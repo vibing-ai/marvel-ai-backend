@@ -12,6 +12,8 @@ from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from langchain.globals import set_debug
 
 
+from langchain.chains.combine_documents import create_stuff_documents_chain
+
 from app.services.logger import setup_logger
 
 relative_path = "tools/multiple_choice_quiz_generator"
@@ -51,7 +53,7 @@ def read_text_file(file_path):
 class QuizBuilder:
     def __init__(self, topic, lang='en', vectorstore_class=Chroma, prompt=None, embedding_model=None, model=None, parser=None, verbose=False):
         default_config = {
-            "model": GoogleGenerativeAI(model="gemini-1.0-pro"),
+            "model": GoogleGenerativeAI(model="gemini-1.5-pro", max_output_tokens=None ),
             "embedding_model": GoogleGenerativeAIEmbeddings(model='models/embedding-001'),
             "parser": JsonOutputParser(pydantic_object=QuizQuestionsList),
             "prompt": read_text_file("prompt/multiple_choice_quiz_generator_prompt.txt"),
@@ -81,23 +83,24 @@ class QuizBuilder:
                                "num_questions": num_questions}
         )
 
-        if self.runner is None:
-            logger.info(f"Creating vectorstore from {len(documents)} documents") if self.verbose else None
-            self.vectorstore = self.vectorstore_class.from_documents(documents, self.embedding_model)
-            logger.info(f"Vectorstore created") if self.verbose else None
+        # if self.runner is None:
+            # logger.info(f"Creating vectorstore from {len(documents)} documents") if self.verbose else None
+            # self.vectorstore = self.vectorstore_class.from_documents(documents, self.embedding_model)
+            # logger.info(f"Vectorstore created") if self.verbose else None
 
-            self.retriever = self.vectorstore.as_retriever()
-            logger.info(f"Retriever created successfully") if self.verbose else None
+            # self.retriever = self.vectorstore.as_retriever()
+            # logger.info(f"Retriever created successfully") if self.verbose else None
 
             
-            self.runner = RunnableParallel(
-                {
-                "context": self.retriever, 
-                "attribute_collection": RunnablePassthrough()
-                }
-            )
+            # self.runner = RunnableParallel(
+            #     {
+            #     "context": self.retriever, 
+            #     "attribute_collection": RunnablePassthrough()
+            #     }
+            # )
         
-        chain = self.runner | prompt | self.model | self.parser
+        # chain = self.runner | prompt | self.model | self.parser
+        chain = create_stuff_documents_chain(self.model, prompt, output_parser=self.parser)
         
         if self.verbose: logger.info(f"Chain compilation complete")
         
@@ -136,7 +139,9 @@ class QuizBuilder:
         max_attempts = num_questions * 5  # Allow for more attempts to generate questions ???
 
         # Run the pipeline with the provided input data
-        response = chain.invoke(f"Topic: {self.topic}, Lang: {self.lang}")
+        # response = chain.invoke(f"Topic: {self.topic}, Lang: {self.lang}")
+        response = chain.invoke({"attribute_collection": f"Topic: {self.topic}, Lang: {self.lang}",
+                                 "context": documents})
         logger.info(f"Generated response: {response}")
 
         questions_list = transform_json_dict(response)
@@ -157,7 +162,7 @@ class QuizBuilder:
             if self.verbose: logger.warning(f"Only generated {len(generated_questions)} out of {num_questions} requested questions")
         
         if self.verbose: logger.info(f"Deleting vectorstore")
-        self.vectorstore.delete_collection()
+        # self.vectorstore.delete_collection()
         
         # Return the list of questions
         return generated_questions[:num_questions]
