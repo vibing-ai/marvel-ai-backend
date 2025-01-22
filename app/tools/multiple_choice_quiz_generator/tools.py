@@ -40,15 +40,19 @@ def transform_json_dict(input_data: dict) -> dict:
 
     return generated_questions
 
+#safely and robustly read the contents of a text file, while also handling potential errors gracefully
 def read_text_file(file_path):
-    # Get the directory containing the script file
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-
-    # Combine the script directory with the relative file path
-    absolute_file_path = os.path.join(script_dir, file_path)
-    
-    with open(absolute_file_path, 'r') as file:
-        return file.read()
+    try:
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        absolute_file_path = os.path.join(script_dir, file_path)
+        with open(absolute_file_path, 'r') as file:
+            return file.read()
+    except FileNotFoundError:
+        logger.error(f"File not found: {file_path}")
+        raise
+    except Exception as e:
+        logger.error(f"Error reading file {file_path}: {e}")
+        raise
 
 class QuizBuilder:
     def __init__(self, topic, lang='en', vectorstore_class=Chroma, prompt=None, embedding_model=None, model=None, parser=None, verbose=False):
