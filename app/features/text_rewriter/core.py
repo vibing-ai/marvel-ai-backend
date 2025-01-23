@@ -2,6 +2,7 @@ from app.services.logger import setup_logger
 from app.utils.document_loaders import get_docs
 from app.features.text_rewriter.tools import TextRewriter
 from app.api.error_utilities import ToolExecutorError
+import langchain
 
 logger = setup_logger()
 
