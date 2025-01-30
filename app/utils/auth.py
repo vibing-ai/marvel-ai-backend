@@ -16,7 +16,6 @@ def access_secret_file(secret_id, version_id="latest"):
 def key_check(api_key: str = Header(None)):
   
   if os.environ['ENV_TYPE'] == "production":
-  #if os.environ.get('ENV_TYPE', 'development') == "production":
     set_key = access_secret_file("backend-access")
   else:
     set_key = "dev"
