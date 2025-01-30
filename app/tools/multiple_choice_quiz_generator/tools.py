@@ -190,11 +190,6 @@ class QuizBuilder:
                 logger.info(f"Generated response: {response}")
                 if response is None: next
 
-                # response = transform_json_dict(response)
-                # if self.validate_response(response):
-                #     # Format choices and add valid question to results
-                #     response["choices"] = self.format_choices(response["choices"])
-                #     generated_questions.append(response)
                 questions_list = transform_json_dict(response)
                 for question in questions_list:
                     # Directly check if the response format is valid
