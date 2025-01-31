@@ -58,7 +58,8 @@ class QuizBuilderConfig:
         prompt_template_path: str = "prompt/multiple_choice_quiz_generator_prompt.txt",
         multi_query_prompt_path: str = "prompt/multi_query_prompt.txt",
         parser: JsonOutputParser = None,
-        verbose: bool = False
+        verbose: bool = False,
+        score_threshold: float = 0.4
     ):
         self.model = model or GoogleGenerativeAI(model="gemini-1.5-pro", max_output_tokens=None ) 
         self.embedding_model = embedding_model or GoogleGenerativeAIEmbeddings(model='models/embedding-001')
@@ -69,6 +70,7 @@ class QuizBuilderConfig:
         self.prompt_template_path = prompt_template_path
         self.multi_query_prompt_path = multi_query_prompt_path
         self.verbose = verbose
+        self.score_threshold = score_threshold
 
         # load the prompt template
         self.prompt_template = read_text_file(self.prompt_template_path)
@@ -147,7 +149,8 @@ class QuizBuilder:
             "number_documents": number_documents,
             "n_questions": num_questions,
             "topic": self.topic,
-            "lang": self.lang
+            "lang": self.lang,
+            "score_threshold": self.config.score_threshold
         }
 
         # Compile the full chain: runner -> prompt -> model -> parser
@@ -288,6 +291,7 @@ class RetrieverFactory:
 
         self._model = config.model
         self._prompt_template = config.multi_query_prompt_template
+        self._score_threshold = config.score_threshold
     
     def create_multiquery_prompt(self, num_questions: int) -> PromptTemplate:
         try:
@@ -302,11 +306,13 @@ class RetrieverFactory:
             logger.error(f"Failed to create multiquery prompt: {e}") if self.verbose else None
             raise Exception(f"Prompt creation failed: {str(e)}")
 
-    def create_base_retriever(self, vectorstore, retriever_k: int):
+    def create_base_retriever(self, vectorstore, retriever_k: int, score_threshold: float):
         try:
             return vectorstore.as_retriever(
+                search_type="similarity_score_threshold",
                 search_kwargs={
                     "k": retriever_k,
+                    "score_threshold": score_threshold
                 }
             )
         except Exception as e:
@@ -326,13 +332,15 @@ class RetrieverFactory:
         self, 
         vectorstore,
         num_questions: int,
-        retriever_k: int
+        retriever_k: int,
+        score_threshold: float = None
     ) -> MultiQueryRetriever:
         if self.verbose:
             logger.info("Setting up MultiQueryRetriever")
             
         try:
-            base_retriever = self.create_base_retriever(vectorstore, retriever_k)
+            search_score_threshold = score_threshold or self._score_threshold
+            base_retriever = self.create_base_retriever(vectorstore, retriever_k, search_score_threshold)
             prompt = self.create_multiquery_prompt(num_questions)
             chain = self.create_multiquery_chain(prompt)
             
