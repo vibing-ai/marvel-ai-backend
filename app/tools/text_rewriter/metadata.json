@@ -1,0 +1,8 @@
+{
+  "input_parameters": {
+    "text": "string",
+    "instruction": "string"
+  },
+  "valid_instructions": ["simplify", "summarize", "paraphrase"]
+}
+

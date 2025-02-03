@@ -1,0 +1,4 @@
+Rewrite the following text based on the instruction:
+
+Instruction: Simplify the text
+Text: Romeo and Juliet is a tragic play by William Shakespeare.
