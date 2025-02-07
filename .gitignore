@@ -167,3 +167,5 @@ cython_debug/
 service.yaml
 devcontainer.env
 keyfile.json
+
+.idea

@@ -38,5 +38,9 @@
     "writing-feedback-generator": {
         "path": "tools.writing_feedback_generator.core",
         "metadata_file": "metadata.json"
+    },
+    "text-rewriter": {
+        "path": "features.text_rewriter.core",
+        "metadata_file": "metadata.json"
     }
 }
