@@ -2,20 +2,25 @@
 
 This repository hosts the implementation of a modular architecture for a variety of educational assistants designed to enhance teaching and learning experiences. The assistants are categorized into three main groups:
 
+
 | **Curriculum Tools** | **Classroom Support** | **Communication & Tech Integration** |
-|-----------------------|-----------------------|--------------------------------------|
+| ---------------------- | ----------------------- | -------------------------------------- |
 | Coming Soon          | **CoTeacher**         | Coming Soon                          |
 
 ## Implemented Assistants
 
 ### CoTeacher
+
 CoTeacher, part of the **Classroom Support** category, is an advanced AI assistant designed to aid educators by offering multilingual support and personalized interactions. With its ability to adapt to user preferences, CoTeacher ensures inclusivity by seamlessly accommodating diverse languages and teaching styles, making it an invaluable tool for fostering effective and engaging learning experiences.
 
 ## Features and Payloads
+
 Below are the JSON payloads for the implemented actions of CoTeacher.
 
 ### CoTeacher
+
 **Request:**
+
 ```json
 {
    "assistant_inputs":{
@@ -57,6 +62,7 @@ Below are the JSON payloads for the implemented actions of CoTeacher.
 ```
 
 **Response:**
+
 ```json
 {
   "data": [
