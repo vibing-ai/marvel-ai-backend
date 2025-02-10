@@ -1,54 +1,81 @@
+import docx
+import PyPDF2
+import csv
 import os
+from typing import Optional
 
-def validate_input(input_data: str, instruction: str) -> bool:
+def read_file(file_url: str, file_type: str) -> str:
     """
-    Validate the input data and instructions.
+    Reads the input file and converts it to plain text.
     
-    :param input_data: The input data (text or file).
-    :param instruction: The rewriting instruction.
-    :return: True if the input is valid, False otherwise.
-    """
-    if not input_data or not instruction:
-        return False
-    # Add more validation logic (e.g., file format checks, instruction format)
-    return True
-
-def process_input(input_data: str) -> str:
-    """
-    Processes the input data (e.g., extracts text from a file or validates content).
+    Parameters:
+    - file_url (str): URL or path to the file.
+    - file_type (str): Type of the file (csv, pdf, docx, etc.).
     
-    :param input_data: The input data (could be raw text or a file path).
-    :return: The processed text.
+    Returns:
+    - str: Extracted text from the file.
     """
-    if isinstance(input_data, dict):  # Handle file uploads (e.g., DOCX, PDF)
-        # Process file content here (e.g., extract text from DOCX or PDF)
-        pass
-    elif isinstance(input_data, str):  # Handle raw text input
-        return input_data
+    if file_type == "csv":
+        return file_to_text_converter.read_csv(file_url)
+    elif file_type == "pdf":
+        return file_to_text_converter.read_pdf(file_url)
+    elif file_type == "docx":
+        return file_to_text_converter.read_docx(file_url)
+    elif file_type == "txt":
+        return file_to_text_converter.read_txt(file_url)
     else:
-        raise ValueError("Unsupported input format.")
+        raise ValueError(f"Unsupported file type: {file_type}")
 
-def apply_rewriting_logic(text: str, instruction: str) -> str:
+def rewrite_text(input_text: str, instructions: str) -> str:
     """
-    Applies the specific rewriting logic based on the instruction.
+    Rewrites the input text according to the provided instructions.
     
-    :param text: The input text to be rewritten.
-    :param instruction: The rewriting instruction.
-    :return: The rewritten text.
+    Parameters:
+    - input_text (str): The text to be rewritten.
+    - instructions (str): Instructions to guide the rewriting process.
+    
+    Returns:
+    - str: The rewritten text.
     """
-    if instruction == "simplify":
-        return simplify_text(text)
-    # Add more rewriting rules (e.g., summarize, paraphrase)
-    return text
+    # This is a placeholder for actual AI integration.
+    # For now, it just returns the text with a note indicating it's rewritten.
+    if "simplify the text for a middle school audience" in instructions.lower():
+        # Simplify the text for middle school audience (very basic transformation)
+        simplified_text = input_text.replace("tragic play", "sad play") \
+                                    .replace("reconcile their feuding families", "bring peace to their fighting families") \
+                                    .replace("lovers whose deaths ultimately reconcile", "two young people who fall in love but die in the end")
+        return simplified_text
+    else:
+        # If no instruction matches, return original text
+        return input_text
+# Example of a helper module for file conversions
+class file_to_text_converter:
+    
+    @staticmethod
+    def read_csv(file_url: str) -> str:
+        with open(file_url, mode='r') as file:
+            reader = csv.reader(file)
+            text = "\n".join([",".join(row) for row in reader])
+        return text
 
-def simplify_text(text: str) -> str:
-    """
-    Simplifies the text to a level suitable for a middle school audience.
-    
-    :param text: The original text.
-    :return: The simplified text.
-    """
-    # Simplification logic (e.g., shorter sentences, simpler words)
-    simplified = text.replace("tragic", "sad").replace("ultimately", "in the end")
-    return simplified
+    @staticmethod
+    def read_pdf(file_url: str) -> str:
+        with open(file_url, mode='rb') as file:
+            reader = PyPDF2.PdfReader(file)
+            text = ""
+            for page in reader.pages:
+                text += page.extract_text()
+        return text
+
+    @staticmethod
+    def read_docx(file_url: str) -> str:
+        doc = docx.Document(file_url)
+        text = "\n".join([para.text for para in doc.paragraphs])
+        return text
+
+    @staticmethod
+    def read_txt(file_url: str) -> str:
+        with open(file_url, 'r') as file:
+            text = file.read()
+        return text
 

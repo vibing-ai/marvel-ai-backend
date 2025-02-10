@@ -1,29 +1,37 @@
-from typing import Union
 import logging
-from tools import process_input, apply_rewriting_logic, validate_input
-import Langchain
-def executor(input_data: Union[str, dict], instruction: str) -> str:
+from typing import List, Optional
+from app.tools.text_rewriter.tools import read_file, rewrite_text
+from app.tools.text_rewriter.tools import file_to_text_converter
+
+logger = logging.getLogger(__name__)
+
+def executor(instructions: str, input_text: Optional[str] = None, file_url: Optional[str] = None, file_type: Optional[str] = None, verbose: Optional[bool] = False) -> str:
     """
-    Main function to handle the text rewriting task.
+    The executor function to handle input data and instructions, process the file if provided,
+    and rewrite the text according to the instructions.
+
+    Parameters:
+    - instructions (str): Rewriting instructions.
+    - file_url (Optional[str]): URL of the file to be uploaded.
+    - file_type (Optional[str]): Type of the file to be uploaded (e.g., csv, pdf, docx).
     
-    :param input_data: The input text or data to be rewritten (could be a string or a file).
-    :param instruction: Instruction specifying how the text should be rewritten (e.g., simplify).
-    :return: The rewritten text in the requested format.
+    Returns:
+    - str: The rewritten text based on the instructions and input data.
     """
     try:
-        # Validate the input
-        if not validate_input(input_data, instruction):
-            raise ValueError("Invalid input data or instruction.")
+        # Step 1: Read input text from file if provided
+        #input_text = ""
+        if file_url and file_type:
+            input_text = read_file(file_url, file_type)
+
+        # Step 2: Rewrite the text based on the provided instructions
+        rewritten_text = rewrite_text(input_text or instructions, instructions)
         
-        # Process the input data (text or file) into a suitable format
-        processed_data = process_input(input_data)
-        
-        # Apply the rewriting logic based on the instruction
-        rewritten_text = apply_rewriting_logic(processed_data, instruction)
-        
+        # Step 3: Return the rewritten text
+        print(rewritten_text)
         return rewritten_text
-    
     except Exception as e:
-        logging.error(f"Error occurred during text rewriting: {e}")
-        raise
+        logger.error(f"Error in text rewriting: {str(e)}")
+        return "An error occurred during the rewriting process."
+
 

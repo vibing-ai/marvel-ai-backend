@@ -1,8 +1,24 @@
 {
-  "input_parameters": {
-    "text": "string",
-    "instruction": "string"
-  },
-  "valid_instructions": ["simplify", "summarize", "paraphrase"]
+    "inputs": [
+        {
+            "label": "Instructions",
+            "name": "instructions",
+            "type": "text"
+        },
+        {
+            "label": "Input text",
+            "name": "input_text",
+            "type": "text"
+        },
+        {
+            "label": "File URL",
+            "name": "file_url",
+            "type": "text"
+        },
+        {
+            "label": "File Type",
+            "name": "file_type",
+            "type": "text"
+        }
+    ]
 }
-
