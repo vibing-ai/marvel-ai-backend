@@ -4,7 +4,7 @@ import os
 from langchain_core.documents import Document
 from langchain_chroma import Chroma
 from langchain_core.prompts import PromptTemplate
-from langchain_core.runnables import RunnablePassthrough, RunnableParallel
+from langchain_core.runnables import RunnablePassthrough, RunnableParallel, RunnableLambda
 from langchain_core.output_parsers import JsonOutputParser, BaseOutputParser
 from pydantic import BaseModel, Field
 from langchain_google_genai import GoogleGenerativeAI
@@ -176,13 +176,35 @@ class QuizBuilder:
         if num_questions > self.config.max_questions:
             return {"message": "error", "data": f"Number of questions cannot exceed {self.config.max_questions}"}
         
-        chain = self.compile(documents, num_questions)
-        
+        try:
+            chain = self.compile(documents, num_questions)
+
+            generated_questions = self.run_chain(chain)
+
+            number_gen_questions = len(generated_questions)
+            logger.info(f"Total generated questions: {number_gen_questions}") if self.verbose else None
+            
+            # Log if fewer questions are generated
+            if number_gen_questions < num_questions:
+                if self.verbose: logger.warning(f"Only generated {number_gen_questions} out of {num_questions} requested questions")
+            
+            # Return requested number of questions (or fewer if not enough were generated)
+            return generated_questions[:num_questions]
+        except Exception as e:
+            if self.verbose:
+                logger.error(f"Error generating questions: {e}")
+            raise e
+        finally:
+            self.cleanup()
+
+    
+    def run_chain(self, chain):
         generated_questions = []
         attempts = 0
         max_attempts = self.config.max_attempts  # Allow for more attempts to generate questions
 
-        while len(generated_questions) < num_questions and attempts < max_attempts:
+        while not generated_questions and attempts < max_attempts:
+            error = None
             if self.verbose:
                 logger.info(f"Running pipeline. Attempt {attempts + 1} of {max_attempts}")
 
@@ -190,8 +212,7 @@ class QuizBuilder:
                 # Run the pipeline with the provided input data
                 response = chain.invoke(f"Topic: {self.topic}, Lang: {self.lang}")
         
-                logger.info(f"Generated response: {response}")
-                if response is None: next
+                logger.info(f"Generated response: {response}") if self.verbose else None
 
                 questions_list = transform_json_dict(response)
                 for question in questions_list:
@@ -205,25 +226,23 @@ class QuizBuilder:
                         if self.verbose:
                             logger.warning(f"Invalid response format. Attempt {attempts + 1} of {max_attempts}")
             except TypeError as e:
+                error = f"TypeError generating questions: {e}"
                 if self.verbose:
-                    logger.error(f"TypeError generating questions: {e}")
+                    logger.error(error)
             except Exception as e:
+                error = f"Error generating questions: {e}"
                 if self.verbose:
-                    logger.error(f"Error generating questions: {e}")
-            attempts += 1
+                    logger.error(error)
+            finally:
+                if error:
+                    generated_questions = []
+                attempts += 1
 
-        number_generated_questions = len(generated_questions)
-        logger.info(f"Total generated questions: {number_generated_questions}") if self.verbose else None
-        
-        # Log if fewer questions are generated
-        if number_generated_questions < num_questions:
-            if self.verbose: logger.warning(f"Only generated {number_generated_questions} out of {num_questions} requested questions")
-        
+            if error: 
+                raise Exception(error)
+            
+        return generated_questions
 
-        self.vectorstore_manager.cleanup()
-        
-        # Return requested number of questions (or fewer if not enough were generated)
-        return generated_questions[:num_questions]
     
     #new function to validate the response
     def validate_response(self, response: dict) -> bool:
@@ -282,7 +301,18 @@ class QuizBuilder:
         """
         ordered_keys = ['A', 'B', 'C', 'D']
         return {key: choices[key] for key in ordered_keys if key in choices}
+    
+    def cleanup(self):
+        """
+        Cleanup resources used by the QuizBuilder.
+        """
+        if self.verbose:
+            logger.info("Cleaning up resources")
 
+        self.vectorstore_manager.cleanup()
+        self.vectorstore_manager = None
+        self.retriever_factory.cleanup()
+        self.retriever_factory = None
 
 class RetrieverFactory:
     
@@ -353,15 +383,30 @@ class RetrieverFactory:
             
             if self.verbose:
                 logger.info("MultiQueryRetriever created successfully")
-                
-            return retriever
+            
+            factory = self
+            def wrapper_retriever(inputs):
+                retrieved_docs = retriever.invoke(inputs)
+                factory.number_retrieved_docs = len(retrieved_docs)
+                return retrieved_docs
+
+            return RunnableLambda(wrapper_retriever)
             
         except Exception as e:
             logger.error(f"Failed to create enhanced retriever: {e}")
             raise Exception(f"Multiquery retriever creation failed: {str(e)}")
+        
+    def cleanup(self):
+        """
+        Cleanup resources used by the RetrieverFactory.
+        """
+        if self.verbose:
+            logger.info("Cleaning up RetrieverFactory resources")
+        self._model = None
+        
 class VectorStoreManager:
     
-    def __init__(self, config: 'QuizBuilderConfig'):
+    def __init__(self, config: QuizBuilderConfig):
         self.config = config
         self.verbose = config.verbose
         self._vectorstore_class = self.config.vectorstore_class
@@ -398,6 +443,7 @@ class QueryListOutputParser(BaseOutputParser[List[str]]):
     def parse(self, text: str) -> List[str]:
         lines = text.strip().split("\n")
         return list(filter(None, lines)) 
+    
 class QuestionChoice(BaseModel):
     key: str = Field(description="A unique identifier for the choice using letters A, B, C, or D.")
     value: str = Field(description="The text content of the choice")
