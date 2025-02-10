@@ -238,8 +238,8 @@ class QuizBuilder:
                     generated_questions = []
                 attempts += 1
 
-            if error: 
-                raise Exception(error)
+        if error: 
+            raise Exception(error)
             
         return generated_questions
 
