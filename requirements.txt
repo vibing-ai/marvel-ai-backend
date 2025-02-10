@@ -6,6 +6,7 @@ langchain-core
 langchain-google-genai
 langchain-chroma
 langchain-community
+langchain_openai
 google-generativeai
 google-ai-generativelanguage
 google-cloud-secret-manager
