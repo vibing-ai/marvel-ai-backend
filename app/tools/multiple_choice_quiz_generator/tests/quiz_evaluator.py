@@ -93,6 +93,6 @@ class QuizEvaluator:
             evaluation["uniqueness"]["score"],
             evaluation["coverage"]["score"]
         ]
-        evaluation["overall_score"] = sum(scores) / len(scores)
+        evaluation["overall_score"] = round(sum(scores) / len(scores), 2)
         
         return evaluation
