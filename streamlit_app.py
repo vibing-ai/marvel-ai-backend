@@ -9,6 +9,10 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
+# Configure Streamlit to handle websocket connections
+st.server.websocket_headers = {}
+st.server.max_message_size = 200
+
 st.title("Text Rewriter")
 
 text = st.text_area("Enter text to rewrite:", "The cat sat on the mat. It was looking at a bird flying nearby.", height=150)
