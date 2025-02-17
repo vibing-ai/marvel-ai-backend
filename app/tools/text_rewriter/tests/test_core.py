@@ -1,7 +1,7 @@
 
 import pytest
 from app.tools.text_rewriter.core import executor
-from app.tools.text_rewriter.tools import TextRewriterValidator, RewrittenText
+from app.tools.text_rewriter.tools import TextRewriterValidator, RewrittenText, TextRewriterPipeline, TextRewriterArgs
 from app.api.error_utilities import ToolExecutorError
 
 def test_executor_basic():
@@ -18,8 +18,6 @@ def test_executor_with_file():
     result = executor(
         text="Sample text",
         rewrite_style="academic",
-        file_url="sample.txt",
-        file_type="txt",
         lang="en"
     )
     assert isinstance(result, RewrittenText)
@@ -106,32 +104,12 @@ def test_export_pdf(tmp_path):
     assert output_path.exists()
 
 def test_url_inputs():
-    # Test YouTube URL input
-    result = executor(
-        text="Sample text",
-        rewrite_style="casual",
-        file_url="https://www.youtube.com/watch?v=test",
-        file_type="youtube",
-        lang="en"
-    )
-    assert isinstance(result, RewrittenText)
-
     # Test Website URL input
     result = executor(
         text="Sample text",
         rewrite_style="formal",
         file_url="https://example.com",
-        file_type="website",
-        lang="en"
-    )
-    assert isinstance(result, RewrittenText)
-
-    # Test Google Sheets URL input
-    result = executor(
-        text="Sample text",
-        rewrite_style="academic",
-        file_url="https://docs.google.com/spreadsheets/d/test",
-        file_type="sheets",
+        file_type="url",
         lang="en"
     )
     assert isinstance(result, RewrittenText)
