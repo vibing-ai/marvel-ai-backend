@@ -32,7 +32,7 @@ author = 23072300
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "streamlit run streamlit_app.py --server.address 0.0.0.0 --server.port 3000"
+args = "streamlit run streamlit_app.py"
 
 [[ports]]
 localPort = 3000
