@@ -40,16 +40,29 @@ class TextRewriterPipeline:
         """
         
     def rewrite_text(self, docs=None):
-        text_to_rewrite = docs[0].page_content if docs else self.args.text
-        
-        response = self.llm.invoke(
-            [HumanMessage(content=self._create_prompt(text_to_rewrite, self.args.rewrite_style))]
-        )
-        
-        # Parse the response to extract rewritten text and explanation
-        response_parts = response.content.split('\n\n')
-        rewritten_text = response_parts[0]
-        explanation = response_parts[-1] if len(response_parts) > 1 else "Changes made to match requested style"
+        try:
+            # Validate input text
+            text_to_rewrite = docs[0].page_content if docs else self.args.text
+            if not text_to_rewrite or not text_to_rewrite.strip():
+                raise ValueError("Text to rewrite cannot be empty")
+
+            # Generate and validate prompt
+            prompt = self._create_prompt(text_to_rewrite, self.args.rewrite_style)
+            if not prompt:
+                raise ValueError("Failed to create prompt")
+
+            # Get LLM response
+            response = self.llm.invoke([HumanMessage(content=prompt)])
+            if not response or not response.content:
+                raise ValueError("Failed to get valid response from LLM")
+
+            # Parse response
+            response_parts = response.content.split('\n\n')
+            if len(response_parts) < 1:
+                raise ValueError("Invalid response format")
+
+            rewritten_text = response_parts[0].strip()
+            explanation = response_parts[-1].strip() if len(response_parts) > 1 else "Changes made to match requested style"
         
         result = RewrittenText(
             original=text_to_rewrite,
@@ -97,3 +110,22 @@ class TextRewriterPipeline:
         pdf.multi_cell(0, 10, result.changes_explained)
         
         pdf.output(output_path)
+class TextRewriterValidator:
+    @staticmethod
+    def validate_text(text: str) -> bool:
+        return bool(text and text.strip())
+
+    @staticmethod
+    def validate_style(style: str) -> bool:
+        return bool(style and style.strip())
+
+    @staticmethod
+    def validate_language(lang: str) -> bool:
+        return bool(lang and lang.strip() and len(lang) == 2)
+
+    @staticmethod
+    def validate_file_type(file_type: Optional[str]) -> bool:
+        if not file_type:
+            return True
+        allowed_types = ["txt", "pdf", "docx", "md"]
+        return file_type.lower() in allowed_types
