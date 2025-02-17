@@ -31,8 +31,7 @@ if st.button("Rewrite Text"):
                 st.success(result.rewritten)
                 
                 st.subheader("Changes Made")
-                for change in result.changes_explained:
-                    st.write("•", change)
+                st.write(result.changes_explained)
             except Exception as e:
                 st.error(f"An error occurred: {str(e)}")
     else:
