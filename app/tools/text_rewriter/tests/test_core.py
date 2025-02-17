@@ -14,10 +14,16 @@ def test_executor_basic():
     assert result.original == "Hello world"
     assert result.style == "formal"
 
-def test_executor_with_file():
+def test_executor_with_file(tmp_path):
+    # Create a temporary file
+    test_file = tmp_path / "test.txt"
+    test_file.write_text("Sample text")
+    
     result = executor(
         text="Sample text",
         rewrite_style="academic",
+        file_url=str(test_file),
+        file_type="txt",
         lang="en"
     )
     assert isinstance(result, RewrittenText)

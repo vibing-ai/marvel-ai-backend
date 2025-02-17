@@ -43,3 +43,5 @@ fpdf
 python-docx
 fpdf
 python-docx
+fpdf
+python-docx
