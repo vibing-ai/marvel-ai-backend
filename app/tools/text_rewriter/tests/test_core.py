@@ -119,8 +119,11 @@ def test_export_pdf(tmp_path):
     pipeline.export_as_pdf(result, str(output_path))
     assert output_path.exists()
 
-def test_url_inputs():
-    # Test Website URL input
+def test_url_inputs(mocker):
+    # Mock get_docs function
+    mock_docs = [mocker.Mock(page_content="Sample text from URL")]
+    mocker.patch('app.tools.text_rewriter.core.get_docs', return_value=mock_docs)
+    
     result = executor(
         text="Sample text",
         rewrite_style="formal",
@@ -129,6 +132,7 @@ def test_url_inputs():
         lang="en"
     )
     assert isinstance(result, RewrittenText)
+    assert result.original == "Sample text from URL"
 
 def test_url_processing():
     # Test invalid URL
