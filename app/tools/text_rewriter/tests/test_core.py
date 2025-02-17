@@ -78,3 +78,44 @@ def test_executor_verbose():
     )
     assert isinstance(result, RewrittenText)
     assert hasattr(result, "changes_explained")
+
+def test_export_docx(tmp_path):
+    result = executor(
+        text="Sample text for export",
+        rewrite_style="formal",
+        lang="en"
+    )
+    output_path = tmp_path / "test_output.docx"
+    TextRewriterPipeline(TextRewriterArgs(
+        text=result.original,
+        rewrite_style=result.style
+    )).export_as_docx(result, str(output_path))
+    assert output_path.exists()
+
+def test_export_pdf(tmp_path):
+    result = executor(
+        text="Sample text for PDF export",
+        rewrite_style="academic",
+        lang="en"
+    )
+    output_path = tmp_path / "test_output.pdf"
+    TextRewriterPipeline(TextRewriterArgs(
+        text=result.original,
+        rewrite_style=result.style
+    )).export_as_pdf(result, str(output_path))
+    assert output_path.exists()
+
+def test_multiple_styles():
+    styles = ["formal", "casual", "academic", "professional"]
+    text = "This is a test text for multiple styles."
+    
+    for style in styles:
+        result = executor(
+            text=text,
+            rewrite_style=style,
+            lang="en"
+        )
+        assert isinstance(result, RewrittenText)
+        assert result.style == style
+        assert result.original == text
+        assert result.rewritten != text
