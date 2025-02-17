@@ -20,27 +20,26 @@ def read_root():
     return {"Hello": "World"}
 
 @router.post("/submit-tool", response_model=Union[ToolResponse, ErrorResponse])
-async def submit_tool( data: ToolRequest, _ = Depends(key_check)):     
+async def submit_tool(data: ToolRequest, _ = Depends(key_check)):     
     try: 
         # Unpack GenericRequest for tool data
         request_data = data.tool_data
-        
+
         requested_tool = load_tool_metadata(request_data.tool_id)
-        
+
         request_inputs_dict = finalize_inputs(request_data.inputs, requested_tool['inputs'])
 
         result = execute_tool(request_data.tool_id, request_inputs_dict)
-        
+
         return ToolResponse(data=result)
-    
+
     except InputValidationError as e:
         logger.error(f"InputValidationError: {e}")
-
         return JSONResponse(
             status_code=400,
             content=jsonable_encoder(ErrorResponse(status=400, message=e.message))
         )
-    
+
     except HTTPException as e:
         logger.error(f"HTTPException: {e}")
         return JSONResponse(
@@ -49,8 +48,7 @@ async def submit_tool( data: ToolRequest, _ = Depends(key_check)):
         )
 
 @router.post("/assistant-chat", response_model=ChatResponse)
-async def assistants( request: GenericAssistantRequest, _ = Depends(key_check) ):
-    
+async def assistants(request: GenericAssistantRequest, _ = Depends(key_check)):
     assistant_group = request.assistant_inputs.assistant_group
     assistant_name = request.assistant_inputs.assistant_name
     user_info = request.assistant_inputs.user_info
@@ -63,5 +61,5 @@ async def assistants( request: GenericAssistantRequest, _ = Depends(key_check) )
         type="text",
         payload={"text": result}
     )
-    
+
     return ChatResponse(data=[formatted_response])

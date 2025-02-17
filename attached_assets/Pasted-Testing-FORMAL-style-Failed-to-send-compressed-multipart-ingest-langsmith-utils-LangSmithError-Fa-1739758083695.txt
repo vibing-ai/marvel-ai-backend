@@ -1,0 +1,49 @@
+Testing FORMAL style:
+Failed to send compressed multipart ingest: langsmith.utils.LangSmithError: Failed to POST https://api.smith.langchain.com/runs/multipart in LangSmith API. HTTPError('403 Client Error: Forbidden for url: https://api.smith.langchain.com/runs/multipart', '{"error":"Forbidden"}\n')
+2025-02-17 02:04:21,634 - app.services.logger - INFO - Text rewriting completed successfully
+Original: The cat sat on the mat. It was looking at a bird flying nearby.
+Rewritten: **Rewritten version:**
+Changes: * "Cat" is replaced with "feline specimen" to convey a more formal tone.
+* "Mat" is replaced with "textile floor covering" to be more descriptive and specific.
+* "Looking" is replaced with "gaze was fixed upon" to add formality and precision.
+* "Nearby" is replaced with "in the vicinity" for a more formal and technical expression.
+--------------------------------------------------
+
+Testing CASUAL style:
+Failed to send compressed multipart ingest: langsmith.utils.LangSmithError: Failed to POST https://api.smith.langchain.com/runs/multipart in LangSmith API. HTTPError('403 Client Error: Forbidden for url: https://api.smith.langchain.com/runs/multipart', '{"error":"Forbidden"}\n')
+2025-02-17 02:04:24,212 - app.services.logger - INFO - Text rewriting completed successfully
+Original: The cat sat on the mat. It was looking at a bird flying nearby.
+Rewritten: **Rewritten text:**
+Changes: * **"Cat" to "kitty":** More casual and affectionate term.
+* **"Sat" to "chillin'":** Informal and slangy way to describe sitting.
+* **"Mat" to "rug":** More common and less formal term.
+* **"It" to "kitty":** Eliminated the pronoun for a more direct and conversational tone.
+* **"Looking" to "eyes locked":** More vivid and engaging description.
+* **"Flying nearby" to "flappin' around up high":** Informal and more specific about the bird's movement.
+--------------------------------------------------
+
+Testing ACADEMIC style:
+Failed to send compressed multipart ingest: langsmith.utils.LangSmithError: Failed to POST https://api.smith.langchain.com/runs/multipart in LangSmith API. HTTPError('403 Client Error: Forbidden for url: https://api.smith.langchain.com/runs/multipart', '{"error":"Forbidden"}\n')
+2025-02-17 02:04:27,106 - app.services.logger - INFO - Text rewriting completed successfully
+Original: The cat sat on the mat. It was looking at a bird flying nearby.
+Rewritten: **Rewritten text:**
+Changes: * **Use of formal language:** "The cat sat on the mat" becomes "Within a domestic environment, a feline specimen assumed a sedentary posture upon a floor covering."
+* **Removal of informal contractions:** "It was looking" becomes "its gaze fixed."
+* **Specific word choice:** "Nearby" is replaced with "within the immediate vicinity" to emphasize the proximity of the bird.
+* **Use of passive voice:** "The cat sat" becomes "assumed a sedentary posture" to convey a more objective and formal tone.
+* **Addition of descriptive details:** The feline specimen is identified as a "domestic environment," and the floor covering is specified as a "mat."
+--------------------------------------------------
+
+Testing PROFESSIONAL style:
+Failed to send compressed multipart ingest: langsmith.utils.LangSmithError: Failed to POST https://api.smith.langchain.com/runs/multipart in LangSmith API. HTTPError('403 Client Error: Forbidden for url: https://api.smith.langchain.com/runs/multipart', '{"error":"Forbidden"}\n')
+2025-02-17 02:04:29,833 - app.services.logger - INFO - Text rewriting completed successfully
+Original: The cat sat on the mat. It was looking at a bird flying nearby.
+Rewritten: **Rewritten text:**
+Changes: * "Cat" is replaced with "feline subject" to convey a more formal tone.
+* "Sat" is replaced with "occupied a resting position" to provide a more precise description of the cat's posture.
+* "Mat" is replaced with "designated mat" to emphasize the specific object on which the cat is resting.
+* "Looking" is replaced with "gaze directed" to convey a sense of intent and focus.
+* "Bird" is replaced with "avian specimen" to create a more scientific and accurate description.
+* "Nearby" is replaced with "in the vicinity" to provide a more general sense of distance.
+--------------------------------------------------
+Failed to send compressed multipart ingest: langsmith.utils.LangSmithError: Failed to POST https://api.smith.langchain.com/runs/multipart in LangSmith API. HTTPError('403 Client Error: Forbidden for url: https://api.smith.langchain.com/runs/multipart', '{"error":"Forbidden"}\n')

@@ -1,0 +1,28 @@
+{
+    "name": "Text Rewriter",
+    "description": "A tool that rewrites text in different styles while maintaining the core meaning and supports multiple export formats",
+    "export_formats": ["txt", "docx", "pdf", "csv", "ppt"],
+    "inputs": [
+        {
+            "name": "text",
+            "type": "text",
+            "description": "The text to be rewritten"
+        },
+        {
+            "name": "rewrite_style",
+            "type": "text",
+            "description": "The desired style for rewriting (e.g., formal, casual, academic)"
+        },
+        {
+            "name": "lang",
+            "type": "text",
+            "description": "Language of the text (default: en)"
+        }
+    ],
+    "output_format": {
+        "original": "Original text",
+        "rewritten": "Rewritten version of the text",
+        "style": "Style used for rewriting",
+        "changes_explained": "Explanation of changes made"
+    }
+}

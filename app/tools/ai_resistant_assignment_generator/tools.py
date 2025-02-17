@@ -118,5 +118,6 @@ class AIResistanceIdea(BaseModel):
 
 class AIResistantOutput(BaseModel):
     topic: str = Field(..., description="Topic or subject related to the assignment")
+    subject: str = Field(..., description="Specific subject area (e.g., mathematics, science, literature)")
     grade_level: str = Field(..., description="Educational level to which the assignment is directed")
     ideas: List[AIResistanceIdea] = Field(..., description="List of 3 ideas to make the assignment AI-resistant, including explanation")

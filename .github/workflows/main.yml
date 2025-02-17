@@ -1,48 +1,46 @@
-name: Deploy to Google App Engine
+name: Deploy to Cloud Run (MAIN)
+
+env:
+  SERVICE_NAME: marvel-ai-backend
+  PROJECT_ID: kai-ai-f63c8
+  DOCKER_IMAGE_URL: us-central1-docker.pkg.dev/kai-ai-f63c8/marvel-ai-backend/marvel-ai-backend
 
 on:
   push:
     branches:
-      - main # Trigger workflow
+      - main
 
 jobs:
-  deploy:
+  dockerize-and-deploy:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout
+      - name: Checkout repository
         uses: actions/checkout@v2
 
-      # Set env variables based on branch
-      - name: Set Environment Variables for Production
-        if: github.ref == 'refs/heads/main'
+      - name: Google Cloud Auth
+        uses: 'google-github-actions/auth@v2'
+        with:
+          credentials_json: '${{ secrets.PRODUCTION_CREDENTIALS_JSON }}'
+          project_id: ${{ env.PROJECT_ID }}
+
+      - name: Set up Cloud SDK
+        uses: 'google-github-actions/setup-gcloud@v2'
+
+      - name: Configure Docker
         run: |
-          echo "ENV_TYPE=production" >> $GITHUB_ENV
-          echo "PROJECT_ID=kai-ai-f63c8" >> $GITHUB_ENV
+          gcloud auth configure-docker us-central1-docker.pkg.dev
 
-      - name: GCP Auth
-        uses: "google-github-actions/auth@v1"
-        with:
-          credentials_json: ${{ secrets.PRODUCTION_CREDENTIALS_JSON }}
-
-      # Dynamically Update app.yaml
-      - name: Update app.yaml with env variables
+      - name: Build and Push Docker Image
         run: |
-          echo "" >> app.yaml
-          echo "env_variables:" >> app.yaml
-          echo "  ENV_TYPE: '${{ env.ENV_TYPE }}'" >> app.yaml
-          echo "  PROJECT_ID: '${{ env.PROJECT_ID }}'" >> app.yaml
-          echo "  GOOGLE_API_KEY: '${{ secrets.GOOGLE_API_KEY }}'" >> app.yaml
-          echo "  PYTHONPATH: app/" >> app.yaml
+          docker build -t ${{ env.DOCKER_IMAGE_URL }}:latest -f Dockerfile .
+          docker push ${{ env.DOCKER_IMAGE_URL }}:latest
 
-      - name: "Set up Cloud SDK"
-        uses: "google-github-actions/setup-gcloud@v1"
-        with:
-          version: ">= 363.0.0"
-
-      - name: Deploy To App Engine (Production)
-        if: github.ref == 'refs/heads/main'
-        uses: "google-github-actions/deploy-appengine@v0.2.0"
-        with:
-          deliverables: app.yaml
-          version: v1
+      - name: Deploy to Cloud Run
+        run: |
+          echo SERVICE_NAME $SERVICE_NAME
+          gcloud run deploy $SERVICE_NAME \
+            --image ${{ env.DOCKER_IMAGE_URL }}:latest \
+            --platform managed \
+            --region us-east1 \
+            --allow-unauthenticated

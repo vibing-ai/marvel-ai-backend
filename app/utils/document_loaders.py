@@ -50,8 +50,16 @@ def get_docs(file_url: str, file_type: str, lang: str = "en", verbose=True):
     file_type = file_type.lower()
 
     if file_type in FILE_TYPES_TO_CHECK:
+        # Skip URL check for local file paths
+        if not file_url.startswith(('http://', 'https://', 'ftp://')):
+            try:
+                loader = FileHandler(TextLoader, file_type)
+                return loader.load(file_url)
+            except Exception as e:
+                raise FileHandlerError(f"Failed to load local file: {str(e)}", file_url)
+
         try:
-            # Make a HEAD request to get content type
+            # Make a HEAD request to get content type for URLs
             head_response = requests.head(file_url, allow_redirects=True)
             content_type = head_response.headers.get('Content-Type') 
             if content_type is None:
@@ -60,7 +68,7 @@ def get_docs(file_url: str, file_type: str, lang: str = "en", verbose=True):
             if 'text/html' in content_type:
                 file_type = "url"
                 logger.info("text/html in content_type: change file_type to url")  
-        
+
         except requests.exceptions.RequestException as e:
             exception_map = {
                 requests.exceptions.MissingSchema: "Invalid URL format.",
@@ -71,7 +79,7 @@ def get_docs(file_url: str, file_type: str, lang: str = "en", verbose=True):
             error_message = exception_map.get(type(e), f"Request failed: {e}")
             logger.error(error_message)
             raise FileHandlerError(error_message, file_url)
-  
+
     try:
         file_loader = file_loader_map[FileType(file_type)]
         if "generate_docs_from_audio_gcloud" in file_loader.__name__:
@@ -83,7 +91,7 @@ def get_docs(file_url: str, file_type: str, lang: str = "en", verbose=True):
     except KeyError:
         logger.error(f"Unsupported file type: {file_type}")
         raise FileHandlerError(f"Unsupported file type", file_url)
-    
+
     except Exception as e:
         logger.error(f"Failed to load the document: {e}")
         raise FileHandlerError(f"Document loading failed", file_url)
@@ -93,14 +101,14 @@ def load_url_documents(url: str, verbose=False):
         # Using the global session to load documents with custom headers
         url_loader = UnstructuredURLLoader(urls=[url])
         docs = url_loader.load()
-            
+
     except requests.exceptions.RequestException as e:
         logger.error(f"HTTP error occurred: {e}")
         raise FileHandlerError(f"Failed to load document from URL due to HTTP error", url) from e
     except Exception as e:
         logger.error(f"Failed to load document from URL: {e}")
         raise FileHandlerError(f"Failed to load document from URL", url)
-    
+
     if docs:
         split_docs = splitter.split_documents(docs)
 
@@ -119,13 +127,19 @@ class FileHandler:
         self.file_extension = file_extension
 
     def load(self, url):
-        # Generate a unique filename with a UUID prefix
+        if os.path.exists(url):  # Handle local files
+            try:
+                loader = self.file_loader(file_path=url)
+                return loader.load()
+            except Exception as e:
+                logger.error(f"Failed to load local file: {e}")
+                raise FileHandlerError(f"Failed to load local file", url) from e
+                
+        # Handle remote URLs
         unique_filename = f"{uuid.uuid4()}.{self.file_extension}"
-
         try:
-            # Download the file from the URL and save it to a temporary file
-            response = requests.get(url, timeout=10)  
-            response.raise_for_status()  # Raise an HTTPError for bad responses
+            response = requests.get(url, timeout=10)
+            response.raise_for_status()
 
             with tempfile.NamedTemporaryFile(delete=False, prefix=unique_filename) as temp_file:
                 temp_file.write(response.content)
@@ -285,9 +299,9 @@ class FileHandlerForGoogleDrive:
         try:
             with tempfile.TemporaryDirectory() as temp_dir:
                 unique_filename = os.path.join(temp_dir, f"{uuid.uuid4()}.{self.file_extension}")
-                
+
                 logger.info(f"Downloading file from URL: {url}")
-                
+
                 try:
                     gdown.download(url=url, output=unique_filename, fuzzy=True)
                     logger.info(f"File downloaded successfully to {unique_filename}")
@@ -314,7 +328,7 @@ class FileHandlerForGoogleDrive:
         except Exception as e:
             logger.error("An unexpected error occurred during the file handling process.")
             raise e
-        
+
 def load_gdocs_documents(drive_folder_url: str, verbose=False):
 
     gdocs_loader = FileHandlerForGoogleDrive(Docx2txtLoader)
@@ -379,11 +393,11 @@ def load_docs_youtube_url(youtube_url: str, verbose=True) -> str:
 
     try:
         docs = loader.load()
-        
+
     except Exception as e:
         logger.error(f"Video transcript might be private or unavailable in 'en' or the URL is incorrect.")
         raise VideoTranscriptError(f"No video transcripts available", youtube_url) from e
-    
+
     if verbose:
         logger.info(f"Found video")
         logger.info(f"Combined documents into a single string.")
@@ -422,7 +436,7 @@ def generate_docs_from_img(img_url, verbose: bool=False):
 
 #USING GOOGLE WEB SPEECH API (FREE SERVICE USED FOR WEB TRANSCRIPT)
 def generate_docs_from_audio(audio_url: str, verbose=False):
-    
+
     logger.info("INSIDE generate_docs_from_audio")
     try:
         # Attempt to create a temporary directory
@@ -440,7 +454,7 @@ def generate_docs_from_audio(audio_url: str, verbose=False):
     mp3_audio = f'mp3_audio_{uuid.uuid4()}.mp3'
     wav_audio = f'wav_audio_{uuid.uuid4()}.wav'
     wav_file_path = os.path.join(temp_dir, wav_audio)
-    
+
     docs = []
 
     # Download the file from the URL and save it to a temporary file
@@ -521,7 +535,7 @@ def generate_docs_from_audio(audio_url: str, verbose=False):
         shutil.rmtree(temp_dir, ignore_errors=True)
         if verbose:
             print("Temporary directory deleted.")
-    
+
     except OSError as e:
         logger.error(f"Error during cleanup temporary files: {e}")
         if verbose:
@@ -558,7 +572,7 @@ def generate_docs_from_audio_gcloud(audio_url: str, lang: str, verbose=False):
 #         # Handle any errors that occur while interacting with the file system
 #         logger.error(f"Failed to create temporary directory: {e}")
 #         raise Exception(f"An error occurred while creating the temporary directory: {e}")
-    
+
 
 #     # Generate unique file names for the MP3 and WAV files
 #     mp3_audio = f'mp3_audio_{uuid.uuid4()}.mp3'
@@ -602,7 +616,7 @@ def generate_docs_from_audio_gcloud(audio_url: str, lang: str, verbose=False):
 #             chunk.export(chunk_file_path, format="wav")
 #         except Exception as e:
 #             raise Exception(f"Failed to export chunk {i} to file: {e}")
-        
+
 #         try:
 #             # Load the audio data and encode it in base64
 #             with open(chunk_file_path, "rb") as audio_file:
@@ -619,7 +633,7 @@ def generate_docs_from_audio_gcloud(audio_url: str, lang: str, verbose=False):
 #             data = {
 #                 "config": {
 #                     "encoding": "LINEAR16",
-                    
+
 #                     "languageCode": lang,
 #                 },
 #                 "audio": {
@@ -664,7 +678,7 @@ def generate_docs_from_audio_gcloud(audio_url: str, lang: str, verbose=False):
 #         shutil.rmtree(temp_dir, ignore_errors=True)
 #         if verbose:
 #             print("Temporary directory deleted.")
-    
+
 #     except OSError as e:
 #         logger.error(f"Error during cleanup temporary files: {e}")
 #         if verbose:

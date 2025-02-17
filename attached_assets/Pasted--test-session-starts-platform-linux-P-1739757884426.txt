@@ -1,0 +1,34 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.7, pytest-8.3.4, pluggy-1.5.0 -- /nix/store/nqlc7ymyglrsfx1hlssssq6zzy0hmk2c-python-wrapped-0.1.0/bin/python3
+cachedir: .pytest_cache
+rootdir: /home/runner/workspace
+plugins: anyio-4.8.0, langsmith-0.3.8, mock-3.14.0
+collected 12 items                                                                            
+
+app/tools/text_rewriter/tests/test_core.py::test_executor_basic PASSED                  [  8%]
+app/tools/text_rewriter/tests/test_core.py::test_executor_with_file PASSED              [ 16%]
+app/tools/text_rewriter/tests/test_core.py::test_executor_empty_text PASSED             [ 25%]
+app/tools/text_rewriter/tests/test_core.py::test_executor_invalid_style PASSED          [ 33%]
+app/tools/text_rewriter/tests/test_core.py::test_executor_invalid_file_type PASSED      [ 41%]
+app/tools/text_rewriter/tests/test_core.py::test_validator PASSED                       [ 50%]
+app/tools/text_rewriter/tests/test_core.py::test_executor_verbose PASSED                [ 58%]
+app/tools/text_rewriter/tests/test_core.py::test_export_docx PASSED                     [ 66%]
+app/tools/text_rewriter/tests/test_core.py::test_export_pdf PASSED                      [ 75%]
+app/tools/text_rewriter/tests/test_core.py::test_url_inputs PASSED                      [ 83%]
+app/tools/text_rewriter/tests/test_core.py::test_url_processing PASSED                  [ 91%]
+app/tools/text_rewriter/tests/test_core.py::test_multiple_styles PASSED                 [100%]
+
+====================================== warnings summary =======================================
+.pythonlibs/lib/python3.12/site-packages/pydub/utils.py:14
+  /home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/pydub/utils.py:14: DeprecationWarning: 'audioop' is deprecated and slated for removal in Python 3.13
+    import audioop
+
+.pythonlibs/lib/python3.12/site-packages/speech_recognition/__init__.py:7
+  /home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/speech_recognition/__init__.py:7: DeprecationWarning: 'aifc' is deprecated and slated for removal in Python 3.13
+    import aifc
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=============================== 12 passed, 2 warnings in 17.83s ===============================
+Failed to send compressed multipart ingest: langsmith.utils.LangSmithError: Failed to POST https://api.smith.langchain.com/runs/multipart in LangSmith API. HTTPError('403 Client Error: Forbidden for url: https://api.smith.langchain.com/runs/multipart', '{"error":"Forbidden"}\n')
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+E0000 00:00:1739757682.193228   11547 init.cc:232] grpc_wait_for_shutdown_with_timeout() timed out.
