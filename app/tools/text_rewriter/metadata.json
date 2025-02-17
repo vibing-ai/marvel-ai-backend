@@ -1,0 +1,38 @@
+
+{
+    "name": "Text Rewriter",
+    "description": "A tool that rewrites text in different styles while maintaining the core meaning",
+    "inputs": [
+        {
+            "name": "text",
+            "type": "text",
+            "description": "The text to be rewritten"
+        },
+        {
+            "name": "rewrite_style",
+            "type": "text",
+            "description": "The desired style for rewriting (e.g., formal, casual, academic)"
+        },
+        {
+            "name": "file_url",
+            "type": "text",
+            "description": "Optional URL of a file containing text to rewrite"
+        },
+        {
+            "name": "file_type",
+            "type": "text",
+            "description": "Type of the input file"
+        },
+        {
+            "name": "lang",
+            "type": "text",
+            "description": "Language of the text (default: en)"
+        }
+    ],
+    "output_format": {
+        "original": "Original text",
+        "rewritten": "Rewritten version of the text",
+        "style": "Style used for rewriting",
+        "changes_explained": "Explanation of changes made"
+    }
+}
