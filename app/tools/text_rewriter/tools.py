@@ -72,18 +72,17 @@ class TextRewriterPipeline:
             rewritten_text = response_parts[0].strip()
             explanation = response_parts[-1].strip() if len(response_parts) > 1 else "Changes made to match requested style"
 
-        result = RewrittenText(
+            result = RewrittenText(
                 original=text_to_rewrite,
                 rewritten=rewritten_text,
                 style=self.args.rewrite_style,
                 changes_explained=explanation
             )
             return result
+
         except Exception as e:
             logger.error(f"Error in text rewriting: {str(e)}")
             raise ValueError(f"Failed to rewrite text: {str(e)}")
-
-        return result
 
     def export_as_docx(self, result: RewrittenText, output_path: str):
         doc = Document()
