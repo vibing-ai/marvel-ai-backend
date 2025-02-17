@@ -1,43 +1,23 @@
-modules = ["python-3.12", "bash"]
-run = "uvicorn undefined:app --host 0.0.0.0 --port 3000"
+modules = ["python-3.12:v25-20230920-d4ad2e4", "python-3.12:v25-20230920-d4ad2e4"]
 
 [nix]
 channel = "stable-24_05"
 
 [deployment]
-run = ["sh", "-c", "uvicorn undefined:app --host 0.0.0.0 --port 3000"]
-
-[workflows]
-runButton = "Streamlit"
-
-[[workflows.workflow]]
-name = "FastAPI"
-author = 23072300
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "uvicorn app.main:app --host 0.0.0.0 --port 3000"
-
-[[workflows.workflow]]
-name = "Test Rewriter"
-author = 23072300
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "python test_rewriter.py"
-
-[[workflows.workflow]]
-name = "Streamlit"
-author = 23072300
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "streamlit run streamlit_app.py --server.address 0.0.0.0 --server.port 8501 --server.headless true"
-
-[[ports]]
-localPort = 3000
-externalPort = 80
+build = []
+run = ["sh", "-c", "streamlit run streamlit_app.py --server.address 0.0.0.0 --server.port 8501 --server.headless true"]
 
 [[ports]]
 localPort = 8501
-externalPort = 3000
+externalPort = 80
+
+[env]
+STREAMLIT_SERVER_PORT = "8501"
+STREAMLIT_SERVER_ADDRESS = "0.0.0.0"
+
+[languages.python]
+pattern = "**/*.py"
+syntax = "python"
+
+[languages.python.languageServer]
+start = ["pylsp"]
