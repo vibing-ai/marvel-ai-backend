@@ -8,7 +8,7 @@ channel = "stable-24_05"
 run = ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port 3000"]
 
 [workflows]
-runButton = "FastAPI"
+runButton = "Streamlit"
 
 [[workflows.workflow]]
 name = "FastAPI"
@@ -25,6 +25,14 @@ author = 23072300
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "python test_rewriter.py"
+
+[[workflows.workflow]]
+name = "Streamlit"
+author = 23072300
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "streamlit run streamlit_app.py --server.address 0.0.0.0 --server.port 8501"
 
 [[ports]]
 localPort = 3000
