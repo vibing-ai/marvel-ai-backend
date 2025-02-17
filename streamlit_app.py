@@ -14,6 +14,12 @@ st.set_page_config(
     }
 )
 
+# Configure Streamlit to run on 0.0.0.0
+if __name__ == "__main__":
+    import os
+    os.environ['STREAMLIT_SERVER_ADDRESS'] = '0.0.0.0'
+    os.environ['STREAMLIT_SERVER_PORT'] = '3000'
+
 try:
     st.title("Text Rewriter")
 
