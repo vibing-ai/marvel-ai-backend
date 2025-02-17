@@ -1,0 +1,777 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.7, pytest-8.3.4, pluggy-1.5.0 -- /nix/store/nqlc7ymyglrsfx1hlssssq6zzy0hmk2c-python-wrapped-0.1.0/bin/python3
+cachedir: .pytest_cache
+rootdir: /home/runner/workspace
+plugins: anyio-4.8.0, langsmith-0.3.8
+collected 12 items                                                                            
+
+app/tools/text_rewriter/tests/test_core.py::test_executor_basic PASSED                  [  8%]
+app/tools/text_rewriter/tests/test_core.py::test_executor_with_file FAILED              [ 16%]
+app/tools/text_rewriter/tests/test_core.py::test_executor_empty_text FAILED             [ 25%]
+app/tools/text_rewriter/tests/test_core.py::test_executor_invalid_style FAILED          [ 33%]
+app/tools/text_rewriter/tests/test_core.py::test_executor_invalid_file_type PASSED      [ 41%]
+app/tools/text_rewriter/tests/test_core.py::test_validator PASSED                       [ 50%]
+app/tools/text_rewriter/tests/test_core.py::test_executor_verbose PASSED                [ 58%]
+app/tools/text_rewriter/tests/test_core.py::test_export_docx FAILED                     [ 66%]
+app/tools/text_rewriter/tests/test_core.py::test_export_pdf FAILED                      [ 75%]
+app/tools/text_rewriter/tests/test_core.py::test_url_inputs FAILED                      [ 83%]
+app/tools/text_rewriter/tests/test_core.py::test_url_processing PASSED                  [ 91%]
+app/tools/text_rewriter/tests/test_core.py::test_multiple_styles PASSED                 [100%]
+
+========================================== FAILURES ===========================================
+___________________________________ test_executor_with_file ___________________________________
+
+file_url = 'sample.txt', file_type = 'txt', lang = True, verbose = True
+
+    def get_docs(file_url: str, file_type: str, lang: str = "en", verbose=True):
+        file_type = file_type.lower()
+    
+        if file_type in FILE_TYPES_TO_CHECK:
+            try:
+                # Make a HEAD request to get content type
+>               head_response = requests.head(file_url, allow_redirects=True)
+
+app/utils/document_loaders.py:55: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+.pythonlibs/lib/python3.12/site-packages/requests/api.py:100: in head
+    return request("head", url, **kwargs)
+.pythonlibs/lib/python3.12/site-packages/requests/api.py:59: in request
+    return session.request(method=method, url=url, **kwargs)
+.pythonlibs/lib/python3.12/site-packages/requests/sessions.py:575: in request
+    prep = self.prepare_request(req)
+.pythonlibs/lib/python3.12/site-packages/requests/sessions.py:484: in prepare_request
+    p.prepare(
+.pythonlibs/lib/python3.12/site-packages/requests/models.py:367: in prepare
+    self.prepare_url(url, params)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <PreparedRequest [HEAD]>, url = 'sample.txt', params = OrderedDict()
+
+    def prepare_url(self, url, params):
+        """Prepares the given HTTP URL."""
+        #: Accept objects that have string representations.
+        #: We're unable to blindly call unicode/str functions
+        #: as this will include the bytestring indicator (b'')
+        #: on python 3.x.
+        #: https://github.com/psf/requests/pull/2238
+        if isinstance(url, bytes):
+            url = url.decode("utf8")
+        else:
+            url = str(url)
+    
+        # Remove leading whitespaces from url
+        url = url.lstrip()
+    
+        # Don't do any URL preparation for non-HTTP schemes like `mailto`,
+        # `data` etc to work around exceptions from `url_parse`, which
+        # handles RFC 3986 only.
+        if ":" in url and not url.lower().startswith("http"):
+            self.url = url
+            return
+    
+        # Support for unicode domain names and paths.
+        try:
+            scheme, auth, host, port, path, query, fragment = parse_url(url)
+        except LocationParseError as e:
+            raise InvalidURL(*e.args)
+    
+        if not scheme:
+>           raise MissingSchema(
+                f"Invalid URL {url!r}: No scheme supplied. "
+                f"Perhaps you meant https://{url}?"
+            )
+E           requests.exceptions.MissingSchema: Invalid URL 'sample.txt': No scheme supplied. Perhaps you meant https://sample.txt?
+
+.pythonlibs/lib/python3.12/site-packages/requests/models.py:438: MissingSchema
+
+During handling of the above exception, another exception occurred:
+
+text = 'Sample text', rewrite_style = 'academic', file_url = 'sample.txt', file_type = 'txt'
+lang = 'en', verbose = False
+
+    def executor(text: str,
+                 rewrite_style: str,
+                 file_url: Optional[str] = None,
+                 file_type: Optional[str] = None,
+                 lang: str = "en",
+                 verbose: bool = False) -> Dict[str, Any]:
+        """
+        Execute text rewriting with enhanced error handling and validation
+        """
+        try:
+            # Validate inputs
+            validate_input(text, rewrite_style)
+    
+            # Load document if file URL is provided
+            docs = None
+            if file_url and file_type:
+                logger.info(f"Loading document from {file_url} of type {file_type}")
+                try:
+>                   docs = get_docs(file_url, file_type, True)
+
+app/tools/text_rewriter/core.py:35: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+file_url = 'sample.txt', file_type = 'txt', lang = True, verbose = True
+
+    def get_docs(file_url: str, file_type: str, lang: str = "en", verbose=True):
+        file_type = file_type.lower()
+    
+        if file_type in FILE_TYPES_TO_CHECK:
+            try:
+                # Make a HEAD request to get content type
+                head_response = requests.head(file_url, allow_redirects=True)
+                content_type = head_response.headers.get('Content-Type')
+                if content_type is None:
+                    raise FileHandlerError(f"Failed to retrieve Content-Type from URL ", file_url)
+                # If the content type is HTML
+                if 'text/html' in content_type:
+                    file_type = "url"
+                    logger.info("text/html in content_type: change file_type to url")
+    
+            except requests.exceptions.RequestException as e:
+                exception_map = {
+                    requests.exceptions.MissingSchema: "Invalid URL format.",
+                    requests.exceptions.ConnectionError: "Failed to connect to the server.",
+                    requests.exceptions.Timeout: "Request timed out.",
+                }
+                # Check if the exception is in the map; if not, default to a generic message
+                error_message = exception_map.get(type(e), f"Request failed: {e}")
+                logger.error(error_message)
+>               raise FileHandlerError(error_message, file_url)
+E               app.api.error_utilities.FileHandlerError: Invalid URL format.
+
+app/utils/document_loaders.py:73: FileHandlerError
+
+During handling of the above exception, another exception occurred:
+
+text = 'Sample text', rewrite_style = 'academic', file_url = 'sample.txt', file_type = 'txt'
+lang = 'en', verbose = False
+
+    def executor(text: str,
+                 rewrite_style: str,
+                 file_url: Optional[str] = None,
+                 file_type: Optional[str] = None,
+                 lang: str = "en",
+                 verbose: bool = False) -> Dict[str, Any]:
+        """
+        Execute text rewriting with enhanced error handling and validation
+        """
+        try:
+            # Validate inputs
+            validate_input(text, rewrite_style)
+    
+            # Load document if file URL is provided
+            docs = None
+            if file_url and file_type:
+                logger.info(f"Loading document from {file_url} of type {file_type}")
+                try:
+                    docs = get_docs(file_url, file_type, True)
+                except Exception as e:
+>                   raise LoaderError(f"Failed to load document: {str(e)}")
+E                   app.api.error_utilities.LoaderError: Failed to load document: Invalid URL format.
+
+app/tools/text_rewriter/core.py:37: LoaderError
+
+During handling of the above exception, another exception occurred:
+
+    def test_executor_with_file():
+>       result = executor(
+            text="Sample text",
+            rewrite_style="academic",
+            file_url="sample.txt",
+            file_type="txt",
+            lang="en"
+        )
+
+app/tools/text_rewriter/tests/test_core.py:18: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+text = 'Sample text', rewrite_style = 'academic', file_url = 'sample.txt', file_type = 'txt'
+lang = 'en', verbose = False
+
+    def executor(text: str,
+                 rewrite_style: str,
+                 file_url: Optional[str] = None,
+                 file_type: Optional[str] = None,
+                 lang: str = "en",
+                 verbose: bool = False) -> Dict[str, Any]:
+        """
+        Execute text rewriting with enhanced error handling and validation
+        """
+        try:
+            # Validate inputs
+            validate_input(text, rewrite_style)
+    
+            # Load document if file URL is provided
+            docs = None
+            if file_url and file_type:
+                logger.info(f"Loading document from {file_url} of type {file_type}")
+                try:
+                    docs = get_docs(file_url, file_type, True)
+                except Exception as e:
+                    raise LoaderError(f"Failed to load document: {str(e)}")
+    
+            # Initialize arguments
+            text_rewriter_args = TextRewriterArgs(
+                text=text,
+                rewrite_style=rewrite_style,
+                file_url=file_url,
+                file_type=file_type,
+                lang=lang
+            )
+    
+            # Execute rewriting
+            pipeline = TextRewriterPipeline(args=text_rewriter_args, verbose=verbose)
+            output = pipeline.rewrite_text(docs)
+    
+            logger.info("Text rewriting completed successfully")
+            return output
+    
+        except LoaderError as e:
+            logger.error(f"Document loading error: {e}")
+>           raise ToolExecutorError(str(e))
+E           app.api.error_utilities.ToolExecutorError: Failed to load document: Invalid URL format.
+
+app/tools/text_rewriter/core.py:57: ToolExecutorError
+------------------------------------ Captured stderr call -------------------------------------
+2025-02-17 01:47:43,151 - app.services.logger - INFO - Loading document from sample.txt of type txt
+2025-02-17 01:47:43,151 - app.utils.document_loaders - ERROR - Invalid URL format.
+2025-02-17 01:47:43,151 - app.services.logger - ERROR - Document loading error: Failed to load document: Invalid URL format.
+-------------------------------------- Captured log call --------------------------------------
+INFO     app.services.logger:core.py:33 Loading document from sample.txt of type txt
+ERROR    app.utils.document_loaders:document_loaders.py:72 Invalid URL format.
+ERROR    app.services.logger:core.py:56 Document loading error: Failed to load document: Invalid URL format.
+__________________________________ test_executor_empty_text ___________________________________
+
+text = '', rewrite_style = 'formal', file_url = None, file_type = None, lang = 'en'
+verbose = False
+
+    def executor(text: str,
+                 rewrite_style: str,
+                 file_url: Optional[str] = None,
+                 file_type: Optional[str] = None,
+                 lang: str = "en",
+                 verbose: bool = False) -> Dict[str, Any]:
+        """
+        Execute text rewriting with enhanced error handling and validation
+        """
+        try:
+            # Validate inputs
+>           validate_input(text, rewrite_style)
+
+app/tools/text_rewriter/core.py:28: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+text = '', rewrite_style = 'formal'
+
+    def validate_input(text: str, rewrite_style: str) -> None:
+        """Validate input parameters"""
+        if not text or not text.strip():
+>           raise ValueError("Text to rewrite cannot be empty")
+E           ValueError: Text to rewrite cannot be empty
+
+app/tools/text_rewriter/core.py:13: ValueError
+
+During handling of the above exception, another exception occurred:
+
+    def test_executor_empty_text():
+        with pytest.raises(ValueError):
+>           executor(
+                text="",
+                rewrite_style="formal",
+                lang="en"
+            )
+
+app/tools/text_rewriter/tests/test_core.py:30: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+text = '', rewrite_style = 'formal', file_url = None, file_type = None, lang = 'en'
+verbose = False
+
+    def executor(text: str,
+                 rewrite_style: str,
+                 file_url: Optional[str] = None,
+                 file_type: Optional[str] = None,
+                 lang: str = "en",
+                 verbose: bool = False) -> Dict[str, Any]:
+        """
+        Execute text rewriting with enhanced error handling and validation
+        """
+        try:
+            # Validate inputs
+            validate_input(text, rewrite_style)
+    
+            # Load document if file URL is provided
+            docs = None
+            if file_url and file_type:
+                logger.info(f"Loading document from {file_url} of type {file_type}")
+                try:
+                    docs = get_docs(file_url, file_type, True)
+                except Exception as e:
+                    raise LoaderError(f"Failed to load document: {str(e)}")
+    
+            # Initialize arguments
+            text_rewriter_args = TextRewriterArgs(
+                text=text,
+                rewrite_style=rewrite_style,
+                file_url=file_url,
+                file_type=file_type,
+                lang=lang
+            )
+    
+            # Execute rewriting
+            pipeline = TextRewriterPipeline(args=text_rewriter_args, verbose=verbose)
+            output = pipeline.rewrite_text(docs)
+    
+            logger.info("Text rewriting completed successfully")
+            return output
+    
+        except LoaderError as e:
+            logger.error(f"Document loading error: {e}")
+            raise ToolExecutorError(str(e))
+        except ValueError as e:
+            logger.error(f"Validation error: {e}")
+>           raise ToolExecutorError(str(e))
+E           app.api.error_utilities.ToolExecutorError: Text to rewrite cannot be empty
+
+app/tools/text_rewriter/core.py:60: ToolExecutorError
+------------------------------------ Captured stderr call -------------------------------------
+2025-02-17 01:47:43,386 - app.services.logger - ERROR - Validation error: Text to rewrite cannot be empty
+-------------------------------------- Captured log call --------------------------------------
+ERROR    app.services.logger:core.py:59 Validation error: Text to rewrite cannot be empty
+_________________________________ test_executor_invalid_style _________________________________
+
+text = 'Hello world', rewrite_style = '', file_url = None, file_type = None, lang = 'en'
+verbose = False
+
+    def executor(text: str,
+                 rewrite_style: str,
+                 file_url: Optional[str] = None,
+                 file_type: Optional[str] = None,
+                 lang: str = "en",
+                 verbose: bool = False) -> Dict[str, Any]:
+        """
+        Execute text rewriting with enhanced error handling and validation
+        """
+        try:
+            # Validate inputs
+>           validate_input(text, rewrite_style)
+
+app/tools/text_rewriter/core.py:28: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+text = 'Hello world', rewrite_style = ''
+
+    def validate_input(text: str, rewrite_style: str) -> None:
+        """Validate input parameters"""
+        if not text or not text.strip():
+            raise ValueError("Text to rewrite cannot be empty")
+        if not rewrite_style or not rewrite_style.strip():
+>           raise ValueError("Rewrite style must be specified")
+E           ValueError: Rewrite style must be specified
+
+app/tools/text_rewriter/core.py:15: ValueError
+
+During handling of the above exception, another exception occurred:
+
+    def test_executor_invalid_style():
+        with pytest.raises(ValueError):
+>           executor(
+                text="Hello world",
+                rewrite_style="",
+                lang="en"
+            )
+
+app/tools/text_rewriter/tests/test_core.py:38: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+text = 'Hello world', rewrite_style = '', file_url = None, file_type = None, lang = 'en'
+verbose = False
+
+    def executor(text: str,
+                 rewrite_style: str,
+                 file_url: Optional[str] = None,
+                 file_type: Optional[str] = None,
+                 lang: str = "en",
+                 verbose: bool = False) -> Dict[str, Any]:
+        """
+        Execute text rewriting with enhanced error handling and validation
+        """
+        try:
+            # Validate inputs
+            validate_input(text, rewrite_style)
+    
+            # Load document if file URL is provided
+            docs = None
+            if file_url and file_type:
+                logger.info(f"Loading document from {file_url} of type {file_type}")
+                try:
+                    docs = get_docs(file_url, file_type, True)
+                except Exception as e:
+                    raise LoaderError(f"Failed to load document: {str(e)}")
+    
+            # Initialize arguments
+            text_rewriter_args = TextRewriterArgs(
+                text=text,
+                rewrite_style=rewrite_style,
+                file_url=file_url,
+                file_type=file_type,
+                lang=lang
+            )
+    
+            # Execute rewriting
+            pipeline = TextRewriterPipeline(args=text_rewriter_args, verbose=verbose)
+            output = pipeline.rewrite_text(docs)
+    
+            logger.info("Text rewriting completed successfully")
+            return output
+    
+        except LoaderError as e:
+            logger.error(f"Document loading error: {e}")
+            raise ToolExecutorError(str(e))
+        except ValueError as e:
+            logger.error(f"Validation error: {e}")
+>           raise ToolExecutorError(str(e))
+E           app.api.error_utilities.ToolExecutorError: Rewrite style must be specified
+
+app/tools/text_rewriter/core.py:60: ToolExecutorError
+------------------------------------ Captured stderr call -------------------------------------
+2025-02-17 01:47:43,394 - app.services.logger - ERROR - Validation error: Rewrite style must be specified
+-------------------------------------- Captured log call --------------------------------------
+ERROR    app.services.logger:core.py:59 Validation error: Rewrite style must be specified
+______________________________________ test_export_docx _______________________________________
+
+tmp_path = PosixPath('/tmp/pytest-of-runner/pytest-0/test_export_docx0')
+
+    def test_export_docx(tmp_path):
+        result = executor(
+            text="Sample text for export",
+            rewrite_style="formal",
+            lang="en"
+        )
+        output_path = tmp_path / "test_output.docx"
+>       TextRewriterPipeline(TextRewriterArgs(
+            text=result.original,
+            rewrite_style=result.style
+        )).export_as_docx(result, str(output_path))
+E       NameError: name 'TextRewriterPipeline' is not defined
+
+app/tools/text_rewriter/tests/test_core.py:89: NameError
+------------------------------------ Captured stderr call -------------------------------------
+2025-02-17 01:47:48,341 - app.services.logger - INFO - Text rewriting completed successfully
+-------------------------------------- Captured log call --------------------------------------
+WARNING  langsmith.client:client.py:1892 Failed to send compressed multipart ingest: langsmith.utils.LangSmithError: Failed to POST https://api.smith.langchain.com/runs/multipart in LangSmith API. HTTPError('403 Client Error: Forbidden for url: https://api.smith.langchain.com/runs/multipart', '{"error":"Forbidden"}\n')
+INFO     app.services.logger:core.py:52 Text rewriting completed successfully
+_______________________________________ test_export_pdf _______________________________________
+
+tmp_path = PosixPath('/tmp/pytest-of-runner/pytest-0/test_export_pdf0')
+
+    def test_export_pdf(tmp_path):
+        result = executor(
+            text="Sample text for PDF export",
+            rewrite_style="academic",
+            lang="en"
+        )
+        output_path = tmp_path / "test_output.pdf"
+>       TextRewriterPipeline(TextRewriterArgs(
+            text=result.original,
+            rewrite_style=result.style
+        )).export_as_pdf(result, str(output_path))
+E       NameError: name 'TextRewriterPipeline' is not defined
+
+app/tools/text_rewriter/tests/test_core.py:102: NameError
+------------------------------------ Captured stderr call -------------------------------------
+2025-02-17 01:47:50,371 - app.services.logger - INFO - Text rewriting completed successfully
+-------------------------------------- Captured log call --------------------------------------
+WARNING  langsmith.client:client.py:1892 Failed to send compressed multipart ingest: langsmith.utils.LangSmithError: Failed to POST https://api.smith.langchain.com/runs/multipart in LangSmith API. HTTPError('403 Client Error: Forbidden for url: https://api.smith.langchain.com/runs/multipart', '{"error":"Forbidden"}\n')
+INFO     app.services.logger:core.py:52 Text rewriting completed successfully
+_______________________________________ test_url_inputs _______________________________________
+
+file_url = 'https://www.youtube.com/watch?v=test', file_type = 'youtube', lang = True
+verbose = True
+
+    def get_docs(file_url: str, file_type: str, lang: str = "en", verbose=True):
+        file_type = file_type.lower()
+    
+        if file_type in FILE_TYPES_TO_CHECK:
+            try:
+                # Make a HEAD request to get content type
+                head_response = requests.head(file_url, allow_redirects=True)
+                content_type = head_response.headers.get('Content-Type')
+                if content_type is None:
+                    raise FileHandlerError(f"Failed to retrieve Content-Type from URL ", file_url)
+                # If the content type is HTML
+                if 'text/html' in content_type:
+                    file_type = "url"
+                    logger.info("text/html in content_type: change file_type to url")
+    
+            except requests.exceptions.RequestException as e:
+                exception_map = {
+                    requests.exceptions.MissingSchema: "Invalid URL format.",
+                    requests.exceptions.ConnectionError: "Failed to connect to the server.",
+                    requests.exceptions.Timeout: "Request timed out.",
+                }
+                # Check if the exception is in the map; if not, default to a generic message
+                error_message = exception_map.get(type(e), f"Request failed: {e}")
+                logger.error(error_message)
+                raise FileHandlerError(error_message, file_url)
+    
+        try:
+>           file_loader = file_loader_map[FileType(file_type)]
+
+app/utils/document_loaders.py:76: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+/nix/store/nb21sc3npfc8gvazwnrjxpvb5d48jysx-python3-3.12.7/lib/python3.12/enum.py:757: in __call__
+    return cls.__new__(cls, value)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+cls = <enum 'FileType'>, value = 'youtube'
+
+    def __new__(cls, value):
+        # all enum instances are actually created during class construction
+        # without calling this method; this method is called by the metaclass'
+        # __call__ (i.e. Color(3) ), and by pickle
+        if type(value) is cls:
+            # For lookups like Color(Color.RED)
+            return value
+        # by-value search for a matching enum member
+        # see if it's in the reverse mapping (for hashable values)
+        try:
+            return cls._value2member_map_[value]
+        except KeyError:
+            # Not found, no need to do long O(n) search
+            pass
+        except TypeError:
+            # not there, now do long search -- O(n) behavior
+            for member in cls._member_map_.values():
+                if member._value_ == value:
+                    return member
+        # still not found -- verify that members exist, in-case somebody got here mistakenly
+        # (such as via super when trying to override __new__)
+        if not cls._member_map_:
+            raise TypeError("%r has no members defined" % cls)
+        #
+        # still not found -- try _missing_ hook
+        try:
+            exc = None
+            result = cls._missing_(value)
+        except Exception as e:
+            exc = e
+            result = None
+        try:
+            if isinstance(result, cls):
+                return result
+            elif (
+                    Flag is not None and issubclass(cls, Flag)
+                    and cls._boundary_ is EJECT and isinstance(result, int)
+                ):
+                return result
+            else:
+                ve_exc = ValueError("%r is not a valid %s" % (value, cls.__qualname__))
+                if result is None and exc is None:
+>                   raise ve_exc
+E                   ValueError: 'youtube' is not a valid FileType
+
+/nix/store/nb21sc3npfc8gvazwnrjxpvb5d48jysx-python3-3.12.7/lib/python3.12/enum.py:1171: ValueError
+
+During handling of the above exception, another exception occurred:
+
+text = 'Sample text', rewrite_style = 'casual'
+file_url = 'https://www.youtube.com/watch?v=test', file_type = 'youtube', lang = 'en'
+verbose = False
+
+    def executor(text: str,
+                 rewrite_style: str,
+                 file_url: Optional[str] = None,
+                 file_type: Optional[str] = None,
+                 lang: str = "en",
+                 verbose: bool = False) -> Dict[str, Any]:
+        """
+        Execute text rewriting with enhanced error handling and validation
+        """
+        try:
+            # Validate inputs
+            validate_input(text, rewrite_style)
+    
+            # Load document if file URL is provided
+            docs = None
+            if file_url and file_type:
+                logger.info(f"Loading document from {file_url} of type {file_type}")
+                try:
+>                   docs = get_docs(file_url, file_type, True)
+
+app/tools/text_rewriter/core.py:35: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+file_url = 'https://www.youtube.com/watch?v=test', file_type = 'youtube', lang = True
+verbose = True
+
+    def get_docs(file_url: str, file_type: str, lang: str = "en", verbose=True):
+        file_type = file_type.lower()
+    
+        if file_type in FILE_TYPES_TO_CHECK:
+            try:
+                # Make a HEAD request to get content type
+                head_response = requests.head(file_url, allow_redirects=True)
+                content_type = head_response.headers.get('Content-Type')
+                if content_type is None:
+                    raise FileHandlerError(f"Failed to retrieve Content-Type from URL ", file_url)
+                # If the content type is HTML
+                if 'text/html' in content_type:
+                    file_type = "url"
+                    logger.info("text/html in content_type: change file_type to url")
+    
+            except requests.exceptions.RequestException as e:
+                exception_map = {
+                    requests.exceptions.MissingSchema: "Invalid URL format.",
+                    requests.exceptions.ConnectionError: "Failed to connect to the server.",
+                    requests.exceptions.Timeout: "Request timed out.",
+                }
+                # Check if the exception is in the map; if not, default to a generic message
+                error_message = exception_map.get(type(e), f"Request failed: {e}")
+                logger.error(error_message)
+                raise FileHandlerError(error_message, file_url)
+    
+        try:
+            file_loader = file_loader_map[FileType(file_type)]
+            if "generate_docs_from_audio_gcloud" in file_loader.__name__:
+                docs = file_loader(file_url, lang, verbose)
+            else:
+                docs = file_loader(file_url, verbose)
+            return docs
+    
+        except KeyError:
+            logger.error(f"Unsupported file type: {file_type}")
+            raise FileHandlerError(f"Unsupported file type", file_url)
+    
+        except Exception as e:
+            logger.error(f"Failed to load the document: {e}")
+>           raise FileHandlerError(f"Document loading failed", file_url)
+E           app.api.error_utilities.FileHandlerError: Document loading failed
+
+app/utils/document_loaders.py:89: FileHandlerError
+
+During handling of the above exception, another exception occurred:
+
+text = 'Sample text', rewrite_style = 'casual'
+file_url = 'https://www.youtube.com/watch?v=test', file_type = 'youtube', lang = 'en'
+verbose = False
+
+    def executor(text: str,
+                 rewrite_style: str,
+                 file_url: Optional[str] = None,
+                 file_type: Optional[str] = None,
+                 lang: str = "en",
+                 verbose: bool = False) -> Dict[str, Any]:
+        """
+        Execute text rewriting with enhanced error handling and validation
+        """
+        try:
+            # Validate inputs
+            validate_input(text, rewrite_style)
+    
+            # Load document if file URL is provided
+            docs = None
+            if file_url and file_type:
+                logger.info(f"Loading document from {file_url} of type {file_type}")
+                try:
+                    docs = get_docs(file_url, file_type, True)
+                except Exception as e:
+>                   raise LoaderError(f"Failed to load document: {str(e)}")
+E                   app.api.error_utilities.LoaderError: Failed to load document: Document loading failed
+
+app/tools/text_rewriter/core.py:37: LoaderError
+
+During handling of the above exception, another exception occurred:
+
+    def test_url_inputs():
+        # Test YouTube URL input
+>       result = executor(
+            text="Sample text",
+            rewrite_style="casual",
+            file_url="https://www.youtube.com/watch?v=test",
+            file_type="youtube",
+            lang="en"
+        )
+
+app/tools/text_rewriter/tests/test_core.py:110: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+text = 'Sample text', rewrite_style = 'casual'
+file_url = 'https://www.youtube.com/watch?v=test', file_type = 'youtube', lang = 'en'
+verbose = False
+
+    def executor(text: str,
+                 rewrite_style: str,
+                 file_url: Optional[str] = None,
+                 file_type: Optional[str] = None,
+                 lang: str = "en",
+                 verbose: bool = False) -> Dict[str, Any]:
+        """
+        Execute text rewriting with enhanced error handling and validation
+        """
+        try:
+            # Validate inputs
+            validate_input(text, rewrite_style)
+    
+            # Load document if file URL is provided
+            docs = None
+            if file_url and file_type:
+                logger.info(f"Loading document from {file_url} of type {file_type}")
+                try:
+                    docs = get_docs(file_url, file_type, True)
+                except Exception as e:
+                    raise LoaderError(f"Failed to load document: {str(e)}")
+    
+            # Initialize arguments
+            text_rewriter_args = TextRewriterArgs(
+                text=text,
+                rewrite_style=rewrite_style,
+                file_url=file_url,
+                file_type=file_type,
+                lang=lang
+            )
+    
+            # Execute rewriting
+            pipeline = TextRewriterPipeline(args=text_rewriter_args, verbose=verbose)
+            output = pipeline.rewrite_text(docs)
+    
+            logger.info("Text rewriting completed successfully")
+            return output
+    
+        except LoaderError as e:
+            logger.error(f"Document loading error: {e}")
+>           raise ToolExecutorError(str(e))
+E           app.api.error_utilities.ToolExecutorError: Failed to load document: Document loading failed
+
+app/tools/text_rewriter/core.py:57: ToolExecutorError
+------------------------------------ Captured stderr call -------------------------------------
+2025-02-17 01:47:50,376 - app.services.logger - INFO - Loading document from https://www.youtube.com/watch?v=test of type youtube
+2025-02-17 01:47:50,376 - app.utils.document_loaders - ERROR - Failed to load the document: 'youtube' is not a valid FileType
+2025-02-17 01:47:50,377 - app.services.logger - ERROR - Document loading error: Failed to load document: Document loading failed
+-------------------------------------- Captured log call --------------------------------------
+INFO     app.services.logger:core.py:33 Loading document from https://www.youtube.com/watch?v=test of type youtube
+ERROR    app.utils.document_loaders:document_loaders.py:88 Failed to load the document: 'youtube' is not a valid FileType
+ERROR    app.services.logger:core.py:56 Document loading error: Failed to load document: Document loading failed
+====================================== warnings summary =======================================
+.pythonlibs/lib/python3.12/site-packages/pydub/utils.py:14
+  /home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/pydub/utils.py:14: DeprecationWarning: 'audioop' is deprecated and slated for removal in Python 3.13
+    import audioop
+
+.pythonlibs/lib/python3.12/site-packages/speech_recognition/__init__.py:7
+  /home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/speech_recognition/__init__.py:7: DeprecationWarning: 'aifc' is deprecated and slated for removal in Python 3.13
+    import aifc
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=================================== short test summary info ===================================
+FAILED app/tools/text_rewriter/tests/test_core.py::test_executor_with_file - app.api.error_utilities.ToolExecutorError: Failed to load document: Invalid URL format.
+FAILED app/tools/text_rewriter/tests/test_core.py::test_executor_empty_text - app.api.error_utilities.ToolExecutorError: Text to rewrite cannot be empty
+FAILED app/tools/text_rewriter/tests/test_core.py::test_executor_invalid_style - app.api.error_utilities.ToolExecutorError: Rewrite style must be specified
+FAILED app/tools/text_rewriter/tests/test_core.py::test_export_docx - NameError: name 'TextRewriterPipeline' is not defined
+FAILED app/tools/text_rewriter/tests/test_core.py::test_export_pdf - NameError: name 'TextRewriterPipeline' is not defined
+FAILED app/tools/text_rewriter/tests/test_core.py::test_url_inputs - app.api.error_utilities.ToolExecutorError: Failed to load document: Document loading failed
+========================== 6 failed, 6 passed, 2 warnings in 19.56s ===========================
+Failed to send compressed multipart ingest: langsmith.utils.LangSmithError: Failed to POST https://api.smith.langchain.com/runs/multipart in LangSmith API. HTTPError('403 Client Error: Forbidden for url: https://api.smith.langchain.com/runs/multipart', '{"error":"Forbidden"}\n')
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+E0000 00:00:1739756881.644110    7919 init.cc:232] grpc_wait_for_shutdown_with_timeout() timed out.
