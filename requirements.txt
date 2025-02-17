@@ -45,3 +45,4 @@ fpdf
 python-docx
 fpdf
 python-docx
+pytest-mock
