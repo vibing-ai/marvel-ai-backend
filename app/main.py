@@ -13,11 +13,17 @@ logger = setup_logger(__name__)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    logger.info(f"Initializing Application Startup")
-    logger.info(f"Environment Variables Check:")
-    logger.info(f"GOOGLE_API_KEY present: {bool(os.getenv('GOOGLE_API_KEY'))}")
-    logger.info(f"PROJECT_ID present: {bool(os.getenv('PROJECT_ID'))}")
-    logger.info(f"Successfully Completed Application Startup")
+    logger.info("Initializing Application Startup")
+    
+    # Check required environment variables
+    required_vars = ['GOOGLE_API_KEY', 'PROJECT_ID']
+    missing_vars = [var for var in required_vars if not os.getenv(var)]
+    
+    if missing_vars:
+        logger.error(f"Missing required environment variables: {', '.join(missing_vars)}")
+        raise RuntimeError(f"Missing required environment variables: {', '.join(missing_vars)}")
+    
+    logger.info("Successfully completed application startup")
     yield
     logger.info("Application shutdown")
 
