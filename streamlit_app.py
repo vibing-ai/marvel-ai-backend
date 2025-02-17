@@ -1,18 +1,19 @@
+
 import streamlit as st
 from app.tools.text_rewriter.core import executor
 
-# Configure Streamlit page settings
+# Configure page settings
 st.set_page_config(
     page_title="Text Rewriter",
     layout="wide",
-    initial_sidebar_state="collapsed"
+    initial_sidebar_state="expanded"
 )
 
 # Title of the application
 st.title("Text Rewriter")
 
 # Input text area
-text = st.text_area("Enter text to rewrite:", "The cat sat on the mat. It was looking at a bird flying nearby.")
+text = st.text_area("Enter text to rewrite:", "The cat sat on the mat. It was looking at a bird flying nearby.", height=150)
 
 # Style selector
 style = st.selectbox(
