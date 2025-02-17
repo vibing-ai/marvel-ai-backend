@@ -32,15 +32,20 @@ class TextRewriterPipeline:
         self.llm = ChatGoogleGenerativeAI(model="gemini-pro", callbacks=[])
 
     def _create_prompt(self, text: str, style: str) -> str:
-        return f"""Rewrite the following text in {style} style while maintaining its core meaning. 
-        Provide the rewritten version and explain the key changes made.
-
-        Original text: {text}
         """
+        If you're using a separate .txt file for your prompt, you can load it here.
+        Otherwise, this inline prompt is a placeholder.
+        """
+        return (
+            f"You are a text rewriting assistant. Please rewrite the following text in {style} style "
+            f"while preserving its meaning, avoiding scientific synonyms unless the original text used them.\n\n"
+            f"{text}\n\n"
+            "After the rewritten text, skip one line and provide bullet points for any changes."
+        )
 
     def rewrite_text(self, docs=None):
         try:
-            # Process URL inputs if present
+            # Handle file input if provided
             if self.args.file_url and self.args.file_type:
                 if self.args.file_type == "youtube":
                     docs = get_docs(self.args.file_url, "youtube_url", True)
@@ -49,43 +54,67 @@ class TextRewriterPipeline:
                 elif self.args.file_type == "sheets":
                     docs = get_docs(self.args.file_url, "gsheet", True)
 
-            # Validate input text
+            # Validate text
             text_to_rewrite = docs[0].page_content if docs else self.args.text
             if not text_to_rewrite or not text_to_rewrite.strip():
                 raise ValueError("Text to rewrite cannot be empty")
 
-            # Generate and validate prompt
+            # Create prompt
             prompt = self._create_prompt(text_to_rewrite, self.args.rewrite_style)
             if not prompt:
                 raise ValueError("Failed to create prompt")
 
-            # Get LLM response
+            # Invoke LLM
             response = self.llm.invoke([HumanMessage(content=prompt)])
             if not response or not response.content:
                 raise ValueError("Failed to get valid response from LLM")
 
-            # Parse response
-            response_parts = response.content.split('\n\n')
-            if len(response_parts) < 1:
-                raise ValueError("Invalid response format")
+            # Debug log the raw LLM response
+            logger.info(f"Raw LLM response: {response.content}")
 
-            rewritten_text = response_parts[0].strip()
-            explanation = response_parts[-1].strip() if len(response_parts) > 1 else "Changes made to match requested style"
-            
+            # Split on line breaks, ignoring empty lines
+            lines = [line.strip() for line in response.content.split('\n') if line.strip()]
+            if not lines:
+                raise ValueError("LLM returned an empty or invalid format response.")
+
+            # We'll collect lines for the rewritten text until we see a bullet
+            rewritten_lines = []
+            changes_lines = []
+            found_bullet = False
+
+            for line in lines:
+                # If line starts with '-' or '•', treat it as a bullet
+                if line.startswith('-') or line.startswith('•'):
+                    found_bullet = True
+
+                if found_bullet:
+                    changes_lines.append(line)
+                else:
+                    rewritten_lines.append(line)
+
+            # Combine the rewritten text lines
+            rewritten_text = " ".join(rewritten_lines).strip()
+            # Combine changes
+            explanation = "\n".join(changes_lines).strip()
+
+            # Fallback if no bullet lines were found
+            if not explanation:
+                explanation = "No bullet points or explanation provided."
+
+            # If the rewritten text is empty, revert to original
             if not rewritten_text:
-                rewritten_text = text_to_rewrite  # Fallback to original if rewrite fails
-            
-            # Ensure the rewritten text is different from original
+                rewritten_text = text_to_rewrite
+
+            # If the model didn't change anything, add a small note
             if rewritten_text == text_to_rewrite:
                 rewritten_text = f"{text_to_rewrite} ({self.args.rewrite_style} version)"
 
-            result = RewrittenText(
+            return RewrittenText(
                 original=text_to_rewrite,
                 rewritten=rewritten_text,
                 style=self.args.rewrite_style,
                 changes_explained=explanation
             )
-            return result
 
         except Exception as e:
             logger.error(f"Error in text rewriting: {str(e)}")
@@ -128,6 +157,7 @@ class TextRewriterPipeline:
         pdf.multi_cell(0, 10, result.changes_explained)
 
         pdf.output(output_path)
+
 class TextRewriterValidator:
     @staticmethod
     def validate_text(text: str) -> bool:

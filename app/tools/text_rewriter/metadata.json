@@ -1,4 +1,3 @@
-
 {
     "name": "Text Rewriter",
     "description": "A tool that rewrites text in different styles while maintaining the core meaning and supports multiple export formats",
@@ -13,16 +12,6 @@
             "name": "rewrite_style",
             "type": "text",
             "description": "The desired style for rewriting (e.g., formal, casual, academic)"
-        },
-        {
-            "name": "file_url",
-            "type": "text",
-            "description": "Optional URL of a file containing text to rewrite"
-        },
-        {
-            "name": "file_type",
-            "type": "text",
-            "description": "Type of the input file"
         },
         {
             "name": "lang",

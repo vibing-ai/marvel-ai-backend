@@ -31,7 +31,7 @@ syntax = "python"
 start = ["pylsp"]
 
 [workflows]
-runButton = "FastAPI"
+runButton = "Streamlit"
 
 [[workflows.workflow]]
 name = "Streamlit"
@@ -47,4 +47,4 @@ author = 23072300
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "uvicorn app.main:app --host 0.0.0.0 --port 8080 --reload"
+args = "uvicorn app.main:app --host 0.0.0.0 --port 80 --reload"
