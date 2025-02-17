@@ -39,3 +39,7 @@ pydub
 ffmpeg-python
 speechrecognition
 google-cloud-speech
+fpdf
+python-docx
+fpdf
+python-docx
