@@ -25,15 +25,13 @@ if st.button("Rewrite Text"):
                 result = executor(text=text, rewrite_style=style, lang="en")
                 
                 st.subheader("Original Text")
-                st.write(text)
+                st.write(result.original)
                 
                 st.subheader(f"Rewritten Text ({style.title()} Style)")
-                if hasattr(result, 'rewritten'):
-                    st.write(result.rewritten)
-                    st.subheader("Changes Made")
-                    st.write(result.changes_explained)
-                else:
-                    st.error("Could not generate rewritten text")
+                st.write(result.rewritten)
+                
+                st.subheader("Changes Made")
+                st.write(result.changes_explained)
             except Exception as e:
                 st.error(f"Error: {str(e)}")
     else:
