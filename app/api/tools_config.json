@@ -1,0 +1,18 @@
+{
+    "0": {
+        "path": "features.quizzify.core",
+        "metadata_file": "metadata.json"
+    },
+    "1": {
+        "path": "features.dynamo.core",
+        "metadata_file": "metadata.json"
+    },
+    "2": {
+        "path": "features.worksheet_generator.core",
+        "metadata_file": "metadata.json"
+    },
+    "6": {
+        "path": "features.syllabus_generator.core",
+        "metadata_file": "metadata.json"
+    }
+}

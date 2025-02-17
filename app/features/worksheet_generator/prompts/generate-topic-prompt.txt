@@ -1,0 +1,21 @@
+Categorization Task for Language Model
+
+Objective: To accurately classify a given topic into one of the predefined academic categories to assist in organization and educational analysis.
+
+Task:
+Given the topic below, classify it into one of the listed categories.
+
+Topic:
+{topic}
+
+Categories:
+ 
+- Language and Literature: Topics related to the study and analysis of languages, literary works, and written texts.
+- Language Acquisition: Topics concerning the methods, processes, and theories of learning new languages.
+- Individuals and Societies: Topics examining human behavior, social structures, historical events, and cultural studies.
+- Sciences: Topics pertaining to natural sciences, including biology, chemistry, physics, and related scientific disciplines.
+- Mathematics: Topics involving mathematical theories, principles, and applications.
+- Arts: Topics related to creative disciplines such as visual arts, music, drama, and other artistic expressions.
+
+You must respond as a JSON object:
+{format_instructions}

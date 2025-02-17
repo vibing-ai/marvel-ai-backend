@@ -1,9 +1,18 @@
+<<<<<<< HEAD
 from pydantic import BaseModel, Field
 from typing import Optional, List, Any, Literal, Union
 from enum import Enum
 from app.services.assistant_registry import AssistantInputs
 from app.services.tool_registry import BaseTool
 
+=======
+from pydantic import BaseModel
+from typing import Optional, List, Any
+from enum import Enum
+from app.services.tool_registry import BaseTool
+
+
+>>>>>>> 2cf0cdd2b47b630ac2959e0306bf0ccbed67e10b
 class User(BaseModel):
     id: str
     fullName: str
@@ -21,7 +30,11 @@ class MessageType(str, Enum):
     file = "file"
 
 class MessagePayload(BaseModel):
+<<<<<<< HEAD
     text: Union[str, dict]
+=======
+    text: str
+>>>>>>> 2cf0cdd2b47b630ac2959e0306bf0ccbed67e10b
 
 class Message(BaseModel):
     role: Role
@@ -39,9 +52,12 @@ class GenericRequest(BaseModel):
     
 class ChatRequest(GenericRequest):
     messages: List[Message]
+<<<<<<< HEAD
 
 class GenericAssistantRequest(BaseModel):
     assistant_inputs: AssistantInputs
+=======
+>>>>>>> 2cf0cdd2b47b630ac2959e0306bf0ccbed67e10b
     
 class ToolRequest(GenericRequest):
     tool_data: BaseTool
@@ -81,6 +97,7 @@ class WorksheetGeneratorArgs(BaseModel):
     
 class SyllabusGeneratorArgsModel(BaseModel):
     grade_level: str
+<<<<<<< HEAD
     subject: str
     course_description: str
     objectives: str
@@ -153,4 +170,16 @@ class WritingFeedbackGeneratorArgs(BaseModel):
     criteria_file_type: str
     writing_to_review_file_url: str
     writing_to_review_file_type: str
+=======
+    course: str
+    instructor_name: str
+    instructor_title: str
+    unit_time: str
+    unit_time_value: int
+    start_date: str
+    assessment_methods: str
+    grading_scale: str
+    file_url: str
+    file_type: str
+>>>>>>> 2cf0cdd2b47b630ac2959e0306bf0ccbed67e10b
     lang: Optional[str] = "en"

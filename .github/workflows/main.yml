@@ -1,8 +1,18 @@
+<<<<<<< HEAD
 name: Deploy to Google App Engine
+=======
+name: Deploy to Cloud Run (MAIN)
+
+env:
+  SERVICE_NAME: marvel-ai-backend
+  PROJECT_ID: kai-ai-f63c8
+  DOCKER_IMAGE_URL: us-central1-docker.pkg.dev/kai-ai-f63c8/marvel-ai-backend/marvel-ai-backend
+>>>>>>> 2cf0cdd2b47b630ac2959e0306bf0ccbed67e10b
 
 on:
   push:
     branches:
+<<<<<<< HEAD
       - main # Trigger workflow
 
 jobs:
@@ -46,3 +56,41 @@ jobs:
         with:
           deliverables: app.yaml
           version: v1
+=======
+      - main
+
+jobs:
+  dockerize-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Google Cloud Auth
+        uses: 'google-github-actions/auth@v2'
+        with:
+          credentials_json: '${{ secrets.PRODUCTION_CREDENTIALS_JSON }}'
+          project_id: ${{ env.PROJECT_ID }}
+
+      - name: Set up Cloud SDK
+        uses: 'google-github-actions/setup-gcloud@v2'
+
+      - name: Configure Docker
+        run: |
+          gcloud auth configure-docker us-central1-docker.pkg.dev
+
+      - name: Build and Push Docker Image
+        run: |
+          docker build -t ${{ env.DOCKER_IMAGE_URL }}:latest -f Dockerfile .
+          docker push ${{ env.DOCKER_IMAGE_URL }}:latest
+
+      - name: Deploy to Cloud Run
+        run: |
+          echo SERVICE_NAME $SERVICE_NAME
+          gcloud run deploy $SERVICE_NAME \
+            --image ${{ env.DOCKER_IMAGE_URL }}:latest \
+            --platform managed \
+            --region us-east1 \
+            --allow-unauthenticated
+>>>>>>> 2cf0cdd2b47b630ac2959e0306bf0ccbed67e10b

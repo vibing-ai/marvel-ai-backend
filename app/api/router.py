@@ -1,8 +1,12 @@
+<<<<<<< HEAD
 import os
+=======
+>>>>>>> 2cf0cdd2b47b630ac2959e0306bf0ccbed67e10b
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse
 from typing import Union
+<<<<<<< HEAD
 from app.assistants.utils.assistants_utilities import execute_assistant
 from app.services.schemas import GenericAssistantRequest, ToolRequest, ChatRequest, Message, ChatResponse, ToolResponse
 from app.utils.auth import key_check
@@ -11,6 +15,13 @@ from app.api.error_utilities import InputValidationError, ErrorResponse
 from app.tools.utils.tool_utilities import load_tool_metadata, execute_tool, finalize_inputs
 from fastapi.responses import FileResponse
 from starlette.background import BackgroundTask
+=======
+from app.services.schemas import ToolRequest, ChatRequest, Message, ChatResponse, ToolResponse
+from app.utils.auth import key_check
+from app.services.logger import setup_logger
+from app.api.error_utilities import InputValidationError, ErrorResponse
+from app.api.tool_utilities import load_tool_metadata, execute_tool, finalize_inputs
+>>>>>>> 2cf0cdd2b47b630ac2959e0306bf0ccbed67e10b
 
 logger = setup_logger(__name__)
 router = APIRouter()
@@ -48,6 +59,7 @@ async def submit_tool( data: ToolRequest, _ = Depends(key_check)):
             content=jsonable_encoder(ErrorResponse(status=e.status_code, message=e.detail))
         )
 
+<<<<<<< HEAD
 @router.post("/assistant-chat", response_model=ChatResponse)
 async def assistants( request: GenericAssistantRequest, _ = Depends(key_check) ):
     
@@ -62,6 +74,22 @@ async def assistants( request: GenericAssistantRequest, _ = Depends(key_check) )
         role="ai",
         type="text",
         payload={"text": result}
+=======
+@router.post("/chat", response_model=ChatResponse)
+async def chat( request: ChatRequest, _ = Depends(key_check) ):
+    from app.features.Kaichat.core import executor as kaichat_executor
+    
+    user_name = request.user.fullName
+    chat_messages = request.messages
+    user_query = chat_messages[-1].payload.text
+    
+    response = kaichat_executor(user_name=user_name, user_query=user_query, messages=chat_messages)
+    
+    formatted_response = Message(
+        role="ai",
+        type="text",
+        payload={"text": response}
+>>>>>>> 2cf0cdd2b47b630ac2959e0306bf0ccbed67e10b
     )
     
     return ChatResponse(data=[formatted_response])

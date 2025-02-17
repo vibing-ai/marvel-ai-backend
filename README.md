@@ -42,6 +42,7 @@
 marvel-ai-backend/
 ├── app/                     # Contains the main application code
 │   ├── api/                 # Contains the API router for handling requests
+<<<<<<< HEAD
 │   │   └── router.py        # Endpoints for FastAPI to test features and handle incoming requests
 │   │   └── error_utilities.py  
 │   ├── assistants/            # Contains the MarvelAI tools
@@ -71,32 +72,54 @@ marvel-ai-backend/
 │   │   │   └── assistants_config.json       
 │   ├── tools/            # Contains the MarvelAI tools
 │   │   ├── tool1/
+=======
+│   │   ├── tests/
+│   │   └── router.py        # Endpoints for FastAPI to test features and handle incoming requests
+│   │   └── error_utilities.py        
+│   │   └── tool_utilities.py        
+│   │   └── tools_config.json        
+│   ├── features/            # Contains feature-specific modules
+│   │   ├── feature1/
+>>>>>>> 2cf0cdd2b47b630ac2959e0306bf0ccbed67e10b
 │   │   │   ├── core.py
 │   │   │   ├── tools.py
 │   │   │   ├── prompt/
 │   │   │   ├── tests/
 │   │   │   └── metadata.json
+<<<<<<< HEAD
 │   │   ├── tool2/
+=======
+│   │   ├── feature2/
+>>>>>>> 2cf0cdd2b47b630ac2959e0306bf0ccbed67e10b
 │   │   │   ├── core.py
 │   │   │   ├── tools.py
 │   │   │   ├── prompt/
 │   │   │   ├── tests/
 │   │   │   └── metadata.json
+<<<<<<< HEAD
 │   │   ├── toolN/
+=======
+│   │   ├── featureN/
+>>>>>>> 2cf0cdd2b47b630ac2959e0306bf0ccbed67e10b
 │   │   │   ├── core.py
 │   │   │   ├── tools.py
 │   │   │   ├── prompt/
 │   │   │   ├── tests/
 │   │   │   └── metadata.json
+<<<<<<< HEAD
 │   │   ├── utils/
 │   │   │   ├── tool_utilities.py
 │   │   │   └── tools_config.json
 │   ├── services/            # Contains service modules
 │   │   ├── assistant_registry.py
+=======
+│   ├── services/            # Contains service modules
+>>>>>>> 2cf0cdd2b47b630ac2959e0306bf0ccbed67e10b
 │   │   ├── logger.py
 │   │   ├── schemas.py
 │   │   ├── tool_registry.py
 │   ├── utils/               # Contains utility modules
+<<<<<<< HEAD
 │   │   ├── actions_for_assistants/ 
 │   │   │   ├── prompts/
 │   │   │   └── actions_for_assistants.py
@@ -106,6 +129,9 @@ marvel-ai-backend/
 │   │   ├── auth.py # The auth config.
 │   │   ├── document_loaders_summarization.py # The document loaders used for summarization
 │   │   └── document_loaders.py # The document loaders used for handling a list of documents
+=======
+│   │   ├── auth.py
+>>>>>>> 2cf0cdd2b47b630ac2959e0306bf0ccbed67e10b
 │   ├── .env.sample              # Contains the required env variables (CREATE AN .env file using it)
 │   ├── main.py              # Main entry point for the application
 ├── Dockerfile               # Dockerfile for containerizing the application
@@ -113,8 +139,11 @@ marvel-ai-backend/
 ├── app.yaml                 # Application configuration file
 ├── load_env.sh              # Loads env variables
 ├── local-start.sh           # Starts the local server
+<<<<<<< HEAD
 ├── code-of-conduct.md          # Code of conduct for contributors
 ├── contribution.md           # Contribution guidelines
+=======
+>>>>>>> 2cf0cdd2b47b630ac2959e0306bf0ccbed67e10b
 └── README.md                # Documentation file
 ```
 

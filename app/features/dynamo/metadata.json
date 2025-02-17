@@ -1,0 +1,19 @@
+{
+    "inputs": [
+        {
+            "label": "File Url",
+            "name": "file_url",
+            "type": "string"
+        },
+        {
+            "label": "File Type",
+            "name": "file_type",
+            "type": "string"
+        }
+    ],
+    "models": {
+        "Gemini 1.0": "gemini-1.0-pro",
+        "Gemini 1.5 Flash": "gemini-1.5-flash",
+        "Gemini 1.5 Pro": "gemini-1.5-pro"
+    }
+}

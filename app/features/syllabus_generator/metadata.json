@@ -1,0 +1,64 @@
+{
+    "inputs": [
+        {
+            "label": "Grade Level",
+            "name": "grade_level",
+            "type": "text"
+        },
+        {
+            "label": "Course",
+            "name": "course",
+            "type": "text"
+        },
+        {
+            "label": "Instructor Name",
+            "name": "instructor_name",
+            "type": "text"
+        },
+        {
+            "label": "Instructor Title",
+            "name": "instructor_title",
+            "type": "text"
+        },
+        {
+            "label": "Unit Time",
+            "name": "unit_time",
+            "type": "text"
+        },
+        {
+            "label": "Unit Time Value",
+            "name": "unit_time_value",
+            "type": "number"
+        },
+        {
+            "label": "Start Date",
+            "name": "start_date",
+            "type": "text"
+        },
+        {
+            "label": "Assessment Methods",
+            "name": "assessment_methods",
+            "type": "text"
+        },
+        {
+            "label": "Grading Scale",
+            "name": "grading_scale",
+            "type": "text"
+        },
+        {
+            "label": "File URL",
+            "name": "file_url",
+            "type": "text"
+        },
+        {
+            "label": "File Type",
+            "name": "file_type",
+            "type": "text"
+        },
+        {
+            "label": "Language",
+            "name": "lang",
+            "type": "text"
+        }
+    ]
+}

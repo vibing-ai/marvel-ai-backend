@@ -1,0 +1,34 @@
+{
+    "inputs": [
+        {
+            "label": "Grade Level",
+            "name": "grade_level",
+            "type": "text"
+        },
+        {
+            "label": "Topic",
+            "name": "topic",
+            "type": "text"
+        },
+        {
+            "label": "Worksheet List",
+            "name": "worksheet_list",
+            "type": "worksheet_list"
+        },
+        {
+            "label": "File URL",
+            "name": "file_url",
+            "type": "text"
+        },
+        {
+            "label": "File Type",
+            "name": "file_type",
+            "type": "text"
+        },
+        {
+            "label": "Language",
+            "name": "lang",
+            "type": "text"
+        }
+    ]
+}
