@@ -2,10 +2,11 @@
 import streamlit as st
 from app.tools.text_rewriter.core import executor
 
-# Configure Streamlit
+# Configure page settings at the very start
 st.set_page_config(
     page_title="Text Rewriter",
-    layout="wide"
+    layout="wide",
+    initial_sidebar_state="collapsed"
 )
 
 st.title("Text Rewriter")
