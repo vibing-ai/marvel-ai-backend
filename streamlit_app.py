@@ -2,6 +2,11 @@
 import streamlit as st
 from app.tools.text_rewriter.core import executor
 
+# Configure Streamlit to run on the correct host/port
+import os
+os.environ['STREAMLIT_SERVER_PORT'] = '8501'
+os.environ['STREAMLIT_SERVER_ADDRESS'] = '0.0.0.0'
+
 st.title("Text Rewriter")
 
 # Input text area
