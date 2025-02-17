@@ -136,6 +136,27 @@ def test_url_inputs():
     )
     assert isinstance(result, RewrittenText)
 
+def test_url_processing():
+    # Test invalid URL
+    with pytest.raises(ToolExecutorError):
+        executor(
+            text="Sample text",
+            rewrite_style="formal",
+            file_url="invalid_url",
+            file_type="website",
+            lang="en"
+        )
+    
+    # Test invalid file type
+    with pytest.raises(ToolExecutorError):
+        executor(
+            text="Sample text",
+            rewrite_style="formal",
+            file_url="https://example.com",
+            file_type="invalid",
+            lang="en"
+        )
+
 def test_multiple_styles():
     styles = ["formal", "casual", "academic", "professional"]
     text = "This is a test text for multiple styles."
