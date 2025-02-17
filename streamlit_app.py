@@ -2,10 +2,11 @@
 import streamlit as st
 from app.tools.text_rewriter.core import executor
 
-# Configure Streamlit to run on the correct host/port
-import os
-os.environ['STREAMLIT_SERVER_PORT'] = '8501'
-os.environ['STREAMLIT_SERVER_ADDRESS'] = '0.0.0.0'
+# Configure Streamlit
+st.set_page_config(
+    page_title="Text Rewriter",
+    layout="wide"
+)
 
 st.title("Text Rewriter")
 
