@@ -5,7 +5,7 @@ channel = "stable-24_05"
 
 [deployment]
 build = []
-run = ["sh", "-c", "streamlit run streamlit_app.py --server.address 0.0.0.0 --server.port 8501 --server.headless true --server.enableCORS true --server.enableWebsocketCompression true"]
+run = ["sh", "-c", "streamlit run streamlit_app.py --server.address=0.0.0.0 --server.port=8501 --server.headless=true"]
 
 [[ports]]
 localPort = 8501
@@ -31,4 +31,4 @@ author = 23072300
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "streamlit run streamlit_app.py --server.address=0.0.0.0 --server.port=8501"
+args = "streamlit run streamlit_app.py --server.address=0.0.0.0 --server.port=8501 --server.headless=true"
