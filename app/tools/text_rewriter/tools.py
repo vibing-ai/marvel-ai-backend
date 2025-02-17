@@ -51,9 +51,49 @@ class TextRewriterPipeline:
         rewritten_text = response_parts[0]
         explanation = response_parts[-1] if len(response_parts) > 1 else "Changes made to match requested style"
         
-        return RewrittenText(
+        result = RewrittenText(
             original=text_to_rewrite,
             rewritten=rewritten_text,
             style=self.args.rewrite_style,
             changes_explained=explanation
         )
+
+        return result
+
+    def export_as_docx(self, result: RewrittenText, output_path: str):
+        doc = Document()
+        doc.add_heading('Text Rewriting Result', 0)
+        
+        doc.add_heading('Original Text:', level=1)
+        doc.add_paragraph(result.original)
+        
+        doc.add_heading(f'Rewritten Text ({result.style} style):', level=1)
+        doc.add_paragraph(result.rewritten)
+        
+        doc.add_heading('Changes Explained:', level=1)
+        doc.add_paragraph(result.changes_explained)
+        
+        doc.save(output_path)
+
+    def export_as_pdf(self, result: RewrittenText, output_path: str):
+        pdf = FPDF()
+        pdf.add_page()
+        pdf.set_font('Arial', 'B', 16)
+        pdf.cell(0, 10, 'Text Rewriting Result', ln=True)
+        
+        pdf.set_font('Arial', 'B', 12)
+        pdf.cell(0, 10, 'Original Text:', ln=True)
+        pdf.set_font('Arial', '', 12)
+        pdf.multi_cell(0, 10, result.original)
+        
+        pdf.set_font('Arial', 'B', 12)
+        pdf.cell(0, 10, f'Rewritten Text ({result.style} style):', ln=True)
+        pdf.set_font('Arial', '', 12)
+        pdf.multi_cell(0, 10, result.rewritten)
+        
+        pdf.set_font('Arial', 'B', 12)
+        pdf.cell(0, 10, 'Changes Explained:', ln=True)
+        pdf.set_font('Arial', '', 12)
+        pdf.multi_cell(0, 10, result.changes_explained)
+        
+        pdf.output(output_path)
