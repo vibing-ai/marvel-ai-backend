@@ -5,7 +5,7 @@ run = "uvicorn undefined:app --host 0.0.0.0 --port 3000"
 channel = "stable-24_05"
 
 [deployment]
-run = ["sh", "-c", "streamlit run streamlit_app.py --server.port 3000 --server.address 0.0.0.0 --server.headless true"]
+run = ["sh", "-c", "streamlit run streamlit_app.py --server.address 0.0.0.0 --server.port 3000 --server.headless true"]
 
 [workflows]
 runButton = "Streamlit"
@@ -32,7 +32,7 @@ author = 23072300
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "streamlit run streamlit_app.py"
+args = "streamlit run streamlit_app.py --server.address 0.0.0.0 --server.port 3000 --server.headless true"
 
 [[ports]]
 localPort = 3000
