@@ -17,7 +17,7 @@ class BaseTool(BaseModel):
     tool_id: str  # Unique identifier for each tool,
 =======
     tool_id: int  # Unique identifier for each tool,
->>>>>>> 2cf0cdd2b47b630ac2959e0306bf0ccbed67e10b
+
     inputs: List[ToolInput]
 
 class ToolFile(BaseModel):
