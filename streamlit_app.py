@@ -27,25 +27,20 @@ if st.button("Rewrite Text"):
         with st.spinner('Rewriting text...'):
             try:
                 result = executor(text=text, rewrite_style=style, lang="en")
-
-                # Original text
+                
+                # Display original text
                 st.subheader("Original Text")
                 st.write(text)
-
-                # Rewritten text
+                
+                # Display rewritten text
                 st.subheader(f"Rewritten Text ({style.title()} Style)")
-                if isinstance(result, dict):
-                    st.write(result.get('rewritten', 'No rewritten text available'))
-                    if 'changes_explained' in result:
-                        st.subheader("Changes Made")
-                        st.write(result['changes_explained'])
+                if hasattr(result, 'rewritten'):
+                    st.write(result.rewritten)
+                    st.subheader("Changes Made")
+                    st.write(result.changes_explained)
                 else:
-                    st.write(result.rewritten if hasattr(result, 'rewritten') else 'No rewritten text available')
-                    if hasattr(result, 'changes_explained'):
-                        st.subheader("Changes Made")
-                        st.write(result.changes_explained)
-
+                    st.error("Could not generate rewritten text")
             except Exception as e:
-                st.error(f"Error during text rewriting: {str(e)}")
+                st.error(f"Error: {str(e)}")
     else:
         st.warning("Please enter some text to rewrite.")
