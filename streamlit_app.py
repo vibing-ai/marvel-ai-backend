@@ -28,10 +28,12 @@ if st.button("Rewrite Text"):
                 st.info(result.original)
                 
                 st.subheader(f"Rewritten Text ({style.title()} Style)")
-                st.success(result.rewritten)
+                st.write("Rewritten version:", result.rewritten)
                 
                 st.subheader("Changes Made")
-                st.write(result.changes_explained)
+                for change in result.changes_explained.split('\n'):
+                    if change.strip():
+                        st.write("•", change.strip())
             except Exception as e:
                 st.error(f"An error occurred: {str(e)}")
     else:
