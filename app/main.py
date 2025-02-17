@@ -1,4 +1,5 @@
-from fastapi import FastAPI, Request, Depends
+
+from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
@@ -6,23 +7,21 @@ from contextlib import asynccontextmanager
 from app.api.router import router
 from app.services.logger import setup_logger
 from app.api.error_utilities import ErrorResponse
-
 import os
-from dotenv import load_dotenv, find_dotenv
-
-load_dotenv(find_dotenv())
 
 logger = setup_logger(__name__)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     logger.info(f"Initializing Application Startup")
+    logger.info(f"Environment Variables Check:")
+    logger.info(f"GOOGLE_API_KEY present: {bool(os.getenv('GOOGLE_API_KEY'))}")
+    logger.info(f"PROJECT_ID present: {bool(os.getenv('PROJECT_ID'))}")
     logger.info(f"Successfully Completed Application Startup")
-    
     yield
     logger.info("Application shutdown")
 
-app = FastAPI(lifespan = lifespan)
+app = FastAPI(lifespan=lifespan)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -39,7 +38,7 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
         message = error['msg']
         error_detail = f"Error in field '{field}': {message}"
         errors.append(error_detail)
-        logger.error(error_detail)  # Log the error details
+        logger.error(error_detail)
 
     error_response = ErrorResponse(status=422, message=errors)
     return JSONResponse(
