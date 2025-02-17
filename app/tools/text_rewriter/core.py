@@ -1,4 +1,3 @@
-
 from typing import Optional, Dict, Any
 from app.services.logger import setup_logger
 from app.utils.document_loaders import get_docs
@@ -10,9 +9,12 @@ logger = setup_logger()
 def validate_input(text: str, rewrite_style: str) -> None:
     """Validate input parameters"""
     if not text or not text.strip():
-        raise ValueError("Text to rewrite cannot be empty")
+        raise ValueError("Text cannot be empty")
     if not rewrite_style or not rewrite_style.strip():
-        raise ValueError("Rewrite style must be specified")
+        raise ValueError("Invalid rewrite style")
+    valid_styles = ["formal", "casual", "academic", "professional"]
+    if rewrite_style.lower() not in valid_styles:
+        raise ValueError("Invalid rewrite style")
 
 def executor(text: str,
              rewrite_style: str,
@@ -26,7 +28,7 @@ def executor(text: str,
     try:
         # Validate inputs
         validate_input(text, rewrite_style)
-        
+
         # Load document if file URL is provided
         docs = None
         if file_url and file_type:
@@ -48,7 +50,7 @@ def executor(text: str,
         # Execute rewriting
         pipeline = TextRewriterPipeline(args=text_rewriter_args, verbose=verbose)
         output = pipeline.rewrite_text(docs)
-        
+
         logger.info("Text rewriting completed successfully")
         return output
 

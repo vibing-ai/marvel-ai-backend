@@ -28,6 +28,8 @@ def test_executor_with_file(tmp_path):
     )
     assert isinstance(result, RewrittenText)
     assert result.style == "academic"
+    assert result.original == "Sample text"
+    assert result.style == "academic"
 
 def test_executor_empty_text():
     with pytest.raises(ValueError) as exc_info:
