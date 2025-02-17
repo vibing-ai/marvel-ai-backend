@@ -5,7 +5,7 @@ channel = "stable-24_05"
 
 [deployment]
 build = []
-run = ["sh", "-c", "streamlit run streamlit_app.py --server.address=0.0.0.0 --server.port=8501 --server.headless=true"]
+run = ["sh", "-c", "streamlit run streamlit_app.py --server.address=0.0.0.0 --server.port=8501 --server.headless=true --server.enableCORS=false --server.enableWebsocketCompression=false"]
 
 [[ports]]
 localPort = 8501
