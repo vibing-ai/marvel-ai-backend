@@ -127,5 +127,5 @@ class TextRewriterValidator:
     def validate_file_type(file_type: Optional[str]) -> bool:
         if not file_type:
             return True
-        allowed_types = ["txt", "pdf", "docx", "md"]
+        allowed_types = ["txt", "pdf", "docx", "md", "csv", "ppt", "youtube", "website", "sheets"]
         return file_type.lower() in allowed_types

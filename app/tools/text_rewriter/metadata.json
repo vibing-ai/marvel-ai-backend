@@ -2,7 +2,7 @@
 {
     "name": "Text Rewriter",
     "description": "A tool that rewrites text in different styles while maintaining the core meaning and supports multiple export formats",
-    "export_formats": ["txt", "docx", "pdf"],
+    "export_formats": ["txt", "docx", "pdf", "csv", "ppt"],
     "inputs": [
         {
             "name": "text",
