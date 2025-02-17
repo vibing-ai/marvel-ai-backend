@@ -29,7 +29,7 @@ class TextRewriterPipeline:
     def __init__(self, args: TextRewriterArgs, verbose: bool = False):
         self.args = args
         self.verbose = verbose
-        self.llm = ChatGoogleGenerativeAI(model="gemini-pro")
+        self.llm = ChatGoogleGenerativeAI(model="gemini-pro", callbacks=[])
 
     def _create_prompt(self, text: str, style: str) -> str:
         return f"""Rewrite the following text in {style} style while maintaining its core meaning. 
