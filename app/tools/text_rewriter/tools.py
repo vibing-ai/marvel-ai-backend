@@ -1,4 +1,3 @@
-
 from pydantic import BaseModel, Field
 from typing import List, Optional, Literal
 from app.services.logger import setup_logger
@@ -31,16 +30,25 @@ class TextRewriterPipeline:
         self.args = args
         self.verbose = verbose
         self.llm = ChatGoogleGenerativeAI(model="gemini-pro")
-        
+
     def _create_prompt(self, text: str, style: str) -> str:
         return f"""Rewrite the following text in {style} style while maintaining its core meaning. 
         Provide the rewritten version and explain the key changes made.
-        
+
         Original text: {text}
         """
-        
+
     def rewrite_text(self, docs=None):
         try:
+            # Process URL inputs if present
+            if self.args.file_url and self.args.file_type:
+                if self.args.file_type == "youtube":
+                    docs = get_docs(self.args.file_url, "youtube_url", True)
+                elif self.args.file_type == "website":
+                    docs = get_docs(self.args.file_url, "web_url", True)
+                elif self.args.file_type == "sheets":
+                    docs = get_docs(self.args.file_url, "gsheet", True)
+
             # Validate input text
             text_to_rewrite = docs[0].page_content if docs else self.args.text
             if not text_to_rewrite or not text_to_rewrite.strip():
@@ -63,7 +71,7 @@ class TextRewriterPipeline:
 
             rewritten_text = response_parts[0].strip()
             explanation = response_parts[-1].strip() if len(response_parts) > 1 else "Changes made to match requested style"
-        
+
         result = RewrittenText(
             original=text_to_rewrite,
             rewritten=rewritten_text,
@@ -76,16 +84,16 @@ class TextRewriterPipeline:
     def export_as_docx(self, result: RewrittenText, output_path: str):
         doc = Document()
         doc.add_heading('Text Rewriting Result', 0)
-        
+
         doc.add_heading('Original Text:', level=1)
         doc.add_paragraph(result.original)
-        
+
         doc.add_heading(f'Rewritten Text ({result.style} style):', level=1)
         doc.add_paragraph(result.rewritten)
-        
+
         doc.add_heading('Changes Explained:', level=1)
         doc.add_paragraph(result.changes_explained)
-        
+
         doc.save(output_path)
 
     def export_as_pdf(self, result: RewrittenText, output_path: str):
@@ -93,22 +101,22 @@ class TextRewriterPipeline:
         pdf.add_page()
         pdf.set_font('Arial', 'B', 16)
         pdf.cell(0, 10, 'Text Rewriting Result', ln=True)
-        
+
         pdf.set_font('Arial', 'B', 12)
         pdf.cell(0, 10, 'Original Text:', ln=True)
         pdf.set_font('Arial', '', 12)
         pdf.multi_cell(0, 10, result.original)
-        
+
         pdf.set_font('Arial', 'B', 12)
         pdf.cell(0, 10, f'Rewritten Text ({result.style} style):', ln=True)
         pdf.set_font('Arial', '', 12)
         pdf.multi_cell(0, 10, result.rewritten)
-        
+
         pdf.set_font('Arial', 'B', 12)
         pdf.cell(0, 10, 'Changes Explained:', ln=True)
         pdf.set_font('Arial', '', 12)
         pdf.multi_cell(0, 10, result.changes_explained)
-        
+
         pdf.output(output_path)
 class TextRewriterValidator:
     @staticmethod

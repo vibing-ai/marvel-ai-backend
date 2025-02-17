@@ -105,6 +105,37 @@ def test_export_pdf(tmp_path):
     )).export_as_pdf(result, str(output_path))
     assert output_path.exists()
 
+def test_url_inputs():
+    # Test YouTube URL input
+    result = executor(
+        text="Sample text",
+        rewrite_style="casual",
+        file_url="https://www.youtube.com/watch?v=test",
+        file_type="youtube",
+        lang="en"
+    )
+    assert isinstance(result, RewrittenText)
+
+    # Test Website URL input
+    result = executor(
+        text="Sample text",
+        rewrite_style="formal",
+        file_url="https://example.com",
+        file_type="website",
+        lang="en"
+    )
+    assert isinstance(result, RewrittenText)
+
+    # Test Google Sheets URL input
+    result = executor(
+        text="Sample text",
+        rewrite_style="academic",
+        file_url="https://docs.google.com/spreadsheets/d/test",
+        file_type="sheets",
+        lang="en"
+    )
+    assert isinstance(result, RewrittenText)
+
 def test_multiple_styles():
     styles = ["formal", "casual", "academic", "professional"]
     text = "This is a test text for multiple styles."
