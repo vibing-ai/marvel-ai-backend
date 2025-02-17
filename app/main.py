@@ -28,7 +28,9 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     lifespan=lifespan,
-    root_path="",
+    title="Marvel AI Backend",
+    description="Backend API for Marvel AI Platform",
+    version="1.0.0",
     docs_url="/docs",
     redoc_url="/redoc",
     openapi_url="/openapi.json"

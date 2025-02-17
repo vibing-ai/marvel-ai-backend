@@ -1,7 +1,10 @@
 
 {
-  "text_rewriter": {
-    "path": "app.tools.text_rewriter.core",
-    "metadata_file": "metadata.json"
+  "tools": {
+    "text_rewriter": {
+      "path": "app.tools.text_rewriter.core",
+      "function": "executor",
+      "inputs": ["text", "rewrite_style", "lang"]
+    }
   }
 }
