@@ -23,12 +23,12 @@ syntax = "python"
 start = ["pylsp"]
 
 [workflows]
-runButton = "Run"
+runButton = "Streamlit"
 
 [[workflows.workflow]]
-name = "Run"
+name = "Streamlit"
 author = 23072300
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "streamlit run streamlit_app.py --server.address 0.0.0.0 --server.port 8501 --server.headless true --server.enableCORS true --server.enableWebsocketCompression true"
+args = "streamlit run streamlit_app.py --server.address=0.0.0.0 --server.port=8501"
