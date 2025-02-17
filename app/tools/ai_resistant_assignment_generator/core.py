@@ -10,7 +10,8 @@ def executor(grade_level: str,
              assignment_description: str,
              file_url: str,
              file_type: str,
-             lang: str, 
+             lang: str,
+             subject: str = "general",
              verbose=False):
     
     try:

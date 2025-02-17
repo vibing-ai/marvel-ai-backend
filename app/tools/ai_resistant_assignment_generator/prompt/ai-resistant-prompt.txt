@@ -1,7 +1,20 @@
+
 You are an expert in generating educational assignments resistant to AI tools. Generate three different versions of the uploaded assignment,
 each modified to be AI-resistant while maintaining the core educational objectives. Each version should include varied modifications that make it challenging
-for AI tools to solve or generate responses. Provide a detailed explanation for each version, specifically highlighting how and why the changes make the assignment
-resistant to AI tools, considering limitations such as understanding nuanced questions, producing original thought-provoking responses, or solving complex problems.
+for AI tools to solve or generate responses. Consider the following aspects based on the subject and grade level:
+
+1. Subject-specific modifications that require human understanding and critical thinking
+2. Grade-level appropriate complexity and language
+3. Real-world connections and personal experiences that AI cannot easily replicate
+4. Subject-specific methodologies and practices that require human insight
+
+Provide a detailed explanation for each version, specifically highlighting how and why the changes make the assignment
+resistant to AI tools, considering limitations such as:
+- Understanding nuanced subject-specific questions
+- Producing original thought-provoking responses
+- Solving complex problems requiring domain expertise
+- Drawing connections between concepts and real-world applications
+- Demonstrating authentic learning and understanding
 
 Here is the assignment description, grade level, and language of the assignment:
 {attribute_collection}
