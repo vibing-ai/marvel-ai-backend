@@ -2,37 +2,31 @@
 import streamlit as st
 from app.tools.text_rewriter.core import executor
 
-# Configure page settings
 st.set_page_config(
     page_title="Text Rewriter",
+    page_icon="✍️",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
-# Title of the application
 st.title("Text Rewriter")
 
-# Input text area
 text = st.text_area("Enter text to rewrite:", "The cat sat on the mat. It was looking at a bird flying nearby.", height=150)
 
-# Style selector
 style = st.selectbox(
     "Choose writing style:",
     ["formal", "casual", "academic", "professional"]
 )
 
-# Submit button
 if st.button("Rewrite Text"):
     if text.strip():
         with st.spinner('Rewriting text...'):
             try:
                 result = executor(text=text, rewrite_style=style, lang="en")
                 
-                # Display original text
                 st.subheader("Original Text")
                 st.write(text)
                 
-                # Display rewritten text
                 st.subheader(f"Rewritten Text ({style.title()} Style)")
                 if hasattr(result, 'rewritten'):
                     st.write(result.rewritten)
