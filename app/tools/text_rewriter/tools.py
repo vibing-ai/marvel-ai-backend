@@ -71,6 +71,9 @@ class TextRewriterPipeline:
 
             rewritten_text = response_parts[0].strip()
             explanation = response_parts[-1].strip() if len(response_parts) > 1 else "Changes made to match requested style"
+            
+            if not rewritten_text:
+                rewritten_text = text_to_rewrite  # Fallback to original if rewrite fails
 
             result = RewrittenText(
                 original=text_to_rewrite,
