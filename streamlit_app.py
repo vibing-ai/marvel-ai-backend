@@ -34,15 +34,16 @@ if st.button("Rewrite Text"):
 
                 # Rewritten text
                 st.subheader(f"Rewritten Text ({style.title()} Style)")
-                if hasattr(result, 'rewritten'):
-                    st.write(result.rewritten)
+                if isinstance(result, dict):
+                    st.write(result.get('rewritten', 'No rewritten text available'))
+                    if 'changes_explained' in result:
+                        st.subheader("Changes Made")
+                        st.write(result['changes_explained'])
                 else:
-                    st.error("Failed to generate rewritten text")
-
-                # Changes explanation
-                if hasattr(result, 'changes_explained'):
-                    st.subheader("Changes Made")
-                    st.write(result.changes_explained)
+                    st.write(result.rewritten if hasattr(result, 'rewritten') else 'No rewritten text available')
+                    if hasattr(result, 'changes_explained'):
+                        st.subheader("Changes Made")
+                        st.write(result.changes_explained)
 
             except Exception as e:
                 st.error(f"Error during text rewriting: {str(e)}")
