@@ -93,7 +93,12 @@ def test_export_docx(tmp_path):
         changes_explained="Made text more formal"
     )
     output_path = tmp_path / "test_output.docx"
-    TextRewriterPipeline.export_as_docx(result, str(output_path))
+    pipeline = TextRewriterPipeline(TextRewriterArgs(
+        text="Sample text",
+        rewrite_style="formal",
+        lang="en"
+    ))
+    pipeline.export_as_docx(result, str(output_path))
     assert output_path.exists()
 
 def test_export_pdf(tmp_path):
@@ -104,7 +109,12 @@ def test_export_pdf(tmp_path):
         changes_explained="Made text more academic"
     )
     output_path = tmp_path / "test_output.pdf"
-    TextRewriterPipeline.export_as_pdf(result, str(output_path))
+    pipeline = TextRewriterPipeline(TextRewriterArgs(
+        text="Sample text",
+        rewrite_style="academic",
+        lang="en"
+    ))
+    pipeline.export_as_pdf(result, str(output_path))
     assert output_path.exists()
 
 def test_url_inputs():
