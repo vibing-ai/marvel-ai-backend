@@ -26,7 +26,13 @@ async def lifespan(app: FastAPI):
     yield
     logger.info("Application shutdown")
 
-app = FastAPI(lifespan=lifespan)
+app = FastAPI(
+    lifespan=lifespan,
+    root_path="",
+    docs_url="/docs",
+    redoc_url="/redoc",
+    openapi_url="/openapi.json"
+)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
