@@ -21,3 +21,14 @@ syntax = "python"
 
 [languages.python.languageServer]
 start = ["pylsp"]
+
+[workflows]
+runButton = "Run"
+
+[[workflows.workflow]]
+name = "Run"
+author = 23072300
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "streamlit run --server.address 0.0.0.0 --server.headless true --server.enableCORS=false --server.enableWebsocketCompression=false streamlit_app.py"
