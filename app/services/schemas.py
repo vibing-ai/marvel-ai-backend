@@ -1,23 +1,14 @@
-<<<<<<< HEAD
 from pydantic import BaseModel, Field
 from typing import Optional, List, Any, Literal, Union
 from enum import Enum
 from app.services.assistant_registry import AssistantInputs
 from app.services.tool_registry import BaseTool
 
-=======
-from pydantic import BaseModel
-from typing import Optional, List, Any
-from enum import Enum
-from app.services.tool_registry import BaseTool
-
-
->>>>>>> 2cf0cdd2b47b630ac2959e0306bf0ccbed67e10b
 class User(BaseModel):
     id: str
     fullName: str
     email: str
-    
+
 class Role(str, Enum):
     human = "human"
     ai = "ai"
@@ -30,18 +21,14 @@ class MessageType(str, Enum):
     file = "file"
 
 class MessagePayload(BaseModel):
-<<<<<<< HEAD
     text: Union[str, dict]
-=======
-    text: str
->>>>>>> 2cf0cdd2b47b630ac2959e0306bf0ccbed67e10b
 
 class Message(BaseModel):
     role: Role
     type: MessageType
     timestamp: Optional[Any] = None
     payload: MessagePayload
-    
+
 class RequestType(str, Enum):
     chat = "chat"
     tool = "tool"
@@ -49,25 +36,22 @@ class RequestType(str, Enum):
 class GenericRequest(BaseModel):
     user: User
     type: RequestType
-    
+
 class ChatRequest(GenericRequest):
     messages: List[Message]
-<<<<<<< HEAD
 
 class GenericAssistantRequest(BaseModel):
     assistant_inputs: AssistantInputs
-=======
->>>>>>> 2cf0cdd2b47b630ac2959e0306bf0ccbed67e10b
-    
+
 class ToolRequest(GenericRequest):
     tool_data: BaseTool
-    
+
 class ChatResponse(BaseModel):
     data: List[Message]
 
 class ToolResponse(BaseModel):
     data: Any
-    
+
 class ChatMessage(BaseModel):
     role: str
     type: str
@@ -83,7 +67,7 @@ class QuizzifyArgs(BaseModel):
 class WorksheetQuestion(BaseModel):
     question_type: str
     number: int
-    
+
 class WorksheetQuestionModel(BaseModel):
     worksheet_question_list: List[WorksheetQuestion]
 
@@ -94,10 +78,9 @@ class WorksheetGeneratorArgs(BaseModel):
     file_url: str
     file_type: str
     lang: Optional[str] = "en"
-    
+
 class SyllabusGeneratorArgsModel(BaseModel):
     grade_level: str
-<<<<<<< HEAD
     subject: str
     course_description: str
     objectives: str
@@ -109,14 +92,14 @@ class SyllabusGeneratorArgsModel(BaseModel):
     file_url: str
     file_type: str
     lang: Optional[str] = "en"
-    
+
 class AIResistantArgs(BaseModel):
     assignment: str = Field(..., max_length=255, description="The given assignment")
     grade_level: Literal["pre-k", "kindergarten", "elementary", "middle", "high", "university", "professional"] = Field(..., description="Educational level to which the content is directed")
     file_type: str = Field(..., description="Type of file being handled, according to the defined enumeration")
     file_url: str = Field(..., description="URL or path of the file to be processed")
     lang: str = Field(..., description="Language in which the file or content is written")
-    
+
 class ConnectWithThemArgs(BaseModel):
     grade_level: str = Field(..., description="The grade level the teacher is instructing.")
     task_description: str = Field(..., description="A brief description of the subject or topic the teacher is instructing.")
@@ -170,16 +153,4 @@ class WritingFeedbackGeneratorArgs(BaseModel):
     criteria_file_type: str
     writing_to_review_file_url: str
     writing_to_review_file_type: str
-=======
-    course: str
-    instructor_name: str
-    instructor_title: str
-    unit_time: str
-    unit_time_value: int
-    start_date: str
-    assessment_methods: str
-    grading_scale: str
-    file_url: str
-    file_type: str
->>>>>>> 2cf0cdd2b47b630ac2959e0306bf0ccbed67e10b
     lang: Optional[str] = "en"
