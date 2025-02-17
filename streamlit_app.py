@@ -24,15 +24,19 @@ if st.button("Rewrite Text"):
             try:
                 result = executor(text=text, rewrite_style=style, lang="en")
                 
-                st.subheader("Original Text")
-                st.write(result.original)
+                col1, col2 = st.columns(2)
                 
-                st.subheader(f"Rewritten Text ({style.title()} Style)")
-                st.write(result.rewritten)
+                with col1:
+                    st.subheader("Original Text")
+                    st.write(result.original)
+                
+                with col2:
+                    st.subheader(f"Rewritten Text ({style.title()} Style)")
+                    st.write(result.rewritten)
                 
                 st.subheader("Changes Made")
                 st.write(result.changes_explained)
             except Exception as e:
-                st.error(f"Error: {str(e)}")
+                st.error(f"An error occurred: {str(e)}")
     else:
         st.warning("Please enter some text to rewrite.")
