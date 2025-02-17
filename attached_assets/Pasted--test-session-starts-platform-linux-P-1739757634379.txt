@@ -1,0 +1,486 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.7, pytest-8.3.4, pluggy-1.5.0 -- /nix/store/nqlc7ymyglrsfx1hlssssq6zzy0hmk2c-python-wrapped-0.1.0/bin/python3
+cachedir: .pytest_cache
+rootdir: /home/runner/workspace
+plugins: anyio-4.8.0, langsmith-0.3.8
+collected 12 items                                                                            
+
+app/tools/text_rewriter/tests/test_core.py::test_executor_basic PASSED                  [  8%]
+app/tools/text_rewriter/tests/test_core.py::test_executor_with_file FAILED              [ 16%]
+app/tools/text_rewriter/tests/test_core.py::test_executor_empty_text FAILED             [ 25%]
+app/tools/text_rewriter/tests/test_core.py::test_executor_invalid_style FAILED          [ 33%]
+app/tools/text_rewriter/tests/test_core.py::test_executor_invalid_file_type PASSED      [ 41%]
+app/tools/text_rewriter/tests/test_core.py::test_validator PASSED                       [ 50%]
+app/tools/text_rewriter/tests/test_core.py::test_executor_verbose PASSED                [ 58%]
+app/tools/text_rewriter/tests/test_core.py::test_export_docx PASSED                     [ 66%]
+app/tools/text_rewriter/tests/test_core.py::test_export_pdf PASSED                      [ 75%]
+app/tools/text_rewriter/tests/test_core.py::test_url_inputs ERROR                       [ 83%]
+app/tools/text_rewriter/tests/test_core.py::test_url_processing PASSED                  [ 91%]
+app/tools/text_rewriter/tests/test_core.py::test_multiple_styles PASSED                 [100%]
+
+=========================================== ERRORS ============================================
+______________________________ ERROR at setup of test_url_inputs ______________________________
+file /home/runner/workspace/app/tools/text_rewriter/tests/test_core.py, line 122
+  def test_url_inputs(mocker):
+E       fixture 'mocker' not found
+>       available fixtures: anyio_backend, anyio_backend_name, anyio_backend_options, cache, capfd, capfdbinary, caplog, capsys, capsysbinary, doctest_namespace, monkeypatch, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory
+>       use 'pytest --fixtures [testpath]' for help on them.
+
+/home/runner/workspace/app/tools/text_rewriter/tests/test_core.py:122
+========================================== FAILURES ===========================================
+___________________________________ test_executor_with_file ___________________________________
+
+file_url = '/tmp/pytest-of-runner/pytest-1/test_executor_with_file0/test.txt'
+file_type = 'txt', lang = True, verbose = True
+
+    def get_docs(file_url: str, file_type: str, lang: str = "en", verbose=True):
+        file_type = file_type.lower()
+    
+        if file_type in FILE_TYPES_TO_CHECK:
+            try:
+                # Make a HEAD request to get content type
+>               head_response = requests.head(file_url, allow_redirects=True)
+
+app/utils/document_loaders.py:55: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+.pythonlibs/lib/python3.12/site-packages/requests/api.py:100: in head
+    return request("head", url, **kwargs)
+.pythonlibs/lib/python3.12/site-packages/requests/api.py:59: in request
+    return session.request(method=method, url=url, **kwargs)
+.pythonlibs/lib/python3.12/site-packages/requests/sessions.py:575: in request
+    prep = self.prepare_request(req)
+.pythonlibs/lib/python3.12/site-packages/requests/sessions.py:484: in prepare_request
+    p.prepare(
+.pythonlibs/lib/python3.12/site-packages/requests/models.py:367: in prepare
+    self.prepare_url(url, params)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <PreparedRequest [HEAD]>
+url = '/tmp/pytest-of-runner/pytest-1/test_executor_with_file0/test.txt'
+params = OrderedDict()
+
+    def prepare_url(self, url, params):
+        """Prepares the given HTTP URL."""
+        #: Accept objects that have string representations.
+        #: We're unable to blindly call unicode/str functions
+        #: as this will include the bytestring indicator (b'')
+        #: on python 3.x.
+        #: https://github.com/psf/requests/pull/2238
+        if isinstance(url, bytes):
+            url = url.decode("utf8")
+        else:
+            url = str(url)
+    
+        # Remove leading whitespaces from url
+        url = url.lstrip()
+    
+        # Don't do any URL preparation for non-HTTP schemes like `mailto`,
+        # `data` etc to work around exceptions from `url_parse`, which
+        # handles RFC 3986 only.
+        if ":" in url and not url.lower().startswith("http"):
+            self.url = url
+            return
+    
+        # Support for unicode domain names and paths.
+        try:
+            scheme, auth, host, port, path, query, fragment = parse_url(url)
+        except LocationParseError as e:
+            raise InvalidURL(*e.args)
+    
+        if not scheme:
+>           raise MissingSchema(
+                f"Invalid URL {url!r}: No scheme supplied. "
+                f"Perhaps you meant https://{url}?"
+            )
+E           requests.exceptions.MissingSchema: Invalid URL '/tmp/pytest-of-runner/pytest-1/test_executor_with_file0/test.txt': No scheme supplied. Perhaps you meant https:///tmp/pytest-of-runner/pytest-1/test_executor_with_file0/test.txt?
+
+.pythonlibs/lib/python3.12/site-packages/requests/models.py:438: MissingSchema
+
+During handling of the above exception, another exception occurred:
+
+text = 'Sample text', rewrite_style = 'academic'
+file_url = '/tmp/pytest-of-runner/pytest-1/test_executor_with_file0/test.txt'
+file_type = 'txt', lang = 'en', verbose = False
+
+    def executor(text: str,
+                 rewrite_style: str,
+                 file_url: Optional[str] = None,
+                 file_type: Optional[str] = None,
+                 lang: str = "en",
+                 verbose: bool = False) -> Dict[str, Any]:
+        """
+        Execute text rewriting with enhanced error handling and validation
+        """
+        try:
+            # Validate inputs
+            validate_input(text, rewrite_style)
+    
+            # Load document if file URL is provided
+            docs = None
+            if file_url and file_type:
+                logger.info(f"Loading document from {file_url} of type {file_type}")
+                try:
+>                   docs = get_docs(file_url, file_type, True)
+
+app/tools/text_rewriter/core.py:37: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+file_url = '/tmp/pytest-of-runner/pytest-1/test_executor_with_file0/test.txt'
+file_type = 'txt', lang = True, verbose = True
+
+    def get_docs(file_url: str, file_type: str, lang: str = "en", verbose=True):
+        file_type = file_type.lower()
+    
+        if file_type in FILE_TYPES_TO_CHECK:
+            try:
+                # Make a HEAD request to get content type
+                head_response = requests.head(file_url, allow_redirects=True)
+                content_type = head_response.headers.get('Content-Type')
+                if content_type is None:
+                    raise FileHandlerError(f"Failed to retrieve Content-Type from URL ", file_url)
+                # If the content type is HTML
+                if 'text/html' in content_type:
+                    file_type = "url"
+                    logger.info("text/html in content_type: change file_type to url")
+    
+            except requests.exceptions.RequestException as e:
+                exception_map = {
+                    requests.exceptions.MissingSchema: "Invalid URL format.",
+                    requests.exceptions.ConnectionError: "Failed to connect to the server.",
+                    requests.exceptions.Timeout: "Request timed out.",
+                }
+                # Check if the exception is in the map; if not, default to a generic message
+                error_message = exception_map.get(type(e), f"Request failed: {e}")
+                logger.error(error_message)
+>               raise FileHandlerError(error_message, file_url)
+E               app.api.error_utilities.FileHandlerError: Invalid URL format.
+
+app/utils/document_loaders.py:73: FileHandlerError
+
+During handling of the above exception, another exception occurred:
+
+text = 'Sample text', rewrite_style = 'academic'
+file_url = '/tmp/pytest-of-runner/pytest-1/test_executor_with_file0/test.txt'
+file_type = 'txt', lang = 'en', verbose = False
+
+    def executor(text: str,
+                 rewrite_style: str,
+                 file_url: Optional[str] = None,
+                 file_type: Optional[str] = None,
+                 lang: str = "en",
+                 verbose: bool = False) -> Dict[str, Any]:
+        """
+        Execute text rewriting with enhanced error handling and validation
+        """
+        try:
+            # Validate inputs
+            validate_input(text, rewrite_style)
+    
+            # Load document if file URL is provided
+            docs = None
+            if file_url and file_type:
+                logger.info(f"Loading document from {file_url} of type {file_type}")
+                try:
+                    docs = get_docs(file_url, file_type, True)
+                except Exception as e:
+>                   raise LoaderError(f"Failed to load document: {str(e)}")
+E                   app.api.error_utilities.LoaderError: Failed to load document: Invalid URL format.
+
+app/tools/text_rewriter/core.py:39: LoaderError
+
+During handling of the above exception, another exception occurred:
+
+tmp_path = PosixPath('/tmp/pytest-of-runner/pytest-1/test_executor_with_file0')
+
+    def test_executor_with_file(tmp_path):
+        # Create a temporary file
+        test_file = tmp_path / "test.txt"
+        test_file.write_text("Sample text")
+    
+>       result = executor(
+            text="Sample text",
+            rewrite_style="academic",
+            file_url=str(test_file),
+            file_type="txt",
+            lang="en"
+        )
+
+app/tools/text_rewriter/tests/test_core.py:22: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+text = 'Sample text', rewrite_style = 'academic'
+file_url = '/tmp/pytest-of-runner/pytest-1/test_executor_with_file0/test.txt'
+file_type = 'txt', lang = 'en', verbose = False
+
+    def executor(text: str,
+                 rewrite_style: str,
+                 file_url: Optional[str] = None,
+                 file_type: Optional[str] = None,
+                 lang: str = "en",
+                 verbose: bool = False) -> Dict[str, Any]:
+        """
+        Execute text rewriting with enhanced error handling and validation
+        """
+        try:
+            # Validate inputs
+            validate_input(text, rewrite_style)
+    
+            # Load document if file URL is provided
+            docs = None
+            if file_url and file_type:
+                logger.info(f"Loading document from {file_url} of type {file_type}")
+                try:
+                    docs = get_docs(file_url, file_type, True)
+                except Exception as e:
+                    raise LoaderError(f"Failed to load document: {str(e)}")
+    
+            # Initialize arguments
+            text_rewriter_args = TextRewriterArgs(
+                text=text,
+                rewrite_style=rewrite_style,
+                file_url=file_url,
+                file_type=file_type,
+                lang=lang
+            )
+    
+            # Execute rewriting
+            pipeline = TextRewriterPipeline(args=text_rewriter_args, verbose=verbose)
+            output = pipeline.rewrite_text(docs)
+    
+            logger.info("Text rewriting completed successfully")
+            return output
+    
+        except LoaderError as e:
+            logger.error(f"Document loading error: {e}")
+>           raise ToolExecutorError(str(e))
+E           app.api.error_utilities.ToolExecutorError: Failed to load document: Invalid URL format.
+
+app/tools/text_rewriter/core.py:59: ToolExecutorError
+------------------------------------ Captured stderr call -------------------------------------
+2025-02-17 01:57:02,283 - app.services.logger - INFO - Loading document from /tmp/pytest-of-runner/pytest-1/test_executor_with_file0/test.txt of type txt
+2025-02-17 01:57:02,283 - app.utils.document_loaders - ERROR - Invalid URL format.
+2025-02-17 01:57:02,283 - app.services.logger - ERROR - Document loading error: Failed to load document: Invalid URL format.
+-------------------------------------- Captured log call --------------------------------------
+INFO     app.services.logger:core.py:35 Loading document from /tmp/pytest-of-runner/pytest-1/test_executor_with_file0/test.txt of type txt
+ERROR    app.utils.document_loaders:document_loaders.py:72 Invalid URL format.
+ERROR    app.services.logger:core.py:58 Document loading error: Failed to load document: Invalid URL format.
+__________________________________ test_executor_empty_text ___________________________________
+
+text = '', rewrite_style = 'formal', file_url = None, file_type = None, lang = 'en'
+verbose = False
+
+    def executor(text: str,
+                 rewrite_style: str,
+                 file_url: Optional[str] = None,
+                 file_type: Optional[str] = None,
+                 lang: str = "en",
+                 verbose: bool = False) -> Dict[str, Any]:
+        """
+        Execute text rewriting with enhanced error handling and validation
+        """
+        try:
+            # Validate inputs
+>           validate_input(text, rewrite_style)
+
+app/tools/text_rewriter/core.py:30: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+text = '', rewrite_style = 'formal'
+
+    def validate_input(text: str, rewrite_style: str) -> None:
+        """Validate input parameters"""
+        if not text or not text.strip():
+>           raise ValueError("Text cannot be empty")
+E           ValueError: Text cannot be empty
+
+app/tools/text_rewriter/core.py:12: ValueError
+
+During handling of the above exception, another exception occurred:
+
+    def test_executor_empty_text():
+        with pytest.raises(ValueError) as exc_info:
+>           executor(
+                text="",
+                rewrite_style="formal",
+                lang="en"
+            )
+
+app/tools/text_rewriter/tests/test_core.py:36: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+text = '', rewrite_style = 'formal', file_url = None, file_type = None, lang = 'en'
+verbose = False
+
+    def executor(text: str,
+                 rewrite_style: str,
+                 file_url: Optional[str] = None,
+                 file_type: Optional[str] = None,
+                 lang: str = "en",
+                 verbose: bool = False) -> Dict[str, Any]:
+        """
+        Execute text rewriting with enhanced error handling and validation
+        """
+        try:
+            # Validate inputs
+            validate_input(text, rewrite_style)
+    
+            # Load document if file URL is provided
+            docs = None
+            if file_url and file_type:
+                logger.info(f"Loading document from {file_url} of type {file_type}")
+                try:
+                    docs = get_docs(file_url, file_type, True)
+                except Exception as e:
+                    raise LoaderError(f"Failed to load document: {str(e)}")
+    
+            # Initialize arguments
+            text_rewriter_args = TextRewriterArgs(
+                text=text,
+                rewrite_style=rewrite_style,
+                file_url=file_url,
+                file_type=file_type,
+                lang=lang
+            )
+    
+            # Execute rewriting
+            pipeline = TextRewriterPipeline(args=text_rewriter_args, verbose=verbose)
+            output = pipeline.rewrite_text(docs)
+    
+            logger.info("Text rewriting completed successfully")
+            return output
+    
+        except LoaderError as e:
+            logger.error(f"Document loading error: {e}")
+            raise ToolExecutorError(str(e))
+        except ValueError as e:
+            logger.error(f"Validation error: {e}")
+>           raise ToolExecutorError(str(e))
+E           app.api.error_utilities.ToolExecutorError: Text cannot be empty
+
+app/tools/text_rewriter/core.py:62: ToolExecutorError
+------------------------------------ Captured stderr call -------------------------------------
+2025-02-17 01:57:02,454 - app.services.logger - ERROR - Validation error: Text cannot be empty
+-------------------------------------- Captured log call --------------------------------------
+ERROR    app.services.logger:core.py:61 Validation error: Text cannot be empty
+_________________________________ test_executor_invalid_style _________________________________
+
+text = 'Hello world', rewrite_style = 'invalid_style', file_url = None, file_type = None
+lang = 'en', verbose = False
+
+    def executor(text: str,
+                 rewrite_style: str,
+                 file_url: Optional[str] = None,
+                 file_type: Optional[str] = None,
+                 lang: str = "en",
+                 verbose: bool = False) -> Dict[str, Any]:
+        """
+        Execute text rewriting with enhanced error handling and validation
+        """
+        try:
+            # Validate inputs
+>           validate_input(text, rewrite_style)
+
+app/tools/text_rewriter/core.py:30: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+text = 'Hello world', rewrite_style = 'invalid_style'
+
+    def validate_input(text: str, rewrite_style: str) -> None:
+        """Validate input parameters"""
+        if not text or not text.strip():
+            raise ValueError("Text cannot be empty")
+        if not rewrite_style or not rewrite_style.strip():
+            raise ValueError("Invalid rewrite style")
+        valid_styles = ["formal", "casual", "academic", "professional"]
+        if rewrite_style.lower() not in valid_styles:
+>           raise ValueError("Invalid rewrite style")
+E           ValueError: Invalid rewrite style
+
+app/tools/text_rewriter/core.py:17: ValueError
+
+During handling of the above exception, another exception occurred:
+
+    def test_executor_invalid_style():
+        with pytest.raises(ValueError) as exc_info:
+>           executor(
+                text="Hello world",
+                rewrite_style="invalid_style",
+                lang="en"
+            )
+
+app/tools/text_rewriter/tests/test_core.py:45: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+text = 'Hello world', rewrite_style = 'invalid_style', file_url = None, file_type = None
+lang = 'en', verbose = False
+
+    def executor(text: str,
+                 rewrite_style: str,
+                 file_url: Optional[str] = None,
+                 file_type: Optional[str] = None,
+                 lang: str = "en",
+                 verbose: bool = False) -> Dict[str, Any]:
+        """
+        Execute text rewriting with enhanced error handling and validation
+        """
+        try:
+            # Validate inputs
+            validate_input(text, rewrite_style)
+    
+            # Load document if file URL is provided
+            docs = None
+            if file_url and file_type:
+                logger.info(f"Loading document from {file_url} of type {file_type}")
+                try:
+                    docs = get_docs(file_url, file_type, True)
+                except Exception as e:
+                    raise LoaderError(f"Failed to load document: {str(e)}")
+    
+            # Initialize arguments
+            text_rewriter_args = TextRewriterArgs(
+                text=text,
+                rewrite_style=rewrite_style,
+                file_url=file_url,
+                file_type=file_type,
+                lang=lang
+            )
+    
+            # Execute rewriting
+            pipeline = TextRewriterPipeline(args=text_rewriter_args, verbose=verbose)
+            output = pipeline.rewrite_text(docs)
+    
+            logger.info("Text rewriting completed successfully")
+            return output
+    
+        except LoaderError as e:
+            logger.error(f"Document loading error: {e}")
+            raise ToolExecutorError(str(e))
+        except ValueError as e:
+            logger.error(f"Validation error: {e}")
+>           raise ToolExecutorError(str(e))
+E           app.api.error_utilities.ToolExecutorError: Invalid rewrite style
+
+app/tools/text_rewriter/core.py:62: ToolExecutorError
+------------------------------------ Captured stderr call -------------------------------------
+2025-02-17 01:57:02,461 - app.services.logger - ERROR - Validation error: Invalid rewrite style
+-------------------------------------- Captured log call --------------------------------------
+ERROR    app.services.logger:core.py:61 Validation error: Invalid rewrite style
+====================================== warnings summary =======================================
+.pythonlibs/lib/python3.12/site-packages/pydub/utils.py:14
+  /home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/pydub/utils.py:14: DeprecationWarning: 'audioop' is deprecated and slated for removal in Python 3.13
+    import audioop
+
+.pythonlibs/lib/python3.12/site-packages/speech_recognition/__init__.py:7
+  /home/runner/workspace/.pythonlibs/lib/python3.12/site-packages/speech_recognition/__init__.py:7: DeprecationWarning: 'aifc' is deprecated and slated for removal in Python 3.13
+    import aifc
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=================================== short test summary info ===================================
+FAILED app/tools/text_rewriter/tests/test_core.py::test_executor_with_file - app.api.error_utilities.ToolExecutorError: Failed to load document: Invalid URL format.
+FAILED app/tools/text_rewriter/tests/test_core.py::test_executor_empty_text - app.api.error_utilities.ToolExecutorError: Text cannot be empty
+FAILED app/tools/text_rewriter/tests/test_core.py::test_executor_invalid_style - app.api.error_utilities.ToolExecutorError: Invalid rewrite style
+ERROR app/tools/text_rewriter/tests/test_core.py::test_url_inputs
+====================== 3 failed, 8 passed, 2 warnings, 1 error in 13.67s ======================
+Failed to send compressed multipart ingest: langsmith.utils.LangSmithError: Failed to POST https://api.smith.langchain.com/runs/multipart in LangSmith API. HTTPError('403 Client Error: Forbidden for url: https://api.smith.langchain.com/runs/multipart', '{"error":"Forbidden"}\n')
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+E0000 00:00:1739757435.095656   10457 init.cc:232] grpc_wait_for_shutdown_with_timeout() timed out.
