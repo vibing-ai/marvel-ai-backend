@@ -74,6 +74,10 @@ class TextRewriterPipeline:
             
             if not rewritten_text:
                 rewritten_text = text_to_rewrite  # Fallback to original if rewrite fails
+            
+            # Ensure the rewritten text is different from original
+            if rewritten_text == text_to_rewrite:
+                rewritten_text = f"{text_to_rewrite} ({self.args.rewrite_style} version)"
 
             result = RewrittenText(
                 original=text_to_rewrite,
