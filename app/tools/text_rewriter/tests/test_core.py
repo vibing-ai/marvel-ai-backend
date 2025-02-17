@@ -2,6 +2,7 @@
 import pytest
 from app.tools.text_rewriter.core import executor
 from app.tools.text_rewriter.tools import TextRewriterValidator, RewrittenText
+from app.api.error_utilities import ToolExecutorError
 
 def test_executor_basic():
     result = executor(
@@ -12,6 +13,17 @@ def test_executor_basic():
     assert isinstance(result, RewrittenText)
     assert result.original == "Hello world"
     assert result.style == "formal"
+
+def test_executor_with_file():
+    result = executor(
+        text="Sample text",
+        rewrite_style="academic",
+        file_url="sample.txt",
+        file_type="txt",
+        lang="en"
+    )
+    assert isinstance(result, RewrittenText)
+    assert result.style == "academic"
 
 def test_executor_empty_text():
     with pytest.raises(ValueError):
@@ -29,6 +41,16 @@ def test_executor_invalid_style():
             lang="en"
         )
 
+def test_executor_invalid_file_type():
+    with pytest.raises(ToolExecutorError):
+        executor(
+            text="Hello world",
+            rewrite_style="casual",
+            file_url="test.invalid",
+            file_type="invalid",
+            lang="en"
+        )
+
 def test_validator():
     validator = TextRewriterValidator()
     
@@ -40,6 +62,19 @@ def test_validator():
     
     assert validator.validate_language("en") == True
     assert validator.validate_language("") == False
+    assert validator.validate_language("eng") == False
     
     assert validator.validate_file_type("pdf") == True
+    assert validator.validate_file_type("docx") == True
+    assert validator.validate_file_type("txt") == True
     assert validator.validate_file_type("invalid") == False
+
+def test_executor_verbose():
+    result = executor(
+        text="Test text",
+        rewrite_style="casual",
+        lang="en",
+        verbose=True
+    )
+    assert isinstance(result, RewrittenText)
+    assert hasattr(result, "changes_explained")
