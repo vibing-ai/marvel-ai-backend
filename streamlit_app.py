@@ -33,15 +33,22 @@ try:
                 try:
                     result = executor(text=text, rewrite_style=style, lang="en")
                     
-                    # Display results
-                    st.subheader("Original Text:")
-                    st.write(result.original)
+                    # Original text
+                    st.subheader("Original Text")
+                    st.write(text)
                     
-                    st.subheader(f"Rewritten Text ({style.title()} Style):")
-                    st.write(result.rewritten)
+                    # Rewritten text
+                    st.subheader(f"Rewritten Text ({style.title()} Style)")
+                    if hasattr(result, 'rewritten'):
+                        st.write(result.rewritten)
+                    else:
+                        st.error("Failed to generate rewritten text")
                     
-                    st.subheader("Changes Made:")
-                    st.write(result.changes_explained)
+                    # Changes explanation
+                    if hasattr(result, 'changes_explained'):
+                        st.subheader("Changes Made")
+                        st.write(result.changes_explained)
+                        
                 except Exception as e:
                     st.error(f"Error during text rewriting: {str(e)}")
         else:
