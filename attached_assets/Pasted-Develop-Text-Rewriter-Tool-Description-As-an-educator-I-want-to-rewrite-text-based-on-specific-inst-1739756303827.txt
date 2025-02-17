@@ -1,0 +1,113 @@
+Develop Text Rewriter Tool
+Description
+As an educator, I want to rewrite text based on specific instructions (e.g., simplify, summarize, or rephrase) so that I can adapt content for different reading levels, purposes, or contexts. This tool will help streamline the process of tailoring written material for diverse educational needs.
+
+The tool should allow users to:
+
+Input original text or upload files to be rewritten.
+Provide rewriting instructions (e.g., simplify, summarize, rephrase).
+Accept file uploads (one file per prompt) in supported formats:
+Upload: CSV, PDF, DOCX, PPT, Plain Text
+URLs: YouTube Video, Website, Google Sheets
+Process the uploaded content and generate rewritten text tailored to the instructions.
+Export the rewritten text in user-friendly formats such as plain text, DOCX, or PDF.
+##Design
+Rewrite text
+Rewrite text-1
+Generated Output
+
+Acceptance Criteria
+Feature Requirements
+Input Handling
+
+Users can input text to be rewritten directly into a text box.
+
+Users can upload files (one file per prompt) in the following formats:
+
+Upload: CSV, PDF, DOCX, PPT, Plain Text
+
+URLs: YouTube Video, Website, Google Sheets
+
+Users can provide rewriting instructions via:
+
+Direct text input.
+Text Rewriting Logic
+
+The tool rewrites the content based on:
+
+Provided instructions.
+
+Uploaded text or file input.
+
+The rewritten text is aligned with the specified instruction and maintains original context and tone.
+Output Format
+
+The rewritten text is presented in a clear, editable format.
+
+Users can export the rewritten text in the following formats:
+
+Plain Text
+
+DOCX
+
+PDF
+Technical Implementation
+Folder Structure
+Create a new folder within app/features/ named text_rewriter.
+Core Development
+
+Implement the executor function in core.py with input parameters matching the tool's functionality, including type hints.
+
+Use tools.py for abstractions and helper functions to keep core.py clean and maintainable.
+
+Include a metadata.json file defining the input parameters for proper validation.
+
+Utilize a prompt/ folder for AI-driven generation prompts if necessary.
+
+Implement logging and error handling as per platform standards.
+Unit Tests
+
+Write unit tests for all functions and classes in core.py and tools.py using PyTest.
+
+Tests cover:
+
+Normal operation with valid inputs.
+
+Edge cases and invalid inputs.
+
+Error handling and exceptions.
+Code Quality and Documentation
+
+Ensure code follows best practices for readability and maintainability.
+
+Use consistent naming conventions.
+
+Include type hints for all functions and methods.
+
+Avoid redundant or unnecessary code.
+
+Add docstrings to all functions and classes explaining their purpose and usage.
+
+Provide comments within the code where necessary to explain complex logic.
+Integration and Testing
+
+Ensure the feature integrates seamlessly with the existing Marvel AI platform.
+
+The executor function is compatible with the router.py layer for request handling.
+
+Inputs are validated as per the platform's requirements.
+
+Test the entire feature from input handling to output generation.
+
+Verify that users can input their data and receive the expected outputs without errors.
+Sample Input and Output
+Input
+Original Text:
+"Romeo and Juliet is a tragic play by William Shakespeare that tells the story of two young lovers whose deaths ultimately reconcile their feuding families."
+
+Instruction:
+
+Simplify the text for a middle school audience.
+Output
+Simplified Text:
+"Romeo and Juliet is a sad play by William Shakespeare about two young people who fall in love but die in the end, bringing peace to their fighting families."
