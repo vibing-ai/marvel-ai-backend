@@ -8,6 +8,10 @@ build = []
 run = ["sh", "-c", "streamlit run streamlit_app.py --server.address=0.0.0.0 --server.port=8501 --server.headless=true --server.enableCORS=false --server.enableWebsocketCompression=false"]
 
 [[ports]]
+localPort = 80
+externalPort = 3000
+
+[[ports]]
 localPort = 8080
 externalPort = 8080
 
@@ -43,4 +47,4 @@ author = 23072300
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "uvicorn app.main:app --host 0.0.0.0 --port 8080"
+args = "uvicorn app.main:app --host 0.0.0.0 --port 80"
