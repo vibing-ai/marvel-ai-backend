@@ -1,7 +1,7 @@
 
 {
-  "1": {
-    "path": "tools.text_rewriter.core",
+  "text_rewriter": {
+    "path": "app.tools.text_rewriter.core",
     "metadata_file": "metadata.json"
   }
 }
