@@ -127,13 +127,19 @@ class FileHandler:
         self.file_extension = file_extension
 
     def load(self, url):
-        # Generate a unique filename with a UUID prefix
+        if os.path.exists(url):  # Handle local files
+            try:
+                loader = self.file_loader(file_path=url)
+                return loader.load()
+            except Exception as e:
+                logger.error(f"Failed to load local file: {e}")
+                raise FileHandlerError(f"Failed to load local file", url) from e
+                
+        # Handle remote URLs
         unique_filename = f"{uuid.uuid4()}.{self.file_extension}"
-
         try:
-            # Download the file from the URL and save it to a temporary file
-            response = requests.get(url, timeout=10)  
-            response.raise_for_status()  # Raise an HTTPError for bad responses
+            response = requests.get(url, timeout=10)
+            response.raise_for_status()
 
             with tempfile.NamedTemporaryFile(delete=False, prefix=unique_filename) as temp_file:
                 temp_file.write(response.content)
