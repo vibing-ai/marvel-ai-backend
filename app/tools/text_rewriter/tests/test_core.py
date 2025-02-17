@@ -30,20 +30,22 @@ def test_executor_with_file(tmp_path):
     assert result.style == "academic"
 
 def test_executor_empty_text():
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError) as exc_info:
         executor(
             text="",
             rewrite_style="formal",
             lang="en"
         )
+    assert str(exc_info.value) == "Text cannot be empty"
 
 def test_executor_invalid_style():
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError) as exc_info:
         executor(
             text="Hello world",
-            rewrite_style="",
+            rewrite_style="invalid_style",
             lang="en"
         )
+    assert str(exc_info.value) == "Invalid rewrite style"
 
 def test_executor_invalid_file_type():
     with pytest.raises(ToolExecutorError):
@@ -84,29 +86,25 @@ def test_executor_verbose():
     assert hasattr(result, "changes_explained")
 
 def test_export_docx(tmp_path):
-    result = executor(
-        text="Sample text for export",
-        rewrite_style="formal",
-        lang="en"
+    result = RewrittenText(
+        original="Sample text for export",
+        rewritten="Formal sample text for export",
+        style="formal",
+        changes_explained="Made text more formal"
     )
     output_path = tmp_path / "test_output.docx"
-    TextRewriterPipeline(TextRewriterArgs(
-        text=result.original,
-        rewrite_style=result.style
-    )).export_as_docx(result, str(output_path))
+    TextRewriterPipeline.export_as_docx(result, str(output_path))
     assert output_path.exists()
 
 def test_export_pdf(tmp_path):
-    result = executor(
-        text="Sample text for PDF export",
-        rewrite_style="academic",
-        lang="en"
+    result = RewrittenText(
+        original="Sample text for PDF export",
+        rewritten="Academic sample text for PDF export",
+        style="academic",
+        changes_explained="Made text more academic"
     )
     output_path = tmp_path / "test_output.pdf"
-    TextRewriterPipeline(TextRewriterArgs(
-        text=result.original,
-        rewrite_style=result.style
-    )).export_as_pdf(result, str(output_path))
+    TextRewriterPipeline.export_as_pdf(result, str(output_path))
     assert output_path.exists()
 
 def test_url_inputs():
