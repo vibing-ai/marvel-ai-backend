@@ -18,40 +18,64 @@ logger = setup_logger()
 def post_process_business_email(output: str) -> str:
     """
     Post-process the LLM output for 'business_email' style.
-    This function forces the desired line breaks by looking for the defined XML-like tags.
-    It reconstructs the email so that each section appears on its own, with proper blank lines.
+    This function ensures consistent blank lines and attempts to correct basic punctuation
+    or line-break issues in the final email.
     """
-    # Extract each section with regex:
+
+    # Extract relevant tags to reconstruct the email properly:
     subject_pattern = r"<SubjectLine>(.*?)</SubjectLine>"
     greeting_pattern = r"<Greeting>(.*?)</Greeting>"
     body_pattern = r"<Body>(.*?)</Body>"
     closing_pattern = r"<Closing>(.*?)</Closing>"
+    changes_pattern = r"<Changes>(.*?)</Changes>"
 
     subject_match = re.search(subject_pattern, output, re.DOTALL)
     greeting_match = re.search(greeting_pattern, output, re.DOTALL)
     body_match = re.search(body_pattern, output, re.DOTALL)
     closing_match = re.search(closing_pattern, output, re.DOTALL)
+    changes_match = re.search(changes_pattern, output, re.DOTALL)
 
     subject_line = subject_match.group(1).strip() if subject_match else "No Subject Found"
     greeting = greeting_match.group(1).strip() if greeting_match else "Dear [Recipient Name],"
     body_text = body_match.group(1).strip() if body_match else "(No body found)"
     closing_text = closing_match.group(1).strip() if closing_match else "Best regards,\n[Your Name]"
 
-    # Construct final email with guaranteed blank lines between sections
+    # Rebuild final email with consistent spacing:
     final_email = (
         f"Subject: {subject_line}\n\n"
         f"{greeting}\n\n"
         f"{body_text}\n\n"
         f"{closing_text}"
     )
-    return final_email
+
+    # For good measure, we can ensure each sentence ends with punctuation if missing (basic heuristic):
+    # (Optional) Add more robust punctuation checks if desired.
+    def fix_punctuation(text: str) -> str:
+        lines = text.split('\n')
+        fixed_lines = []
+        for ln in lines:
+            ln = ln.strip()
+            if not ln:
+                fixed_lines.append("")
+                continue
+            # If the line looks like a sentence or ends with an alphanumeric,
+            # we add a period if missing (very basic heuristic).
+            if ln[-1].isalnum():
+                ln += "."
+            fixed_lines.append(ln)
+        return "\n".join(fixed_lines)
+
+    # If you want to strictly enforce punctuation, uncomment the line below:
+    # final_email = fix_punctuation(final_email)
+
+    return final_email.strip()
 
 def parse_business_email_tags(raw_text: str) -> (str, str):
     """
     Parses the raw output for business_email style.
     Returns a tuple (final_email, changes_text) where final_email is post-processed.
     """
-    # Extract <Changes> content separately.
+    # Extract <Changes> content:
     changes_pattern = r"<Changes>(.*?)</Changes>"
     changes_match = re.search(changes_pattern, raw_text, re.DOTALL)
     changes_text = changes_match.group(1).strip() if changes_match else "No bullet points or explanation provided."
@@ -85,7 +109,7 @@ class TextRewriterArgs(BaseModel):
     file_type: Optional[str] = None
     lang: str = "en"
     reading_level: Optional[str] = None       # e.g., "Elementary", "Middle School", etc.
-    excluded_terms: Optional[str] = None        # Comma-separated list of terms to remain unchanged
+    excluded_terms: Optional[str] = None      # Comma-separated list of terms to remain unchanged
 
 class RewrittenText(BaseModel):
     original: str = Field(..., description="Original text")
@@ -104,46 +128,60 @@ class TextRewriterPipeline:
     def _create_prompt(self, text: str, style: str) -> str:
         """
         Constructs the prompt for the LLM.
-        For 'business_email', instruct the model to output ONLY the specified XML-like tags.
+        For 'business_email', instruct the model to output ONLY the specified XML-like tags (plus an example).
         For 'formal', instruct the model to output <FormalText> and <Changes> tags.
         For other styles, use a standard bullet-point approach.
         """
         if style == "business_email":
             prompt = (
                 "You are a text rewriting assistant. Please rewrite the following text as a polite, concise, "
-                "and well-structured business email. Use ONLY the following XML-like tags, and include no text outside them:\n\n"
+                "and well-structured business email. Use ONLY the following XML-like tags:\n\n"
                 "<SubjectLine>...</SubjectLine>\n"
                 "<Greeting>...</Greeting>\n"
                 "<Body>...</Body>\n"
                 "<Closing>...</Closing>\n"
                 "<Changes>...</Changes>\n\n"
-                "Follow these rules:\n"
-                "- Each section must be enclosed in its respective tag.\n"
-                "- Ensure that each sentence ends with proper punctuation.\n"
-                "- Separate paragraphs in <Body> with exactly one blank line.\n\n"
+                "No text should appear outside these tags.\n\n"
+                "RULES:\n"
+                "1. Each sentence ends with correct punctuation.\n"
+                "2. Separate paragraphs in <Body> with exactly one blank line.\n"
+                "3. <Changes> is a list of bullet points (each starting with '-' or '•') explaining how the text was changed.\n\n"
+                "EXAMPLE:\n"
+                "<SubjectLine>New Course Announcement</SubjectLine>\n"
+                "<Greeting>Dear John,</Greeting>\n"
+                "<Body>\n"
+                "Paragraph one of the email.\n\n"
+                "Paragraph two of the email.\n"
+                "</Body>\n"
+                "<Closing>Best regards,\n[Your Name]</Closing>\n"
+                "<Changes>\n"
+                "- Summarized text.\n"
+                "- Added polite tone.\n"
+                "</Changes>\n\n"
                 f"Original text:\n{text}\n\n"
             )
         elif style == "formal":
             prompt = (
                 "You are a text rewriting assistant. Please rewrite the following text in a polite, refined, and formal tone. "
-                "Use ONLY the following tags in your output:\n\n"
+                "Use ONLY the following tags:\n\n"
                 "<FormalText>...</FormalText>\n"
                 "<Changes>...</Changes>\n\n"
-                "Follow these rules:\n"
-                "- The entire rewritten text must be enclosed within <FormalText>.\n"
-                "- Each main idea should be in its own paragraph (separated by a blank line).\n"
-                "- All bullet points must be inside <Changes>, with each bullet starting with '-' or '•'.\n\n"
+                "RULES:\n"
+                "1. All rewritten text goes inside <FormalText>.\n"
+                "2. Each main idea is a separate paragraph (one blank line between paragraphs).\n"
+                "3. All bullet points go inside <Changes>, each starting with '-' or '•'.\n"
+                "4. No text appears outside these tags.\n\n"
                 f"Original text:\n{text}\n\n"
             )
         else:
             prompt = (
                 f"You are a text rewriting assistant. Please rewrite the following text in '{style}' style, "
-                "preserving its meaning and using proper punctuation. Avoid scientific or overly complex synonyms unless they are in the original text.\n\n"
+                "ensuring correct punctuation. Avoid scientific or overly complex synonyms unless originally present.\n\n"
                 f"Original text:\n{text}\n\n"
-                "After the rewritten text, skip one line and provide bullet points summarizing the key changes."
+                "After the rewritten text, skip one line and provide bullet points summarizing key changes."
             )
 
-        # Append advanced educator instructions if provided.
+        # Append advanced educator instructions if provided
         if self.args.reading_level:
             prompt += f"\nAim for a {self.args.reading_level} reading level."
         if self.args.excluded_terms:
@@ -171,7 +209,6 @@ class TextRewriterPipeline:
 
             if self.args.rewrite_style == "business_email":
                 final_email, changes_text = parse_business_email_tags(response.content)
-                # Apply post-processing for business_email formatting
                 final_email = post_process_business_email(final_email)
                 return RewrittenText(
                     original=text_to_rewrite,
@@ -188,6 +225,7 @@ class TextRewriterPipeline:
                     changes_explained=changes_text
                 )
             else:
+                # For other styles, we do the usual bullet-point approach
                 lines = [line.strip() for line in response.content.split('\n') if line.strip()]
                 if not lines:
                     raise ValueError("LLM returned an empty or invalid format response.")
@@ -274,19 +312,4 @@ class TextRewriterValidator:
         allowed_types = ["txt", "pdf", "docx", "md", "csv", "ppt", "youtube", "website", "sheets"]
         return file_type.lower() in allowed_types
 
-def post_process_business_email(output: str) -> str:
-    """
-    Post-process the rewritten email for business_email style to enforce correct formatting.
-    """
-    # We'll assume the raw output already has tags. 
-    # This function focuses on ensuring blank lines between sections.
-    # Split output by newline and reassemble with a blank line after each non-empty line.
-    lines = output.split('\n')
-    processed = []
-    for line in lines:
-        stripped = line.rstrip()
-        if stripped:
-            processed.append(stripped)
-            processed.append("")  # add a blank line after every non-empty line
-    return "\n".join(processed).strip()
 
