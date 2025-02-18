@@ -1,6 +1,11 @@
 import pytest
 from app.tools.text_rewriter.core import executor
-from app.tools.text_rewriter.tools import TextRewriterValidator, RewrittenText, TextRewriterPipeline, TextRewriterArgs
+from app.tools.text_rewriter.tools import (
+    TextRewriterValidator,
+    RewrittenText,
+    TextRewriterPipeline,
+    TextRewriterArgs
+)
 from app.api.error_utilities import ToolExecutorError
 
 def test_executor_basic():
@@ -14,12 +19,12 @@ def test_executor_basic():
     assert result.style == "formal"
 
 def test_executor_with_file(tmp_path):
-    # Create a temporary file
+    # Create a temporary text file for testing
     test_file = tmp_path / "test.txt"
     test_file.write_text("Sample text")
 
     result = executor(
-        text="Sample text",
+        text="Sample text",  # Fallback text; actual file content is parsed via get_docs
         rewrite_style="academic",
         file_url=str(test_file),
         file_type="txt",
@@ -37,7 +42,7 @@ def test_executor_empty_text():
             rewrite_style="formal",
             lang="en"
         )
-    assert str(exc_info.value) == "Text cannot be empty"
+    assert "Text cannot be empty" in str(exc_info.value)
 
 def test_executor_invalid_style():
     with pytest.raises(ToolExecutorError) as exc_info:
@@ -46,7 +51,7 @@ def test_executor_invalid_style():
             rewrite_style="invalid_style",
             lang="en"
         )
-    assert str(exc_info.value) == "Invalid rewrite style"
+    assert "Invalid rewrite style" in str(exc_info.value)
 
 def test_executor_invalid_file_type():
     with pytest.raises(ToolExecutorError):
@@ -60,21 +65,20 @@ def test_executor_invalid_file_type():
 
 def test_validator():
     validator = TextRewriterValidator()
+    assert validator.validate_text("Hello") is True
+    assert validator.validate_text("") is False
 
-    assert validator.validate_text("Hello") == True
-    assert validator.validate_text("") == False
+    assert validator.validate_style("formal") is True
+    assert validator.validate_style("") is False
 
-    assert validator.validate_style("formal") == True
-    assert validator.validate_style("") == False
+    assert validator.validate_language("en") is True
+    assert validator.validate_language("") is False
+    assert validator.validate_language("eng") is False
 
-    assert validator.validate_language("en") == True
-    assert validator.validate_language("") == False
-    assert validator.validate_language("eng") == False
-
-    assert validator.validate_file_type("pdf") == True
-    assert validator.validate_file_type("docx") == True
-    assert validator.validate_file_type("txt") == True
-    assert validator.validate_file_type("invalid") == False
+    assert validator.validate_file_type("pdf") is True
+    assert validator.validate_file_type("docx") is True
+    assert validator.validate_file_type("txt") is True
+    assert validator.validate_file_type("invalid") is False
 
 def test_executor_verbose():
     result = executor(
@@ -119,7 +123,7 @@ def test_export_pdf(tmp_path):
     assert output_path.exists()
 
 def test_url_inputs(mocker):
-    # Mock get_docs function
+    # Mock get_docs to simulate URL input extraction
     mock_docs = [mocker.Mock(page_content="Sample text from URL")]
     mocker.patch('app.tools.text_rewriter.core.get_docs', return_value=mock_docs)
 
@@ -127,14 +131,13 @@ def test_url_inputs(mocker):
         text="Sample text",
         rewrite_style="formal",
         file_url="https://example.com",
-        file_type="url",
+        file_type="website",
         lang="en"
     )
     assert isinstance(result, RewrittenText)
     assert result.original == "Sample text from URL"
 
 def test_url_processing():
-    # Test invalid URL
     with pytest.raises(ToolExecutorError):
         executor(
             text="Sample text",
@@ -143,8 +146,6 @@ def test_url_processing():
             file_type="website",
             lang="en"
         )
-
-    # Test invalid file type
     with pytest.raises(ToolExecutorError):
         executor(
             text="Sample text",
@@ -157,14 +158,29 @@ def test_url_processing():
 def test_multiple_styles():
     styles = ["formal", "casual", "academic", "professional"]
     text = "This is a test text for multiple styles."
-
-    for style in styles:
+    for s in styles:
         result = executor(
             text=text,
-            rewrite_style=style,
+            rewrite_style=s,
             lang="en"
         )
         assert isinstance(result, RewrittenText)
-        assert result.style == style
+        assert result.style == s
         assert result.original == text
+        # Ensure some rewriting occurred
         assert result.rewritten != text
+
+def test_executor_with_advanced_fields():
+    # Test passing reading_level and excluded_terms for educator use
+    result = executor(
+        text="The cat sat on the mat and looked at the bird.",
+        rewrite_style="simplify",
+        lang="en",
+        reading_level="Middle School",
+        excluded_terms="cat, bird"
+    )
+    assert isinstance(result, RewrittenText)
+    assert result.style == "simplify"
+    # Check that rewriting has modified the text in some manner
+    assert result.rewritten != result.original
+

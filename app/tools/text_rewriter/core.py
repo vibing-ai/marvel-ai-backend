@@ -12,7 +12,7 @@ def validate_input(text: str, rewrite_style: str) -> None:
         raise ValueError("Text cannot be empty")
     if not rewrite_style or not rewrite_style.strip():
         raise ValueError("Invalid rewrite style")
-    valid_styles = ["formal", "casual", "academic", "professional"]
+    valid_styles = ["formal", "casual", "academic", "professional", "business_email", "summarize", "simplify"]
     if rewrite_style.lower() not in valid_styles:
         raise ValueError("Invalid rewrite style")
 
@@ -21,9 +21,12 @@ def executor(text: str,
              file_url: Optional[str] = None,
              file_type: Optional[str] = None,
              lang: str = "en",
-             verbose: bool = False) -> Dict[str, Any]:
+             verbose: bool = False,
+             reading_level: Optional[str] = None,
+             excluded_terms: Optional[str] = None) -> Dict[str, Any]:
     """
-    Execute text rewriting with enhanced error handling and validation
+    Execute text rewriting with enhanced error handling and validation.
+    For the educator version, we support reading_level and excluded_terms.
     """
     try:
         # Validate inputs
@@ -38,13 +41,15 @@ def executor(text: str,
             except Exception as e:
                 raise LoaderError(f"Failed to load document: {str(e)}")
 
-        # Initialize arguments
+        # Initialize arguments (only include advanced fields relevant for educators)
         text_rewriter_args = TextRewriterArgs(
             text=text,
             rewrite_style=rewrite_style,
             file_url=file_url,
             file_type=file_type,
-            lang=lang
+            lang=lang,
+            reading_level=reading_level,
+            excluded_terms=excluded_terms
         )
 
         # Execute rewriting
@@ -64,3 +69,4 @@ def executor(text: str,
         error_message = f"Unexpected error in text rewriter: {e}"
         logger.error(error_message)
         raise ToolExecutorError(error_message)
+
