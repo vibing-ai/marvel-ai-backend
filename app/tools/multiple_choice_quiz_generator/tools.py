@@ -80,7 +80,7 @@ class QuizBuilderConfig:
 
 class QuizBuilder:
             
-    def __init__(self, topic: str, lang: str ='en', config: QuizBuilderConfig = None, verbose: bool = False):
+    def __init__(self, topic: str, quiz_description: str = None, lang: str ='en', config: QuizBuilderConfig = None, verbose: bool = False):
 
         """
             Initialize the QuizBuilder with configuration and models.
@@ -94,6 +94,7 @@ class QuizBuilder:
         self.topic = topic
         self.lang = lang
         self.config = config or QuizBuilderConfig(verbose=verbose)
+        self.quiz_description = quiz_description or f"Quiz about {topic}"
 
         self.verbose = verbose
         self.runner = None
@@ -109,21 +110,18 @@ class QuizBuilder:
         if topic is None: raise ValueError("Topic must be provided")
     
     def compile(self, documents: List[Document], num_questions: int):
-        """
-        Compile the question generation chain using the provided documents.
-        
-        Args:
-            documents (List[Document]): List of documents to use as context
-            num_questions (int): Number of questions to generate per prompt (default: 1)
-            
-        Returns:
-            Chain: A compiled LangChain chain for question generation
-        """
-        # Initialize prompt template with all required variables
+    # Initialize prompt template with all required variables
         prompt = PromptTemplate(
             template=self._prompt_template,
             input_variables=["attribute_collection", "context", "num_questions"],
-            partial_variables={"format_instructions": self._parser.get_format_instructions()}
+            partial_variables={
+                "format_instructions": self._parser.get_format_instructions(),
+                "topic": self.topic,
+                "n_questions": str(num_questions),
+                "file_url": "local_file",  # or make this configurable
+                "quiz_description": f"Quiz about {self.topic}",  # or customize this
+                "grade_level": "general"  # or make this configurable
+            }
         )
 
         number_documents = len(documents)
@@ -150,6 +148,7 @@ class QuizBuilder:
             "n_questions": num_questions,
             "topic": self.topic,
             "lang": self.lang,
+            "quiz_description": self.quiz_description,
             "score_threshold": self.config.score_threshold
         }
 
@@ -171,32 +170,29 @@ class QuizBuilder:
         Returns:
             List[Dict]: List of generated quiz questions with choices and answers
         """
-        logger.info(f"Creating {num_questions} questions") if self.verbose else None
-     
+        logger.info(f"Creating {num_questions} questions for quiz: {self.quiz_description}") if self.verbose else None
+        
         if num_questions > self.config.max_questions:
             return {"message": "error", "data": f"Number of questions cannot exceed {self.config.max_questions}"}
         
         try:
             chain = self.compile(documents, num_questions)
-
             generated_questions = self.run_chain(chain)
 
             number_gen_questions = len(generated_questions)
-            logger.info(f"Total generated questions: {number_gen_questions}") if self.verbose else None
+            logger.info(f"Total generated questions for {self.quiz_description}: {number_gen_questions}") if self.verbose else None
             
-            # Log if fewer questions are generated
             if number_gen_questions < num_questions:
-                if self.verbose: logger.warning(f"Only generated {number_gen_questions} out of {num_questions} requested questions")
+                if self.verbose: 
+                    logger.warning(f"Only generated {number_gen_questions} out of {num_questions} requested questions for quiz: {self.quiz_description}")
             
-            # Return requested number of questions (or fewer if not enough were generated)
             return generated_questions[:num_questions]
         except Exception as e:
             if self.verbose:
-                logger.error(f"Error generating questions: {e}")
+                logger.error(f"Error generating questions for {self.quiz_description}: {e}")
             raise e
         finally:
             self.cleanup()
-
     
     def run_chain(self, chain):
         generated_questions = []

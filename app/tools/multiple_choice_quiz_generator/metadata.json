@@ -24,6 +24,12 @@
             "label": "Language",
             "name": "lang",
             "type": "text"
+        },
+        {
+            "label": "Quiz Description",
+            "name": "quiz_description",
+            "type": "text"
         }
+
     ]
 }

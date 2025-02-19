@@ -63,6 +63,7 @@ class QuizzifyArgs(BaseModel):
     file_url: str
     file_type: str
     lang: Optional[str] = "en"
+    quiz_description: str = Field(None, description="A description of the quiz. Will help the model to generate a better response") # NEW FIELD
 
 class WorksheetQuestion(BaseModel):
     question_type: str

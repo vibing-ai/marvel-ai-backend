@@ -1,5 +1,44 @@
 import pytest
 from app.tools.multiple_choice_quiz_generator.core import executor
+from app.services.schemas import QuizzifyArgs
+
+# Base attributes reused across all tests
+base_attributes = {
+    "topic": "college",
+    "n_questions": 1,
+    "file_url": "https://filesamples.com/samples/document/pdf/sample1.pdf",
+    "file_type": "pdf",
+    "lang": "en",
+    "quiz_description": "Testing basic concepts"  # New field
+}
+
+#TEST 1 -> TEST WITH NEW DATAS
+def test_executor_pdf_url_with_quiz_description_valid():
+    """
+    Test PDF URL with a quiz description provided.
+    """
+    n_questions = 1
+    quiz = executor(
+        **base_attributes,
+        quiz_description="Focusing on core concepts"  # Specific description
+    )
+
+    assert isinstance(quiz, list)
+    assert len(quiz) == base_attributes["n_questions"]
+
+def test_executor_pdf_url_no_quiz_description_valid():
+    """
+    Test PDF URL with a quiz description empty.
+    """
+    n_questions = 1
+    quiz = executor(
+        **base_attributes,
+        quiz_description=""
+    )
+
+    assert isinstance(quiz, list)
+    assert len(quiz) == base_attributes["n_questions"]
+
 
 def test_executor_pdf_url_valid():
 

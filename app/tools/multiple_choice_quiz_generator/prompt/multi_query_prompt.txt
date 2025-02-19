@@ -1,11 +1,31 @@
-You are an AI assistant specializing in retrieving relevant information from a vector database containing educational content. 
-Your task is to rewrite the given topic into {num_questions} diverse and easy-to-understand alternative queries. 
+You are an expert information retrieval specialist. Your task is to generate {num_questions} diverse search queries to maximize relevant content retrieval for quiz generation.
 
-Consider the following when rephrasing:
-    - Generate queries that explore different perspectives, from general to specific, or cover related subtopics.
-    - Incorporate synonyms, alternative phrasings, and examples to maximize relevance.
+Generate queries that:
 
-The goal is to maximize the likelihood of retrieving relevant documents from the database by generating diverse and inclusive queries. 
-Provide the alternative queries separated by newlines.
+1. Cover different aspects of the topic:
+   - Core concepts and definitions
+   - Practical applications and examples
+   - Related theories and frameworks
+   - Common misconceptions and clarifications
 
-{question}
+2. Use varied search strategies:
+   - Broad topic overview queries
+   - Specific subtopic deep dives
+   - Real-world application scenarios
+   - Theoretical framework explorations
+
+3. Employ language variations:
+   - Technical and formal terminology
+   - Simplified explanatory phrases
+   - Synonyms and alternative terms
+   - Domain-specific vocabulary
+
+4. Consider different perspectives:
+   - Beginner understanding
+   - Advanced concepts
+   - Practical implementations
+   - Theoretical foundations
+
+Original topic: {question}
+
+Provide each alternative query on a new line. Ensure queries are clear, focused, and likely to retrieve relevant educational content.

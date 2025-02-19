@@ -61,17 +61,26 @@ def use_cases():
 @pytest.mark.parametrize("input", use_cases())
 def test_end_to_end_flow(input, verbose, evaluator, ls_client):
     """
-        Test the end-to-end flow of the quiz generation process.
+    Test the end-to-end flow of the quiz generation process.
     """
     run_id = uuid.uuid4()
     docs = mock_remote_doc_loading(input["file_name"], input["file_type"], input["lang"])
 
     try:
-        quiz_builder = QuizBuilder(input["topic"], input["lang"], verbose=verbose)
+        quiz_builder = QuizBuilder(
+            topic=input["topic"],
+            quiz_description=f"Test quiz about {input['topic']}", 
+            lang=input["lang"], 
+            verbose=verbose
+        )
 
         chain = quiz_builder.compile(docs, input["n_questions"])
-        # response = chain.invoke(f"Topic: {quiz_builder.topic}, Lang: {quiz_builder.lang}")
-        response = chain.invoke({"input": f"Topic: {quiz_builder.topic}, Lang: {quiz_builder.lang}"}, {"run_id": run_id})
+        
+        # Fix the chain invocation
+        response = chain.invoke(
+            f"Topic: {quiz_builder.topic}, Lang: {quiz_builder.lang}",  # This is the input
+            config={"callbacks": None, "run_id": run_id}  # This is the config
+        )
 
         questions_list = parse_response_to_dict(response)
 
@@ -85,7 +94,6 @@ def test_end_to_end_flow(input, verbose, evaluator, ls_client):
             create_metrics(docs, questions_list, run_id, evaluator, number_retrieved_docs, ls_client)
     finally:
         quiz_builder.cleanup()
-    
 
 def validate_response(quiz_builder, question_list):
     """
@@ -98,16 +106,19 @@ def validate_response(quiz_builder, question_list):
             valid_questions += 1
     return valid_questions
 
-def parse_response_to_dict(json):
+def parse_response_to_dict(json_response):
     """
-        Parse the JSON response to a dictionary.
+    Parse the JSON response to a dictionary.
     """
+    if json_response is None:
+        raise AssertionError("Chain returned None response")
+        
     try:
-        return transform_json_dict(json)
+        return transform_json_dict(json_response)
     except ValidationError as e:
-        assert False, "Output json invalid"
+        raise AssertionError(f"Output json invalid: {str(e)}")
     except Exception as e:
-        assert False, e
+        raise AssertionError(f"Failed to parse response: {str(e)}")
 
 def read_file_content(file_url, file_type):
     """

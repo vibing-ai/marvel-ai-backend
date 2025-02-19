@@ -10,6 +10,7 @@ def executor(topic: str,
              file_url: str,
              file_type: str,
              lang: str,
+             quiz_description: str,
              verbose=True):
     
     try:
@@ -18,8 +19,8 @@ def executor(topic: str,
 
         docs = get_docs(file_url, file_type, lang, verbose=True)
 
-    
-        output = QuizBuilder(topic, lang, verbose=verbose).create_questions(docs, n_questions)
+        # Use quiz_description in the QuizBuilder
+        output = QuizBuilder(topic, lang, quiz_description, verbose=verbose).create_questions(docs, n_questions)
     
     except LoaderError as e:
         error_message = e

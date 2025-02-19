@@ -1,0 +1,21 @@
+version: '3.10.12'
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - ENV_TYPE=dev # Set environment type (e.g., dev or production)
+    volumes:
+      - ./backend/app:/code/app # Mount the app directory for local development
+    command: >
+      python -m debugpy --listen 0.0.0.0:5678 --wait-for-client -m uvicorn app.main:app --host 0.0.0.0 --port 8000
+    depends_on:
+      - ffmpeg
+
+  ffmpeg:
+    image: jrottenberg/ffmpeg:4.4-alpine # Use a lightweight FFmpeg image for media processing
+    command: "tail -f /dev/null" # Keep the container running
