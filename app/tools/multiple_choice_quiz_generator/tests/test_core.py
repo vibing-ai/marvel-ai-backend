@@ -324,3 +324,15 @@ def test_executor_gmp3_url_invalid():
         )
 
     assert isinstance(exc_info.value, ValueError)
+def test_quiz_voting():
+    n_questions = 1
+    quiz = executor(
+        topic="test topic",
+        n_questions=n_questions,
+        file_url="https://filesamples.com/samples/document/pdf/sample1.pdf",
+        file_type="pdf",
+        lang="en"
+    )
+    
+    assert isinstance(quiz[0].get('thumbs_up', 0), int)
+    assert isinstance(quiz[0].get('thumbs_down', 0), int)

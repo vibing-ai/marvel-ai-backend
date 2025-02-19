@@ -302,6 +302,26 @@ class QuizBuilder:
         ordered_keys = ['A', 'B', 'C', 'D']
         return {key: choices[key] for key in ordered_keys if key in choices}
     
+    def vote_question(self, question_index: int, vote_type: str) -> bool:
+        """
+        Add a vote to a specific question
+        
+        Args:
+            question_index (int): Index of the question
+            vote_type (str): Either 'up' or 'down'
+            
+        Returns:
+            bool: True if vote was successful
+        """
+        try:
+            if vote_type == 'up':
+                self.questions[question_index].thumbs_up += 1
+            elif vote_type == 'down':
+                self.questions[question_index].thumbs_down += 1
+            return True
+        except (IndexError, AttributeError):
+            return False
+
     def cleanup(self):
         """
         Cleanup resources used by the QuizBuilder.
@@ -453,6 +473,8 @@ class QuizQuestion(BaseModel):
     choices: List[QuestionChoice] = Field(description="A list of choices for the question, each with a key and a value")
     answer: str = Field(description="The key of the correct answer from the choices list")
     explanation: str = Field(description="An explanation of why the answer is correct")
+    thumbs_up: int = Field(default=0, description="Number of thumbs up votes")
+    thumbs_down: int = Field(default=0, description="Number of thumbs down votes")
 
 class QuizQuestionsList(BaseModel):
     questions_list: List[QuizQuestion] = Field(description="A list of questions for the quiz")
