@@ -23,7 +23,7 @@ def read_root():
     
     import os
     
-    file_url = "https://file.notion.so/f/f/e0e4952d-ee69-4824-9a41-54b460bb8b56/11f3af4e-09e3-4384-a310-1018d784bdfa/Science_Glossary.pdf?table=block&id=19745624-7e0a-81ac-b88b-dc64fb11ef75&spaceId=e0e4952d-ee69-4824-9a41-54b460bb8b56&expirationTimestamp=1740016800000&signature=2OerVCa9GAbhu-NPzbcSA8mJRfKt9FRtBQmIErDs35o&downloadName=Science_Glossary.pdf"
+    file_url = os.path.join(os.getcwd(), "attached_assets", "Science_Glossary.pdf")
     
     quiz = executor(
         topic="Science Terms Vocabulary - 7th Grade Physics, Chemistry, and Biology",

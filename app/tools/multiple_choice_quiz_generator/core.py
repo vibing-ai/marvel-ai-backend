@@ -27,7 +27,8 @@ def executor(topic: str,
                 raise ValueError(f"File not found at path: {file_url}")
             
         docs = get_docs(file_url, file_type, lang, verbose=True)
-
+        if not docs:
+            raise ValueError("Error: Could not load document content from the provided URL")
     
         output = QuizBuilder(topic, lang, verbose=verbose).create_questions(docs, n_questions)
     
