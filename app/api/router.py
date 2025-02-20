@@ -21,10 +21,15 @@ def read_root():
     
     import os
     
+    import pathlib
+    
+    project_root = pathlib.Path(__file__).parent.parent.parent.parent
+    file_path = project_root / "attached_assets" / "Science_Glossary.pdf"
+    
     quiz = executor(
         topic="Science Terms Vocabulary - 7th Grade Physics, Chemistry, and Biology",
         n_questions=10,
-        file_url=os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "attached_assets", "Science_Glossary.pdf"),
+        file_url=str(file_path.absolute()),
         file_type="pdf",
         lang="en"
     )
