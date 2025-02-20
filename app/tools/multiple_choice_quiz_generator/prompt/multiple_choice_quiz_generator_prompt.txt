@@ -7,7 +7,7 @@ User Inputs:
 - Number of Questions: {num_questions}
 {quiz_description}
 
-- Attached Document: {attachment_file}
+- Attached Document: {context}
 
 Task:
 Create a multiple-choice quiz that meets the following criteria:

@@ -21,7 +21,8 @@ def executor(topic: str,
         docs = get_docs(file_url, file_type, lang, verbose=True)
 
     
-        output = QuizBuilder(topic, lang, verbose=verbose).create_questions(docs, n_questions, grade_level, quiz_description)
+        output = QuizBuilder(topic, n_questions, grade_level, quiz_description, lang, verbose=verbose) \
+                .create_questions(docs)
     
     except LoaderError as e:
         error_message = e
