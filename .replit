@@ -31,6 +31,7 @@ syntax = "python"
 start = ["pylsp"]
 
 [workflows]
+runButton = "Streamlit"
 
 [[workflows.workflow]]
 name = "Streamlit"
