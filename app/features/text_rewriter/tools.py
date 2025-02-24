@@ -1,15 +1,14 @@
 import os
 from typing import List, Optional
 
-from pydantic import BaseModel, Field
-
-from langchain_core.documents import Document
 from langchain_chroma import Chroma
+from langchain_core.documents import Document
 from langchain_core.output_parsers import JsonOutputParser
-from langchain_google_genai import GoogleGenerativeAI
-from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from langchain_core.prompts import PromptTemplate
-from langchain_core.runnables import RunnablePassthrough, RunnableParallel
+from langchain_core.runnables import RunnableParallel, RunnablePassthrough
+from langchain_google_genai import (GoogleGenerativeAI,
+                                    GoogleGenerativeAIEmbeddings)
+from pydantic import BaseModel, Field
 
 from app.services.logger import setup_logger
 

@@ -169,3 +169,4 @@ devcontainer.env
 keyfile.json
 
 .idea
+.vscode
