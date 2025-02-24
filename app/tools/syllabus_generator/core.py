@@ -20,36 +20,38 @@ def executor(grade_level: str,
              policies_expectations: str,
              course_outline: str,
              additional_notes: str,
-             file_url: str,
-             file_type: str,
-             lang: str,
+             file_url: str = "",
+             file_type: str = "",
+             lang: str = "en",
              verbose: bool = True):
     
     if verbose:
         logger.info(f"File URL loaded: {file_url}")
     
     try:
-        
-        if file_type == 'img':
-            summary = generate_summary_from_img(file_url)
-        elif file_type == 'youtube_url':
-            summary = summarize_transcript_youtube_url(file_url, verbose=verbose)
-        else:
-            summary = get_summary(file_url, file_type, verbose=verbose)
+        summary = ""
+        # Only process file if both URL and type are provided and not empty
+        if file_url and file_type and file_url.strip() and file_type.strip():
+            if file_type.lower() == 'img':
+                summary = generate_summary_from_img(file_url)
+            elif file_type.lower() == 'youtube_url':
+                summary = summarize_transcript_youtube_url(file_url, verbose=verbose)
+            else:
+                summary = get_summary(file_url, file_type, verbose=verbose)
     
         syllabus_args_model = SyllabusGeneratorArgsModel(
-            grade_level = grade_level,
-            subject = subject,
-            course_description = course_description,
-            objectives = objectives,
-            required_materials = required_materials,
-            grading_policy = grading_policy,
-            policies_expectations = policies_expectations,
-            course_outline = course_outline,
-            additional_notes = additional_notes,
-            file_url = file_url,
-            file_type = file_type,
-            lang = lang
+            grade_level=grade_level,
+            subject=subject,
+            course_description=course_description,
+            objectives=objectives,
+            required_materials=required_materials,
+            grading_policy=grading_policy,
+            policies_expectations=policies_expectations,
+            course_outline=course_outline,
+            additional_notes=additional_notes,
+            file_url=file_url,  
+            file_type=file_type, 
+            lang=lang
         )
 
         request_args = SyllabusRequestArgs(
