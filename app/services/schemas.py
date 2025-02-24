@@ -92,6 +92,9 @@ class SyllabusGeneratorArgsModel(BaseModel):
     file_url: str
     file_type: str
     lang: Optional[str] = "en"
+    unit_time: Optional[str] = "Week"           # New
+    unit_time_value: Optional[int] = 10         # New
+    start_date: Optional[str] = "2025-03-01"    # New
     
 class AIResistantArgs(BaseModel):
     assignment: str = Field(..., max_length=255, description="The given assignment")

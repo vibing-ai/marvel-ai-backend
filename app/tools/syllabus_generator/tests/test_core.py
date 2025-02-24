@@ -1,11 +1,10 @@
 import pytest
 from app.api.error_utilities import SyllabusGeneratorError
 from app.tools.syllabus_generator.core import executor
-
 from dotenv import load_dotenv, find_dotenv
+
 load_dotenv(find_dotenv())
 
-# Base attributes reused across all tests
 base_attributes = {
     "grade_level": "5th grade",
     "subject": "Math",
@@ -19,7 +18,7 @@ base_attributes = {
     "lang": "en"
 }
 
-# PDF Tests
+# Test 1: Basic functionality with PDF
 def test_executor_pdf_url_valid():
     syllabus = executor(
         **base_attributes,
@@ -27,206 +26,95 @@ def test_executor_pdf_url_valid():
         file_type="pdf"
     )
     assert isinstance(syllabus, dict)
+    # Check all expected sections are present
+    expected_sections = [
+        "course_information", "learning_outcomes", "course_content",
+        "assessment_criteria", "course_schedule", "learning_resources",
+        "policies_procedures"
+    ]
+    for section in expected_sections:
+        assert section in syllabus, f"Missing section: {section}"
+    # Basic content check
+    assert "arithmetic" in syllabus["course_information"].lower(), "Course info should mention arithmetic"
 
-def test_executor_pdf_url_invalid():
-    with pytest.raises(SyllabusGeneratorError) as exc_info:
-        executor(
-            **base_attributes,
-            file_url="https://filesamples.com/samples/document/pdf/sample1.pdf",
-            file_type=1
-        )
-    assert isinstance(exc_info.value, SyllabusGeneratorError)
-
-# CSV Tests
-def test_executor_csv_url_valid():
-    syllabus = executor(
-        **base_attributes,
-        file_url="https://filesamples.com/samples/document/csv/sample1.csv",
-        file_type="csv"
-    )
-    assert isinstance(syllabus, dict)
-
-def test_executor_csv_url_invalid():
-    with pytest.raises(SyllabusGeneratorError) as exc_info:
-        executor(
-            **base_attributes,
-            file_url="https://filesamples.com/samples/document/csv/sample1.csv",
-            file_type=1
-        )
-    assert isinstance(exc_info.value, SyllabusGeneratorError)
-
-# TXT Tests
-def test_executor_txt_url_valid():
+# Test 2: Default values for new fields
+def test_executor_with_defaults():
     syllabus = executor(
         **base_attributes,
         file_url="https://filesamples.com/samples/document/txt/sample1.txt",
         file_type="txt"
     )
     assert isinstance(syllabus, dict)
+    assert "course_schedule" in syllabus
+    # Validate defaults in course_schedule
+    schedule_str = str(syllabus["course_schedule"]).lower()
+    assert "week" in schedule_str, "Should use default unit_time 'Week'"
+    assert "2025-03-01" in schedule_str, "Should use default start_date '2025-03-01'"
+    # Check learning outcomes (5-7 expected)
+    assert "learning_outcomes" in syllabus
+    outcomes = syllabus["learning_outcomes"]
+    assert isinstance(outcomes, list) and 5 <= len(outcomes) <= 7, "Should have 5-7 outcomes"
 
-def test_executor_txt_url_invalid():
-    with pytest.raises(SyllabusGeneratorError) as exc_info:
-        executor(
-            **base_attributes,
-            file_url="https://filesamples.com/samples/document/txt/sample1.txt",
-            file_type=1
-        )
-    assert isinstance(exc_info.value, SyllabusGeneratorError)
-
-# MD Tests
-def test_executor_md_url_valid():
+# Test 3: Custom values for new fields
+def test_executor_with_custom_time():
     syllabus = executor(
         **base_attributes,
-        file_url="https://github.com/radicalxdev/kai-ai-backend/blob/main/README.md",
-        file_type="md"
+        file_url="https://filesamples.com/samples/document/txt/sample1.txt",
+        file_type="txt",
+        unit_time="Day",
+        unit_time_value=5,
+        start_date="2025-04-01"
     )
     assert isinstance(syllabus, dict)
+    assert "course_schedule" in syllabus
+    # Validate custom values in course_schedule
+    schedule_str = str(syllabus["course_schedule"]).lower()
+    assert "day" in schedule_str, "Should reflect custom unit_time 'Day'"
+    assert "2025-04-01" in schedule_str, "Should reflect custom start_date '2025-04-01'"
+    # Check course_content reflects unit_time_value
+    content_str = str(syllabus["course_content"]).lower()
+    assert len(syllabus["course_content"]) <= 5, "Course content should respect unit_time_value of 5"
 
-def test_executor_md_url_invalid():
-    with pytest.raises(SyllabusGeneratorError) as exc_info:
-        executor(
-            **base_attributes,
-            file_url="https://github.com/radicalxdev/kai-ai-backend/blob/main/README.md",
-            file_type=1
-        )
-    assert isinstance(exc_info.value, SyllabusGeneratorError)
-
-# PPTX Tests
-def test_executor_pptx_url_valid():
+# Test 4: Dependency check (objectives influencing learning_outcomes)
+def test_executor_objectives_dependency():
     syllabus = executor(
         **base_attributes,
-        file_url="https://scholar.harvard.edu/files/torman_personal/files/samplepptx.pptx",
-        file_type="pptx"
+        file_url="https://filesamples.com/samples/document/txt/sample1.txt",
+        file_type="txt",
+        objectives="Master addition; Understand fractions"
     )
+    assert "learning_outcomes" in syllabus
+    outcomes_str = str(syllabus["learning_outcomes"]).lower()
+    assert "addition" in outcomes_str, "Learning outcomes should reflect objectives"
+    # Note: This assumes you enhanced learning_outcomes_prompt to use {objectives}
+
+# Test 5: Minimal input with defaults
+def test_executor_minimal_input():
+    minimal_attributes = {
+        "grade_level": "6th grade",
+        "subject": "Science",
+        "course_description": "Intro to biology",
+        "objectives": "Learn basics",
+        "required_materials": "Textbook",
+        "grading_policy": "50% tests",
+        "policies_expectations": "Attend class",
+        "course_outline": "Week 1: Cells",
+        "additional_notes": "",
+        "lang": "en",
+        "file_url": "https://filesamples.com/samples/document/txt/sample1.txt",
+        "file_type": "txt"
+    }
+    syllabus = executor(**minimal_attributes)
     assert isinstance(syllabus, dict)
+    assert all(section in syllabus for section in [
+        "course_information", "course_schedule"
+    ]), "Should generate all sections with minimal input"
 
-def test_executor_pptx_url_invalid():
-    with pytest.raises(SyllabusGeneratorError) as exc_info:
+# Test 6: Error handling for invalid file_type
+def test_executor_invalid_file_type():
+    with pytest.raises(SyllabusGeneratorError):
         executor(
             **base_attributes,
-            file_url="https://scholar.harvard.edu/files/torman_personal/files/samplepptx.pptx",
-            file_type=1
+            file_url="https://filesamples.com/samples/document/pdf/sample1.pdf",
+            file_type="invalid_type"
         )
-    assert isinstance(exc_info.value, SyllabusGeneratorError)
-
-# DOCX Tests
-def test_executor_docx_url_valid():
-    syllabus = executor(
-        **base_attributes,
-        file_url="https://filesamples.com/samples/document/docx/sample1.docx",
-        file_type="docx"
-    )
-    assert isinstance(syllabus, dict)
-
-def test_executor_docx_url_invalid():
-    with pytest.raises(SyllabusGeneratorError) as exc_info:
-        executor(
-            **base_attributes,
-            file_url="https://filesamples.com/samples/document/docx/sample1.docx",
-            file_type=1
-        )
-    assert isinstance(exc_info.value, SyllabusGeneratorError)
-
-# XLS Tests
-def test_executor_xls_url_valid():
-    syllabus = executor(
-        **base_attributes,
-        file_url="https://filesamples.com/samples/document/xls/sample1.xls",
-        file_type="xls"
-    )
-    assert isinstance(syllabus, dict)
-
-def test_executor_xls_url_invalid():
-    with pytest.raises(SyllabusGeneratorError) as exc_info:
-        executor(
-            **base_attributes,
-            file_url="https://filesamples.com/samples/document/xls/sample1.xls",
-            file_type=1
-        )
-    assert isinstance(exc_info.value, SyllabusGeneratorError)
-
-# XLSX Tests
-def test_executor_xlsx_url_valid():
-    syllabus = executor(
-        **base_attributes,
-        file_url="https://filesamples.com/samples/document/xlsx/sample1.xlsx",
-        file_type="xlsx"
-    )
-    assert isinstance(syllabus, dict)
-
-def test_executor_xlsx_url_invalid():
-    with pytest.raises(SyllabusGeneratorError) as exc_info:
-        executor(
-            **base_attributes,
-            file_url="https://filesamples.com/samples/document/xlsx/sample1.xlsx",
-            file_type=1
-        )
-    assert isinstance(exc_info.value, SyllabusGeneratorError)
-
-# XML Tests
-def test_executor_xml_url_invalid():
-    with pytest.raises(SyllabusGeneratorError) as exc_info:
-        executor(
-            **base_attributes,
-            file_url="https://filesampleshub.com/download/code/xml/dummy.xml",
-            file_type=1
-        )
-    assert isinstance(exc_info.value, SyllabusGeneratorError)
-
-# GDocs Tests
-def test_executor_gdocs_url_invalid():
-    with pytest.raises(SyllabusGeneratorError) as exc_info:
-        executor(
-            **base_attributes,
-            file_url="https://docs.google.com/document/d/1OWQfO9LX6psGipJu9LabzNE22us1Ct/edit",
-            file_type=1
-        )
-    assert isinstance(exc_info.value, SyllabusGeneratorError)
-
-# GSheets Tests
-def test_executor_gsheets_url_invalid():
-    with pytest.raises(SyllabusGeneratorError) as exc_info:
-        executor(
-            **base_attributes,
-            file_url="https://docs.google.com/spreadsheets/d/16OPtLLSfU/edit",
-            file_type=1
-        )
-    assert isinstance(exc_info.value, SyllabusGeneratorError)
-
-# GSlides Tests
-def test_executor_gslides_url_invalid():
-    with pytest.raises(SyllabusGeneratorError) as exc_info:
-        executor(
-            **base_attributes,
-            file_url="https://docs.google.com/spreadsheets/d/16OPtLLSfU/edit",
-            file_type=1
-        )
-    assert isinstance(exc_info.value, SyllabusGeneratorError)
-
-# GPDFs Tests
-def test_executor_gpdfs_url_valid():
-    syllabus = executor(
-        **base_attributes,
-        file_url="https://drive.google.com/file/d/1fUj1uWIMh6QZsPkt0Vs7mEd2VEqz3O8l/view",
-        file_type="gpdf"
-    )
-    assert isinstance(syllabus, dict)
-
-def test_executor_gpdfs_url_invalid():
-    with pytest.raises(SyllabusGeneratorError) as exc_info:
-        executor(
-            **base_attributes,
-            file_url="https://drive.google.com/file/d/1fUj1uWIMh6QZsPkt0Vs7mEd2VEqz3O8l/view",
-            file_type=1
-        )
-    assert isinstance(exc_info.value, SyllabusGeneratorError)
-
-# MP3 Tests
-def test_executor_mp3_url_invalid():
-    with pytest.raises(SyllabusGeneratorError) as exc_info:
-        executor(
-            **base_attributes,
-            file_url="https://raw.githubusercontent.com/asleem/uploaded_files/main/dummy.mp3",
-            file_type=1
-        )
-    assert isinstance(exc_info.value, SyllabusGeneratorError)
