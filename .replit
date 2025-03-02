@@ -1,5 +1,5 @@
 modules = ["python-3.12", "bash", "nix"]
-run = "uvicorn undefined:app --host 0.0.0.0 --port 3000"
+run = "uvicorn app.main:app --host 0.0.0.0 --port 3000"
 
 [nix]
 channel = "stable-24_05"
