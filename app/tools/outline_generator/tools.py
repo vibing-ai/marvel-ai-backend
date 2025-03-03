@@ -48,12 +48,20 @@ class OutlineGenerator:
             # Create the prompt for the AI model
             # prompt = self._build_prompt(context, doc_content)
 
-            prompt = PromptTemplate(
+            prompt_template = PromptTemplate(
                 template=read_text_file("prompt/outline-generator-prompt.txt"),
                 input_variables=["level", "context", "num_slides"]
             )
+            
+            # Format the prompt template with our variables
+            formatted_prompt = prompt_template.format(
+                level=self.args.level,
+                context=self.args.context,
+                num_slides=self.args.num_slides
+            )
+            
             # Generate the outline using the AI model
-            response = self.llm.invoke(prompt)
+            response = self.llm.invoke(formatted_prompt)
             
             if self.verbose:
                 logger.info("AI model response received")
