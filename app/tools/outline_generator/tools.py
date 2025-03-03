@@ -15,28 +15,6 @@ class OutlineSlideItem(BaseModel):
 class OutlineOutput(BaseModel):
     """Output model for the outline generator."""
     slides: List[str] = Field(..., description="List of slide titles in the outline")
-    
-    class Config:
-        schema_extra = {
-            "example": {
-                "slides": [
-                    "Introduction to the Topic",
-                    "Historical Background",
-                    "Key Concepts",
-                    "Applications",
-                    "Conclusion"
-                ]
-            }
-        }
-
-# class OutlineGeneratorArgs(BaseModel):
-#     """Input arguments for the outline generator."""
-#     context: str = Field(..., description="The context or topic for the outline")
-#     num_slides: int = Field(..., description="Number of slides to generate")
-#     level: str = Field(..., description="Instructional level (Elementary, Middle School, High School, University)")
-#     file_url: Optional[str] = Field(None, description="URL of a file with additional context")
-#     file_type: Optional[str] = Field(None, description="Type of the file")
-#     lang: Optional[str] = Field("en", description="Language for the outline")
 
 class OutlineGenerator:
     """Class to generate slide outlines based on user inputs."""
