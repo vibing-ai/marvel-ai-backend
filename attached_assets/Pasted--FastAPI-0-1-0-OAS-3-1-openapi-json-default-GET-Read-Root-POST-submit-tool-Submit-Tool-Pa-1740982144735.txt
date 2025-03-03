@@ -1,0 +1,197 @@
+
+FastAPI
+ 0.1.0 
+OAS 3.1
+/openapi.json
+default
+
+
+GET
+/
+Read Root
+
+
+POST
+/submit-tool
+Submit Tool
+
+Parameters
+Cancel
+Reset
+Name	Description
+api-key
+string
+(header)
+dev
+Request body
+
+application/json
+
+{
+  "user": {
+    "id": "teacher_789",
+    "fullName": "Dr. Emily Carter",
+    "email": "emily.carter@university.edu"
+  },
+  "type": "tool",
+  "tool_data": {
+    "tool_id": "outline-generator",
+    "inputs": [
+      {
+        "name": "context",
+        "value": "Renewable Energy Sources"
+      },
+      {
+        "name": "num_slides",
+        "value": "7"
+      },
+      {
+        "name": "level",
+        "value": "Middle School"
+      },
+      {
+        "name": "file_url",
+        "value": ""
+      },
+      {
+        "name": "file_type",
+        "value": ""
+      },
+      {
+        "name": "lang",
+        "value": "en"
+      }
+    ]
+  }
+}
+Execute
+Clear
+Responses
+Curl
+
+curl -X 'POST' \
+  'https://26c926e3-cba0-4ffa-a66e-bcd6d448799c-00-3eedz0u3t4l5h.picard.replit.dev/submit-tool' \
+  -H 'accept: application/json' \
+  -H 'api-key: dev' \
+  -H 'Content-Type: application/json' \
+  -d '
+{
+  "user": {
+    "id": "teacher_789",
+    "fullName": "Dr. Emily Carter",
+    "email": "emily.carter@university.edu"
+  },
+  "type": "tool",
+  "tool_data": {
+    "tool_id": "outline-generator",
+    "inputs": [
+      {
+        "name": "context",
+        "value": "Renewable Energy Sources"
+      },
+      {
+        "name": "num_slides",
+        "value": "7"
+      },
+      {
+        "name": "level",
+        "value": "Middle School"
+      },
+      {
+        "name": "file_url",
+        "value": ""
+      },
+      {
+        "name": "file_type",
+        "value": ""
+      },
+      {
+        "name": "lang",
+        "value": "en"
+      }
+    ]
+  }
+}'
+Request URL
+https://26c926e3-cba0-4ffa-a66e-bcd6d448799c-00-3eedz0u3t4l5h.picard.replit.dev/submit-tool
+Server response
+Code	Details
+500
+Undocumented
+Error: Internal Server Error
+
+Response body
+Download
+{
+  "status": 500,
+  "message": "Error in executor: Failed to generate outline: [Errno 2] No such file or directory: '/home/runner/workspace/app/tools/outline_generator/prompt/outline_generator.txt'"
+}
+Response headers
+ access-control-allow-credentials: true 
+ access-control-allow-origin: * 
+ content-length: 192 
+ content-type: application/json 
+ date: Mon,03 Mar 2025 06:08:50 GMT 
+ replit-cluster: picard 
+ server: uvicorn 
+ x-robots-tag: none,noindex,noarchive,nofollow,nositelinkssearchbox,noimageindex,none,noindex,noarchive,nofollow,nositelinkssearchbox,noimageindex 
+Responses
+Code	Description	Links
+200	
+Successful Response
+
+Media type
+
+application/json
+Controls Accept header.
+Example Value
+Schema
+{
+  "data": "string"
+}
+No links
+422	
+Validation Error
+
+Media type
+
+application/json
+Example Value
+Schema
+{
+  "detail": [
+    {
+      "loc": [
+        "string",
+        0
+      ],
+      "msg": "string",
+      "type": "string"
+    }
+  ]
+}
+No links
+
+POST
+/assistant-chat
+Assistants
+
+
+Schemas
+AssistantInputsExpand allobject
+BaseToolExpand allobject
+ChatResponseExpand allobject
+ErrorResponseExpand allobject
+GenericAssistantRequestExpand allobject
+HTTPValidationErrorExpand allobject
+MessageExpand allobject
+MessagePayloadExpand allobject
+MessageTypeExpand allstring
+RequestTypeExpand allstring
+RoleExpand allstring
+ToolInputExpand allobject
+ToolRequestExpand allobject
+ToolResponseExpand allobject
+UserExpand allobject
+UserInfoExpand allobject
+ValidationErrorExpand allobject

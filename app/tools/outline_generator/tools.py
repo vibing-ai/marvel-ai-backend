@@ -49,7 +49,7 @@ class OutlineGenerator:
             # prompt = self._build_prompt(context, doc_content)
 
             promp = PromptTemplate(
-                template=read_text_file("/prompt/outline_generator.txt"),
+                template=read_text_file("prompt/outline_generator.txt"),
                 input_variables=["leve", "context", "num_slides",],
                 partial_variables={"format_instructions": self.parser.get_format_instructions()}
             )
