@@ -2,7 +2,8 @@
 from app.services.logger import setup_logger
 from app.api.error_utilities import LoaderError, ToolExecutorError
 from app.utils.document_loaders import get_docs
-from app.tools.outline_generator.tools import OutlineGenerator, OutlineGeneratorArgs
+from app.tools.outline_generator.tools import OutlineGenerator
+from app.services.schemas import OutlineGeneratorArgs
 
 logger = setup_logger()
 
