@@ -2,6 +2,7 @@
 from pydantic import BaseModel, Field
 from typing import List, Optional
 from langchain_google_genai import ChatGoogleGenerativeAI
+from app.services.schemas import OutlineGeneratorArgs
 from app.services.logger import setup_logger
 import json
 
