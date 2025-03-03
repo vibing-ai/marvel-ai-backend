@@ -67,7 +67,7 @@ class OutlineGenerator:
                 logger.info("AI model response received")
             
             # Extract and process the slide titles
-            # slide_titles = self._process_response(response.content)
+            slide_titles = self._process_response(response.content)
             
             return OutlineOutput(slides=slide_titles)
             
