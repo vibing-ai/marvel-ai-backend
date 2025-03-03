@@ -15,14 +15,14 @@ class OutlineOutput(BaseModel):
     """Output model for the outline generator."""
     slides: List[str] = Field(..., description="List of slide titles in the outline")
 
-class OutlineGeneratorArgs(BaseModel):
-    """Input arguments for the outline generator."""
-    context: str = Field(..., description="The context or topic for the outline")
-    num_slides: int = Field(..., description="Number of slides to generate")
-    level: str = Field(..., description="Instructional level (Elementary, Middle School, High School, University)")
-    file_url: Optional[str] = Field(None, description="URL of a file with additional context")
-    file_type: Optional[str] = Field(None, description="Type of the file")
-    lang: Optional[str] = Field("en", description="Language for the outline")
+# class OutlineGeneratorArgs(BaseModel):
+#     """Input arguments for the outline generator."""
+#     context: str = Field(..., description="The context or topic for the outline")
+#     num_slides: int = Field(..., description="Number of slides to generate")
+#     level: str = Field(..., description="Instructional level (Elementary, Middle School, High School, University)")
+#     file_url: Optional[str] = Field(None, description="URL of a file with additional context")
+#     file_type: Optional[str] = Field(None, description="Type of the file")
+#     lang: Optional[str] = Field("en", description="Language for the outline")
 
 class OutlineGenerator:
     """Class to generate slide outlines based on user inputs."""
@@ -78,7 +78,7 @@ class OutlineGenerator:
 
         Output Requirements:
         1. Generate exactly {self.args.num_slides} slide titles.
-        2. Ensure titles are clear, concise, and educational.
+        2. Ensure titles are clear, concise, and educational Make .
         3. Follow a logical flow from introduction to conclusion.
         4. Match the {self.args.level} educational level in complexity and depth.
         5. Format your response as a JSON array of strings ONLY (no explanation text).
