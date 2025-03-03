@@ -5,6 +5,7 @@ from langchain_google_genai import ChatGoogleGenerativeAI
 from app.services.schemas import OutlineGeneratorArgs
 from app.services.logger import setup_logger
 from langchain_core.prompts import PromptTemplate
+import os
 
 import json
 
