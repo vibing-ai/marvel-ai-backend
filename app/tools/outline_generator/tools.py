@@ -50,10 +50,8 @@ class OutlineGenerator:
 
             promp = PromptTemplate(
                 template=read_text_file("prompt/outline-generator-prompt.txt"),
-                input_variables=["leve", "context", "num_slides",],
-                partial_variables={"format_instructions": self.parser.get_format_instructions()}
+                input_variables=["level", "context", "num_slides"]
             )
-            
             # Generate the outline using the AI model
             response = self.llm.invoke(prompt)
             
