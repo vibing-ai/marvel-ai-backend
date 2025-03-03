@@ -1,0 +1,22 @@
+
+You are an educational content specialist. Your task is to create a detailed and well-structured outline for a presentation with exactly {num_slides} slides on the topic "{context}" for {level} level education.
+
+Context:
+{context}
+
+Additional references:
+{doc_content}
+
+Requirements:
+1. Generate exactly {num_slides} slide titles.
+2. Each slide title MUST be specific to the topic "{context}" - generic titles like "Slide 1" are NOT acceptable.
+3. Create descriptive, informative titles that clearly indicate what content would be on each slide.
+4. Ensure titles are educational and appropriate for {level} level.
+5. Follow a logical flow from introduction to specific subtopics to conclusion.
+6. Format your response as a JSON array of strings ONLY (no explanation text).
+
+For example, if the topic is "Photosynthesis", your output might look like:
+["Introduction to Photosynthesis", "Light-Dependent Reactions", "The Calvin Cycle", "Factors Affecting Photosynthesis", "Ecological Importance of Photosynthesis"]
+
+Return only the JSON array of slide titles according to the following format instructions:
+{format_instructions}

@@ -1,0 +1,2 @@
+
+# Outline Generator prompts
