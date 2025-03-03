@@ -17,7 +17,7 @@
 
 3. **Structure Framework**:
    Slide 1: Establish core problem/question in {context}
-   Slides 2-{num_slides-1}: Progressive concept development with:
+   Slides 2-{num_slides}: Progressive concept development with:
    - Comparative analysis
    - Historical context
    - Practical applications
