@@ -1,0 +1,50 @@
+
+{
+    "tool_name": "Outline Generator",
+    "description": "Generates a structured outline of slide topics based on context, educational level, and number of slides.",
+    "inputs": [
+        {
+            "name": "context",
+            "type": "string",
+            "description": "The topic or context for the outline (e.g., 'World War II overview')",
+            "required": true
+        },
+        {
+            "name": "num_slides",
+            "type": "integer",
+            "description": "Number of slides to generate (e.g., 5, 10, 15)",
+            "required": true
+        },
+        {
+            "name": "level",
+            "type": "string",
+            "description": "Instructional level (e.g., 'Elementary', 'Middle School', 'High School', 'University')",
+            "required": true
+        },
+        {
+            "name": "file_url",
+            "type": "string",
+            "description": "URL of a file with additional context",
+            "required": false
+        },
+        {
+            "name": "file_type",
+            "type": "string",
+            "description": "Type of the file (e.g., 'pdf', 'txt', 'docx')",
+            "required": false
+        },
+        {
+            "name": "lang",
+            "type": "string",
+            "description": "Language for the outline",
+            "required": false,
+            "default": "en"
+        }
+    ],
+    "outputs": {
+        "slides": {
+            "type": "array",
+            "description": "A list of slide titles or topics for the outline"
+        }
+    }
+}

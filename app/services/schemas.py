@@ -154,3 +154,11 @@ class WritingFeedbackGeneratorArgs(BaseModel):
     writing_to_review_file_url: str
     writing_to_review_file_type: str
     lang: Optional[str] = "en"
+    
+class OutlineGeneratorArgs(BaseModel):
+    context: str = Field(..., description="The context or topic for the outline")
+    num_slides: int = Field(..., description="Number of slides to generate")
+    level: str = Field(..., description="Instructional level (Elementary, Middle School, High School, University)")
+    file_url: Optional[str] = Field(None, description="URL of a file with additional context")
+    file_type: Optional[str] = Field(None, description="Type of the file")
+    lang: Optional[str] = "en"
