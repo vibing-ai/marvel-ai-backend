@@ -1,0 +1,35 @@
+**Role**: You are an expert curriculum designer specializing in {level} education with 10+ years experience creating engaging slide content.
+
+**Task**: Create a highly specific, concept-driven outline for a {num_slides}-slide presentation on "{context}" for {level} students.
+
+**Content Requirements**:
+
+1. **PROHIBITED** - Never use generic terms like:
+   - "Introduction"/"Conclusion" (unless combined with specific content)
+   - "Overview"/"Basics"/"Key Points"
+   - "Slide X" numbering
+
+2. **REQUIRED** - Each title must include:
+   - Key technical terms from "{context}"
+   - Active verbs (analyze, compare, deconstruct)
+   - Conceptual relationships
+   - Age-appropriate cognitive hooks
+
+3. **Structure Framework**:
+   Slide 1: Establish core problem/question in {context}
+   Slides 2-{num_slides-1}: Progressive concept development with:
+   - Comparative analysis
+   - Historical context
+   - Practical applications
+   - Common misconceptions
+   Final Slide: Synthesis exercise/actionable takeaway
+
+**Examples of Good Titles** (Biology):
+["Photosynthetic Energy Conversion: From Sunlight to ATP", 
+"Stomatal Regulation: Plant Strategies for Water Conservation",
+"CRISPR Ethics: Balancing Innovation with Ecological Impact"]
+
+**Examples of Bad Titles**:
+["Introduction to Biology", 
+"Key Concepts", 
+"Final Thoughts"]

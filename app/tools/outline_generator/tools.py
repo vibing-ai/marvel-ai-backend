@@ -4,17 +4,21 @@ from typing import List, Optional
 from langchain_google_genai import ChatGoogleGenerativeAI
 from app.services.schemas import OutlineGeneratorArgs
 from app.services.logger import setup_logger
+from langchain_core.prompts import PromptTemplate
+
 import json
 
 logger = setup_logger()
 
-class OutlineSlideItem(BaseModel):
-    """Represents a single slide title in the outline."""
-    title: str
+def read_text_file(file_path):
+    # Get the directory containing the script file
+    script_dir = os.path.dirname(os.path.abspath(__file__))
 
-class OutlineOutput(BaseModel):
-    """Output model for the outline generator."""
-    slides: List[str] = Field(..., description="List of slide titles in the outline")
+    # Combine the script directory with the relative file path
+    absolute_file_path = os.path.join(script_dir, file_path)
+
+    with open(absolute_file_path, 'r') as file:
+        return file.read()
 
 class OutlineGenerator:
     """Class to generate slide outlines based on user inputs."""
@@ -41,7 +45,13 @@ class OutlineGenerator:
                     logger.info(f"Including additional content from documents")
             
             # Create the prompt for the AI model
-            prompt = self._build_prompt(context, doc_content)
+            # prompt = self._build_prompt(context, doc_content)
+
+            promp = PromptTemplate(
+                template=read_text_file("/prompt/outline_generator.txt"),
+                input_variables=["leve", "context", "num_slides",],
+                partial_variables={"format_instructions": self.parser.get_format_instructions()}
+            )
             
             # Generate the outline using the AI model
             response = self.llm.invoke(prompt)
@@ -50,7 +60,7 @@ class OutlineGenerator:
                 logger.info("AI model response received")
             
             # Extract and process the slide titles
-            slide_titles = self._process_response(response.content)
+            # slide_titles = self._process_response(response.content)
             
             return OutlineOutput(slides=slide_titles)
             
@@ -58,30 +68,10 @@ class OutlineGenerator:
             logger.error(f"Error in outline generation: {str(e)}")
             raise ValueError(f"Failed to generate outline: {str(e)}")
     
-    def _build_prompt(self, context, doc_content):
-        """Build the prompt for the AI model."""
-        prompt = f"""
-        You are an educational content specialist. Create a detailed and specific outline for a presentation with {self.args.num_slides} slides on the topic: "{self.args.context}" for {self.args.level} level education.
-
-        {context}
-
-        Additional context information:
-        {doc_content if doc_content else "No additional context provided."}
-
-        Output Requirements:
-        1. Generate exactly {self.args.num_slides} slide titles.
-        2. Each slide title MUST be specific to the topic "{self.args.context}" - generic titles like "Slide 1" are NOT acceptable.
-        3. Create descriptive, informative titles that clearly indicate the content of each slide.
-        4. Ensure titles are educational and appropriate for {self.args.level} level.
-        5. Follow a logical flow from introduction to specific subtopics to conclusion.
-        6. Format your response as a JSON array of strings ONLY (no explanation text).
-        
-        For example, if the topic is "Photosynthesis":
-        ["Introduction to Photosynthesis", "Light-Dependent Reactions", "The Calvin Cycle", "Factors Affecting Photosynthesis", "Ecological Importance of Photosynthesis"]
-        
-        Return only the JSON array of slide titles.
-        """
-        return prompt
+    # def _build_prompt(self, context, doc_content):
+    #     """Build the prompt for the AI model."""
+    
+    #     return prompt
     
     def _process_response(self, response_text):
         """Process the AI response to extract the slide titles."""
@@ -190,3 +180,11 @@ class OutlineGenerator:
         except Exception as e:
             logger.error(f"Error processing response: {str(e)}")
             return [f"Slide {i+1}" for i in range(self.args.num_slides)]
+
+class OutlineSlideItem(BaseModel):
+    """Represents a single slide title in the outline."""
+    title: str
+
+class OutlineOutput(BaseModel):
+    """Output model for the outline generator."""
+    slides: List[str] = Field(..., description="List of slide titles in the outline")
