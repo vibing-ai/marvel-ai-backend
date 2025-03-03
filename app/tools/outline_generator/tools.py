@@ -14,6 +14,19 @@ class OutlineSlideItem(BaseModel):
 class OutlineOutput(BaseModel):
     """Output model for the outline generator."""
     slides: List[str] = Field(..., description="List of slide titles in the outline")
+    
+    class Config:
+        schema_extra = {
+            "example": {
+                "slides": [
+                    "Introduction to the Topic",
+                    "Historical Background",
+                    "Key Concepts",
+                    "Applications",
+                    "Conclusion"
+                ]
+            }
+        }
 
 # class OutlineGeneratorArgs(BaseModel):
 #     """Input arguments for the outline generator."""
@@ -69,7 +82,7 @@ class OutlineGenerator:
     def _build_prompt(self, context, doc_content):
         """Build the prompt for the AI model."""
         prompt = f"""
-        You are an educational content specialist. Create an outline for a presentation with {self.args.num_slides} slides on the topic: "{self.args.context}" for {self.args.level} level education.
+        You are an educational content specialist. Create a detailed and specific outline for a presentation with {self.args.num_slides} slides on the topic: "{self.args.context}" for {self.args.level} level education.
 
         {context}
 
@@ -78,12 +91,14 @@ class OutlineGenerator:
 
         Output Requirements:
         1. Generate exactly {self.args.num_slides} slide titles.
-        2. Ensure titles are clear, concise, and educational Make .
-        3. Follow a logical flow from introduction to conclusion.
-        4. Match the {self.args.level} educational level in complexity and depth.
-        5. Format your response as a JSON array of strings ONLY (no explanation text).
+        2. Each slide title MUST be specific to the topic "{self.args.context}" - generic titles like "Slide 1" are NOT acceptable.
+        3. Create descriptive, informative titles that clearly indicate the content of each slide.
+        4. Ensure titles are educational and appropriate for {self.args.level} level.
+        5. Follow a logical flow from introduction to specific subtopics to conclusion.
+        6. Format your response as a JSON array of strings ONLY (no explanation text).
         
-        For example: ["Introduction to Topic", "First Main Point", "Second Main Point", "Applications", "Conclusion"]
+        For example, if the topic is "Photosynthesis":
+        ["Introduction to Photosynthesis", "Light-Dependent Reactions", "The Calvin Cycle", "Factors Affecting Photosynthesis", "Ecological Importance of Photosynthesis"]
         
         Return only the JSON array of slide titles.
         """
@@ -106,20 +121,87 @@ class OutlineGenerator:
                     cleaned_text = cleaned_text[:-3].strip()
             
             # Parse the JSON array
-            slide_titles = json.loads(cleaned_text)
-            
-            # Ensure we have the correct number of slides
-            if len(slide_titles) != self.args.num_slides:
-                logger.warning(f"Expected {self.args.num_slides} slides but got {len(slide_titles)}")
-                # Adjust the number of slides if necessary
-                if len(slide_titles) > self.args.num_slides:
-                    slide_titles = slide_titles[:self.args.num_slides]
-                else:
-                    # If we have too few slides, add generic ones to reach the target
-                    additional_slides = [f"Additional Content {i+1}" for i in range(self.args.num_slides - len(slide_titles))]
-                    slide_titles.extend(additional_slides)
-            
-            return slide_titles
+            try:
+                slide_titles = json.loads(cleaned_text)
+                
+                # Check for generic slide titles
+                generic_title_count = sum(1 for title in slide_titles if title.lower().startswith("slide "))
+                if generic_title_count > 0:
+                    logger.warning(f"Detected {generic_title_count} generic slide titles. Attempting to regenerate.")
+                    # Try a simple fix - call the AI again with a stronger instruction
+                    retry_prompt = f"""
+                    You are an educational content specialist. The slide titles you provided are too generic.
+                    
+                    Create {self.args.num_slides} SPECIFIC and DESCRIPTIVE slide titles for a presentation on "{self.args.context}" for {self.args.level} level education.
+                    
+                    Each title must clearly indicate the content and be related to the topic. Do NOT use generic titles like "Slide 1".
+                    
+                    Return only a JSON array of slide titles.
+                    """
+                    retry_response = self.llm.invoke(retry_prompt)
+                    cleaned_retry = retry_response.content.strip()
+                    if cleaned_retry.startswith("```") and cleaned_retry.endswith("```"):
+                        cleaned_retry = cleaned_retry[3:-3].strip()
+                    if cleaned_retry.startswith("```json"):
+                        cleaned_retry = cleaned_retry[7:].strip()
+                        if cleaned_retry.endswith("```"):
+                            cleaned_retry = cleaned_retry[:-3].strip()
+                    
+                    try:
+                        new_titles = json.loads(cleaned_retry)
+                        # Check if the new titles are better
+                        new_generic_count = sum(1 for title in new_titles if title.lower().startswith("slide "))
+                        if new_generic_count < generic_title_count:
+                            slide_titles = new_titles
+                    except:
+                        logger.warning("Failed to parse retry response, keeping original titles")
+                
+                # Ensure we have the correct number of slides
+                if len(slide_titles) != self.args.num_slides:
+                    logger.warning(f"Expected {self.args.num_slides} slides but got {len(slide_titles)}")
+                    # Adjust the number of slides if necessary
+                    if len(slide_titles) > self.args.num_slides:
+                        slide_titles = slide_titles[:self.args.num_slides]
+                    else:
+                        # If we have too few slides, generate specific slide titles based on context
+                        topic_words = self.args.context.split()
+                        missing_count = self.args.num_slides - len(slide_titles)
+                        additional_slides = [f"{topic_words[0]} Subtopic {i+1}: Additional Content" for i in range(missing_count)]
+                        slide_titles.extend(additional_slides)
+                
+                # Final check to replace any remaining generic titles
+                for i, title in enumerate(slide_titles):
+                    if title.lower().startswith("slide "):
+                        topic_words = self.args.context.split()
+                        if i == 0:
+                            slide_titles[i] = f"Introduction to {self.args.context}"
+                        elif i == len(slide_titles) - 1:
+                            slide_titles[i] = f"Conclusion: Key Takeaways on {self.args.context}"
+                        else:
+                            slide_titles[i] = f"Key Aspect {i} of {self.args.context}"
+                
+                return slide_titles
+            except json.JSONDecodeError as e:
+                logger.error(f"Failed to parse JSON response: {e}")
+                logger.error(f"Response text: {response_text}")
+                # Create context-specific fallback titles rather than generic ones
+                topic = self.args.context
+                
+                default_titles = [
+                    f"Introduction to {topic}",
+                    f"Background of {topic}",
+                    f"Key Concepts in {topic}",
+                    f"Important Components of {topic}"
+                ]
+                
+                # Add more specific titles based on number needed
+                remaining = self.args.num_slides - len(default_titles)
+                if remaining > 0:
+                    default_titles.extend([f"Aspect {i+1} of {topic}" for i in range(remaining-1)])
+                    default_titles.append(f"Conclusion: Summary of {topic}")
+                
+                # Trim if we have too many
+                return default_titles[:self.args.num_slides]
             
         except json.JSONDecodeError as e:
             logger.error(f"Failed to parse JSON response: {e}")
