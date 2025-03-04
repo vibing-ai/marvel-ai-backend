@@ -27,6 +27,10 @@
         "path": "tools.presentation_generator.core",
         "metadata_file": "metadata.json"
     },
+    "outline-generator":{
+         "path": "tools.outline_generator.core",
+        "metadata_file": "metadata.json"
+    },
     "connect-with-them": {
         "path": "tools.connect_with_them.core",
         "metadata_file": "metadata.json"

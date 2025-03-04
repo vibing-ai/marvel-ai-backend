@@ -1,0 +1,7 @@
+Generate a sequence of {no_of_slides} engaging slide titles for a presentation on '{text_context}' at a {instructional_level} instructional level. Ensure that each title:​
+
+1. Is concise yet descriptive (5-10 words each)​
+2. Follows a logical progression from introduction to conclusion​
+3. Reflects the appropriate technical depth for the specified instructional level​
+4. Utilizes engaging language that captures audience interest​
+5. Return ONLY the numbered slide titles without additional outline details or explanations in this structure: {format_instructions}.

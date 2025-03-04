@@ -1,0 +1,26 @@
+{
+    "inputs": [
+        {
+            "label": "Text Context",
+            "name": "text_context",
+            "type": "text"
+            
+        },
+        {
+            "label": "No of Slides",
+            "name": "no_of_slides",
+            "type": "number"
+        },
+        {
+            "label": "Instructional Level",
+            "name": "instructional_level",
+            "type": "text"
+        }
+
+        ,{
+            "label": "Language",
+            "name": "lang",
+            "type": "text"
+        }
+    ]
+}

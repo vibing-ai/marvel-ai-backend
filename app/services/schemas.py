@@ -154,3 +154,10 @@ class WritingFeedbackGeneratorArgs(BaseModel):
     writing_to_review_file_url: str
     writing_to_review_file_type: str
     lang: Optional[str] = "en"
+
+class OutlineGeneratorArgs(BaseModel):
+        text_context:str
+        no_of_slides:int
+        instructional_level:str
+        lang:str
+      
