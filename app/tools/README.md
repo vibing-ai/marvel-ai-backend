@@ -48,6 +48,8 @@ class MCQArgs(BaseModel):
     file_url: str
     file_type: str
     lang: str = "en"
+    grade_level: str
+    quiz_description: str
 ```
 
 ## Output Schema:
@@ -65,38 +67,46 @@ class QuizQuestion(BaseModel):
 
 ### PDF:
 ```json 
-{ 
-   "user": {
-      "id": "string",
-      "fullName": "string",
-      "email": "string"
-   },
-   "type": "tool",
-   "tool_data": {
-      "tool_id": "multiple-choice-quiz-generator",
-      "inputs": [
-         {
-            "name": "topic",
-            "value": "Linear Algebra"
-         },
-         {
-            "name": "n_questions",
-            "value": 3
-         },
-         {
-            "name": "file_url",
-            "value": "https://firebasestorage.googleapis.com/v0/b/kai-ai-f63c8.appspot.com/o/uploads%2F510f946e-823f-42d7-b95d-d16925293946-Linear%20Regression%20Stat%20Yale.pdf?alt=media&token=caea86aa-c06b-4cde-9fd0-42962eb72ddd"
-         },
-         {
-            "name": "file_type",
-            "value": "pdf"
-         },
-         {
-            "name": "lang",
-            "value": "en"
-         }
-      ]
-   }
+{
+	"user": {
+		"id": "string",
+		"fullName": "string",
+		"email": "string"
+	},
+	"type": "tool",
+	"tool_data": {
+		"tool_id": "multiple-choice-quiz-generator",
+		"inputs": [
+			{
+				"name": "topic",
+				"value": "Linear Algebra"
+			},
+			{
+				"name": "n_questions",
+				"value": 3
+			},
+			{
+				"name": "file_url",
+				"value": "https://firebasestorage.googleapis.com/v0/b/kai-ai-f63c8.appspot.com/o/uploads%2F510f946e-823f-42d7-b95d-d16925293946-Linear%20Regression%20Stat%20Yale.pdf?alt=media&token=caea86aa-c06b-4cde-9fd0-42962eb72ddd"
+			},
+			{
+				"name": "file_type",
+				"value": "pdf"
+			},
+			{
+				"name": "lang",
+				"value": "en"
+			},
+			{
+				"name": "grade_level",
+				"value": "college"
+			},
+			{
+				"name": "quiz_description",
+				"value": "This multiple-choice quiz assesses students' understanding of key concepts in Linear Algebra, focusing on topics related to Linear Regression as covered in the provided document. It tests knowledge of matrix operations, vector spaces, and transformations, ensuring practical application."
+			}
+		]
+	}
 }
 ```
 
@@ -132,6 +142,14 @@ class QuizQuestion(BaseModel):
          {
             "name": "lang",
             "value": "en"
+         },
+         {
+            "name": "grade_level",
+            "value": "high school"
+         },
+         {
+            "name": "quiz_description",
+            "value": "This multiple-choice quiz evaluates knowledge about different countries, their capitals, populations, and geographical data based on the provided Excel dataset."
          }
       ]
    }
@@ -169,6 +187,14 @@ class QuizQuestion(BaseModel):
          {
             "name": "lang",
             "value": "en"
+         },
+         {
+            "name": "grade_level",
+            "value": "college"
+         },
+         {
+            "name": "quiz_description",
+            "value": "This quiz assesses students' understanding of fundamental machine learning concepts as explained in the provided YouTube video. Topics include supervised learning, unsupervised learning, and neural networks."
          }
       ]
    }
@@ -206,6 +232,14 @@ class QuizQuestion(BaseModel):
          {
             "name": "lang",
             "value": "en"
+         },
+         {
+            "name": "grade_level",
+            "value": "college"
+         },
+         {
+            "name": "quiz_description",
+            "value": "This quiz evaluates students' comprehension of OpenAI's capabilities, research focus, and AI applications based on the provided Google Doc."
          }
       ]
    }
@@ -243,6 +277,14 @@ class QuizQuestion(BaseModel):
          {
             "name": "lang",
             "value": "en"
+         },
+         {
+            "name": "grade_level",
+            "value": "college"
+         },
+         {
+            "name": "quiz_description",
+            "value": "This multiple-choice quiz assesses knowledge of OpenAI’s key research areas, its AI models, and applications in various industries based on the provided PDF."
          }
       ]
    }
@@ -280,6 +322,14 @@ class QuizQuestion(BaseModel):
          {
             "name": "lang",
             "value": "en"
+         },
+         {
+            "name": "grade_level",
+            "value": "college"
+         },
+         {
+            "name": "quiz_description",
+            "value": "This quiz tests knowledge of AWS cloud architecture by analyzing and interpreting the provided image, which contains a detailed architectural diagram of AWS services."
          }
       ]
    }
