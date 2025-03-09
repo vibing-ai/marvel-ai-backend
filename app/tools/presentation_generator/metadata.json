@@ -1,4 +1,4 @@
-{
+{ 
     "inputs": [
         {
             "label": "Grade Level",
@@ -16,33 +16,8 @@
             "type": "text"
         },
         {
-            "label": "Standards/Objectives",
+            "label": "Objectives/Description",
             "name": "objectives",
-            "type": "text"
-        },
-        {
-            "label": "Additional Comments",
-            "name": "additional_comments",
-            "type": "text"
-        },
-        {
-            "label": "Standards/Objectives File URL",
-            "name": "objectives_file_url",
-            "type": "text"
-        },
-        {
-            "label": "Standards/Objectives File Type",
-            "name": "objectives_file_type",
-            "type": "text"
-        },
-        {
-            "label": "Additional Comments File URL",
-            "name": "additional_comments_file_url",
-            "type": "text"
-        },
-        {
-            "label": "Additional Comments File Type",
-            "name": "additional_comments_file_type",
             "type": "text"
         },
         {

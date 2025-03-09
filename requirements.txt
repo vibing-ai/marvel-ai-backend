@@ -38,3 +38,5 @@ pydub
 ffmpeg-python
 speechrecognition
 google-cloud-speech
+redis[hiredis]>=5.0.0
+aioredis>=2.0.0

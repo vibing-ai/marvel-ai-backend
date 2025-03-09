@@ -110,16 +110,12 @@ class ConnectWithThemArgs(BaseModel):
     student_description_file_type: str
     lang: str = Field(..., description="The language in which the subject is being taught.")
 
-class PresentationGeneratorInput(BaseModel):
+# Changed request schema to match the new functionality of the presentation generator
+class PresentationGeneratorArgs(BaseModel):
     grade_level: str
     n_slides: int
     topic: str
     objectives: str
-    additional_comments: str
-    objectives_file_url: str
-    objectives_file_type: str
-    additional_comments_file_url: str
-    additional_comments_file_type: str
     lang: Optional[str] = "en"
 
 class RubricGeneratorArgs(BaseModel):

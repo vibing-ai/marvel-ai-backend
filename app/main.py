@@ -5,6 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 from app.api.router import router
 from app.services.logger import setup_logger
+from app.services.cache_service import RedisService
 from app.api.error_utilities import ErrorResponse
 
 import os
@@ -18,6 +19,10 @@ logger = setup_logger(__name__)
 async def lifespan(app: FastAPI):
     logger.info(f"Initializing Application Startup")
     logger.info(f"Successfully Completed Application Startup")
+
+    app.state.cache_service = RedisService()
+
+    logger.info(f"Cache Service Initialized")
     
     yield
     logger.info("Application shutdown")
