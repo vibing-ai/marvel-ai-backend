@@ -1,0 +1,40 @@
+{
+  "inputs": [
+    {
+      "label": "Topic or Focus of the Notes",
+      "name": "topic",
+      "type": "text",
+      "required": true
+    },
+    {
+      "label": "Page Layout (e.g. 'Portrait' or 'Landscape')",
+      "name": "page_layout",
+      "type": "text",
+      "required": true
+    },
+    {
+      "label": "Direct Text Input",
+      "name": "text",
+      "type": "text",
+      "required": false
+    },
+    {
+      "label": "URL of the File (CSV, PDF, DOCX, PPT, etc.)",
+      "name": "text_file_url",
+      "type": "text",
+      "required": false
+    },
+    {
+      "label": "Type of the File",
+      "name": "text_file_type",
+      "type": "text",
+      "required": false
+    },
+    {
+      "label": "Language",
+      "name": "lang",
+      "type": "text",
+      "required": false
+    }
+  ]
+}
