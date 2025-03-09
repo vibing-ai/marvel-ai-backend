@@ -167,3 +167,12 @@ cython_debug/
 service.yaml
 devcontainer.env
 keyfile.json
+
+# Docker for dev enviroment
+Dockerfile.dev
+compose*.yaml
+.env*
+
+# vscode
+.vscode/
+

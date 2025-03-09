@@ -1,0 +1,23 @@
+modules = ["python-3.12", "bash"]
+run = "uvicorn undefined:app --host 0.0.0.0 --port 3000"
+
+[nix]
+channel = "stable-24_05"
+
+[deployment]
+run = ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port 3000"]
+
+[workflows]
+runButton = "Run"
+
+[[workflows.workflow]]
+name = "Run"
+author = 14196363
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "uvicorn app.main:app --host 0.0.0.0 --port 3000"
+
+[[ports]]
+localPort = 3000
+externalPort = 80
