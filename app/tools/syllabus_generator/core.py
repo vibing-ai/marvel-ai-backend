@@ -1,6 +1,6 @@
 from app.services.logger import setup_logger
 from app.tools.syllabus_generator.tools import SyllabusRequestArgs
-from app.tools.syllabus_generator.tools import generate_syllabus
+from app.tools.syllabus_generator.tools import generate_syllabus_with_tracing
 from app.utils.document_loaders_summarization import (
     generate_summary_from_img, 
     summarize_transcript_youtube_url, 
@@ -56,7 +56,7 @@ def executor(grade_level: str,
                                 syllabus_args_model,
                                 summary)
         
-        syllabus = generate_syllabus(request_args, verbose=verbose)
+        syllabus = generate_syllabus_with_tracing(request_args, verbose=verbose)
 
     except Exception as e:
         logger.error(f"Failed to generate syllabus: {str(e)}")

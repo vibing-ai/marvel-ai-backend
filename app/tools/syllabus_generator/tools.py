@@ -5,9 +5,15 @@ from langchain_core.output_parsers import JsonOutputParser
 from langchain_google_genai import GoogleGenerativeAI
 from langchain_core.prompts import PromptTemplate
 from langchain_core.runnables import RunnableParallel  
+from langsmith import trace
 from app.services.schemas import SyllabusGeneratorArgsModel
 from fastapi import HTTPException
 from langchain_core.prompts import PromptTemplate, ChatPromptTemplate
+from functools import lru_cache
+from langchain.callbacks import get_openai_callback
+import hashlib
+import json
+import time
 
 logger = setup_logger(__name__)
 
@@ -41,10 +47,38 @@ class SyllabusRequestArgs:
             "summary": self._summary,
         }
 
+class LLMCache:
+    """Simple cache for LLM responses to reduce redundant calls."""
+    
+    def __init__(self, max_size=100):
+        self.cache = {}
+        self.max_size = max_size
+    
+    def _get_key(self, input_dict):
+        """Create a deterministic hash from the input dictionary."""
+        # Sort the dictionary to ensure consistent hashing
+        serialized = json.dumps(input_dict, sort_keys=True)
+        return hashlib.md5(serialized.encode()).hexdigest()
+    
+    def get(self, input_dict):
+        """Retrieve cached result if available."""
+        key = self._get_key(input_dict)
+        return self.cache.get(key)
+    
+    def set(self, input_dict, result):
+        """Cache the result."""
+        key = self._get_key(input_dict)
+        # Simple LRU implementation - clear cache if too large
+        if len(self.cache) >= self.max_size:
+            self.cache.clear()  
+        self.cache[key] = result
+
+
 class SyllabusGeneratorPipeline:
     def __init__(self, verbose=False):
         self.verbose = verbose
         self.model = GoogleGenerativeAI(model="gemini-1.5-pro")
+        self.cache = LLMCache()  # Initialize the cache
         self.parsers = {
             "course_information": JsonOutputParser(pydantic_object=CourseInformation),
             "course_description_objectives": JsonOutputParser(pydantic_object=CourseDescriptionObjectives),
@@ -54,6 +88,21 @@ class SyllabusGeneratorPipeline:
             "learning_resources": JsonOutputParser(pydantic_object=LearningResource),
             "course_schedule": JsonOutputParser(pydantic_object=CourseScheduleItem),
         }
+    def cached_invoke(self, chain, input_dict):
+        """Execute chain with caching."""
+        # Check cache first
+        cached_result = self.cache.get(input_dict)
+        if cached_result:
+            if self.verbose:
+                logger.info("Using cached result")
+            return cached_result
+        
+        # No cache hit, invoke chain
+        result = chain.invoke(input_dict)
+        
+        # Cache the result
+        self.cache.set(input_dict, result)
+        return result    
 
     # ===== NEW METHOD: compile_sequential() to build a hybrid pipeline =====
     def compile_hybrid_pipeline(self):
@@ -297,26 +346,38 @@ class SyllabusGeneratorPipeline:
     # ===== END NEW METHOD =====
 
 # ===== Updated generate_syllabus() to use the new hybrid pipeline =====
+def generate_syllabus_with_tracing(request_args: SyllabusRequestArgs, verbose=True):
+    """
+    Wrapper function that creates a single root trace for the entire syllabus generation process.
+    """
+    # Create a trace for the entire pipeline
+    with trace(run_type="chain", name="Complete Syllabus", 
+           metadata={"grade_level": request_args.to_dict()["grade_level"],
+                     "subject": request_args.to_dict()["subject"]}) as root_trace:
+        # Call the actual implementation
+        result = generate_syllabus(request_args, verbose=verbose)
+        return result
+    
 def generate_syllabus(request_args: SyllabusRequestArgs, verbose=True):
     try:
+        start_time = time.time()
         pipeline = SyllabusGeneratorPipeline(verbose=verbose)
-        # Compile the new hybrid pipeline with context chaining
         pipeline.compile_hybrid_pipeline()
 
-        # Convert request args to dictionary
         request_dict = request_args.to_dict()
         
-        # Add format instructions to the initial request dict
-        request_dict["format_instructions"] = pipeline.parsers["course_information"].get_format_instructions()
-
         # --- Step 1: Generate course_information and course_description_objectives in parallel ---
-        course_information = pipeline.chain_course_information.invoke(request_dict)
+        request_dict["format_instructions"] = pipeline.parsers["course_information"].get_format_instructions()
         
-        # Update format instructions for course description objectives
+        # Use nested tracing for each component
+        with trace(run_type="chain", name="CourseInformation"):
+            course_information = pipeline.cached_invoke(pipeline.chain_course_information, request_dict)
+        
         request_dict["format_instructions"] = pipeline.parsers["course_description_objectives"].get_format_instructions()
-        course_description_objectives = pipeline.chain_course_description_objectives.invoke(request_dict)
+        with trace(run_type="chain", name="DescriptionObjectives"):
+            course_description_objectives = pipeline.cached_invoke(pipeline.chain_course_description_objectives, request_dict)
         
-        # --- Step 3: For course content, we need to extract and pass values explicitly ---
+        # --- Step 2: Create core content that depends on previous outputs ---
         content_input = request_dict.copy()
         content_input["course_title"] = course_information["course_title"]
         content_input["grade_level"] = course_information["grade_level"]
@@ -324,34 +385,57 @@ def generate_syllabus(request_args: SyllabusRequestArgs, verbose=True):
         content_input["objectives"] = course_description_objectives["objectives"]
         content_input["format_instructions"] = pipeline.parsers["course_content"].get_format_instructions()
         
-        course_content = pipeline.chain_course_content.invoke(content_input)
+        with trace(run_type="chain", name="CourseContent"):
+            course_content = pipeline.cached_invoke(pipeline.chain_course_content, content_input)
         
-        # --- Step 4: Policies & procedures ---
+        # --- Step 3: Run policies, assessment, and resources in parallel ---
+        # Prepare inputs for parallel processing
         policies_input = request_dict.copy()
         policies_input["course_title"] = course_information["course_title"]
         policies_input["grade_level"] = course_information["grade_level"]
         policies_input["format_instructions"] = pipeline.parsers["policies_procedures"].get_format_instructions()
         
-        policies_procedures = pipeline.chain_policies_procedures.invoke(policies_input)
-        
-        # --- Step 5: Assessment & grading criteria ---
         assessment_input = request_dict.copy()
         assessment_input["course_title"] = course_information["course_title"]
         assessment_input["grade_level"] = course_information["grade_level"]
         assessment_input["objectives"] = course_description_objectives["objectives"]
         assessment_input["format_instructions"] = pipeline.parsers["assessment_grading_criteria"].get_format_instructions()
         
-        assessment_grading_criteria = pipeline.chain_assessment_grading_criteria.invoke(assessment_input)
-        
-        # --- Step 6: Learning resources ---
         resources_input = request_dict.copy()
         resources_input["course_title"] = course_information["course_title"]
         resources_input["grade_level"] = course_information["grade_level"]
         resources_input["format_instructions"] = pipeline.parsers["learning_resources"].get_format_instructions()
         
-        learning_resources = pipeline.chain_learning_resources.invoke(resources_input)
+        # Execute parallel tasks using concurrent futures
+        from concurrent.futures import ThreadPoolExecutor
         
-        # --- Step 7: Course schedule ---
+        # Create a trace for the parallel components
+        with trace(run_type="chain", name="ParallelComponents") as parallel_trace:
+            with ThreadPoolExecutor(max_workers=3) as executor:
+                # Submit all three tasks with their own traces
+                def run_policies():
+                    with trace(run_type="chain", name="PoliciesProcedures", parent=parallel_trace):
+                        return pipeline.chain_policies_procedures.invoke(policies_input)
+                
+                def run_assessment():
+                    with trace(run_type="chain", name="AssessmentGrading", parent=parallel_trace):
+                        return pipeline.chain_assessment_grading_criteria.invoke(assessment_input)
+                
+                def run_resources():
+                    with trace(run_type="chain", name="LearningResources", parent=parallel_trace):
+                        return pipeline.chain_learning_resources.invoke(resources_input)
+                
+                # Submit all three tasks to run concurrently
+                policies_future = executor.submit(run_policies)
+                assessment_future = executor.submit(run_assessment)
+                resources_future = executor.submit(run_resources)
+                
+                # Get results when all complete
+                policies_procedures = policies_future.result()
+                assessment_grading_criteria = assessment_future.result()
+                learning_resources = resources_future.result()
+        
+        # --- Step 4: Course schedule (depends on course_content) ---
         schedule_input = {
             "course_title": course_information["course_title"],
             "course_content": course_content,
@@ -359,7 +443,8 @@ def generate_syllabus(request_args: SyllabusRequestArgs, verbose=True):
             "format_instructions": pipeline.parsers["course_schedule"].get_format_instructions()
         }
         
-        course_schedule = pipeline.chain_course_schedule.invoke(schedule_input)
+        with trace(run_type="chain", name="CourseSchedule"):
+            course_schedule = pipeline.chain_course_schedule.invoke(schedule_input)
 
         # Construct final syllabus
         model = SyllabusSchema(
@@ -371,6 +456,11 @@ def generate_syllabus(request_args: SyllabusRequestArgs, verbose=True):
             learning_resources=learning_resources,
             course_schedule=course_schedule,
         )
+
+        end_time = time.time()
+        if verbose:
+            logger.info(f"Total generation time: {end_time - start_time:.2f}s")
+
         return dict(model)
 
     except Exception as e:
