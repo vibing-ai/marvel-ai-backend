@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from typing import Optional, List, Any, Literal, Union
+from typing import Optional, List, Any, Literal, Union, Dict
 from enum import Enum
 from app.services.assistant_registry import AssistantInputs
 from app.services.tool_registry import BaseTool
@@ -8,7 +8,7 @@ class User(BaseModel):
     id: str
     fullName: str
     email: str
-    
+
 class Role(str, Enum):
     human = "human"
     ai = "ai"
@@ -28,7 +28,7 @@ class Message(BaseModel):
     type: MessageType
     timestamp: Optional[Any] = None
     payload: MessagePayload
-    
+
 class RequestType(str, Enum):
     chat = "chat"
     tool = "tool"
@@ -36,22 +36,22 @@ class RequestType(str, Enum):
 class GenericRequest(BaseModel):
     user: User
     type: RequestType
-    
+
 class ChatRequest(GenericRequest):
     messages: List[Message]
 
 class GenericAssistantRequest(BaseModel):
     assistant_inputs: AssistantInputs
-    
+
 class ToolRequest(GenericRequest):
     tool_data: BaseTool
-    
+
 class ChatResponse(BaseModel):
     data: List[Message]
 
 class ToolResponse(BaseModel):
     data: Any
-    
+
 class ChatMessage(BaseModel):
     role: str
     type: str
@@ -67,7 +67,7 @@ class QuizzifyArgs(BaseModel):
 class WorksheetQuestion(BaseModel):
     question_type: str
     number: int
-    
+
 class WorksheetQuestionModel(BaseModel):
     worksheet_question_list: List[WorksheetQuestion]
 
@@ -78,7 +78,7 @@ class WorksheetGeneratorArgs(BaseModel):
     file_url: str
     file_type: str
     lang: Optional[str] = "en"
-    
+
 class SyllabusGeneratorArgsModel(BaseModel):
     grade_level: str
     subject: str
@@ -92,20 +92,20 @@ class SyllabusGeneratorArgsModel(BaseModel):
     file_url: str
     file_type: str
     lang: Optional[str] = "en"
-    
+
 class AIResistantArgs(BaseModel):
     assignment: str = Field(..., max_length=255, description="The given assignment")
     grade_level: Literal["pre-k", "kindergarten", "elementary", "middle", "high", "university", "professional"] = Field(..., description="Educational level to which the content is directed")
     file_type: str = Field(..., description="Type of file being handled, according to the defined enumeration")
     file_url: str = Field(..., description="URL or path of the file to be processed")
     lang: str = Field(..., description="Language in which the file or content is written")
-    
+
 class ConnectWithThemArgs(BaseModel):
     grade_level: str = Field(..., description="The grade level the teacher is instructing.")
     task_description: str = Field(..., description="A brief description of the subject or topic the teacher is instructing.")
     students_description: str = Field(..., description="A description of the students including age group, interests, location, and any relevant cultural or social factors.")
-    task_description_file_url: str 
-    task_description_file_type: str 
+    task_description_file_url: str
+    task_description_file_type: str
     student_description_file_url: str
     student_description_file_type: str
     lang: str = Field(..., description="The language in which the subject is being taught.")
@@ -154,3 +154,23 @@ class WritingFeedbackGeneratorArgs(BaseModel):
     writing_to_review_file_url: str
     writing_to_review_file_type: str
     lang: Optional[str] = "en"
+
+class NotesGeneratorArgs(BaseModel):
+    """
+    Schema for Notes Generator arguments.
+
+    Attributes:
+        input_text (str): The primary content to generate notes from.
+        focus (str): The main topic or focus area for the notes.
+        file_url (Optional[str]): URL of the document to process, if applicable.
+        file_type (Optional[str]): The type of file being processed (CSV, PDF, DOCX, etc.).
+        lang (str): The language of the generated notes.
+    """
+    input_text: str
+    focus: str
+    file_url: Optional[str] = None
+    file_type: Optional[str] = None
+    lang: str = "en"
+
+class NotesResponse(BaseModel):
+    data: Dict[str, Any]
