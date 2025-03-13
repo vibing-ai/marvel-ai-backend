@@ -1,7 +1,7 @@
 from pydantic import BaseModel, Field
 from typing import List, Optional,Union, Any
 import os
-from app.services.logger import setup_logger
+import re
 from langchain_chroma import Chroma
 from langchain_core.prompts import PromptTemplate
 from langchain_core.runnables import RunnablePassthrough, RunnableParallel
@@ -9,7 +9,10 @@ from langchain_core.output_parsers import JsonOutputParser
 from langchain_google_genai import GoogleGenerativeAI
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from langchain_core.documents import Document
-import re
+from app.services.logger import setup_logger
+from app.services.schemas import SlideImageRequest
+from app.api.router import generate_slide_image_api
+
 logger = setup_logger(__name__)
 
 def read_text_file(file_path):
@@ -21,6 +24,8 @@ def read_text_file(file_path):
 
     with open(absolute_file_path, 'r') as file:
         return file.read()
+    
+
     
 class SlideGenerator:
     def __init__(self, args=None, vectorstore_class=Chroma, prompt=None, embedding_model=None, model=None, parser=None, verbose=False):
@@ -43,9 +48,6 @@ class SlideGenerator:
         self.verbose = verbose
 
         if vectorstore_class is None: raise ValueError("Vectorstore must be provided")
-       
-
-      
 
     def validate_slides_content(self, response, topic):
         """Validates that slide content matches the requested topic and level."""
@@ -90,9 +92,6 @@ class SlideGenerator:
         except ValueError as e:
             raise ValueError(e)
 
-        
-        
-
     def compile_context(self):
         # Return the chain
         prompt = PromptTemplate(
@@ -134,6 +133,7 @@ class Slide(BaseModel):
     template: str = Field(..., description="The slide template type: sectionHeader, titleAndBody, titleAndBullets, twoColumn")
     #content: Optional[Union[str, list, dict, Any]] = Field(None, description="Content of the slide, can be string, list, dict, or any type")
     content: str | list | dict | Any = Field(None, description="Content of the slide, can be string, list, dict, or any type")
+    image_url: Optional[str] = Field(None, description="URL of the image for the slide (if applicable)")
 
 class SlidePresentation(BaseModel):
     slides: List[Slide] = Field(..., description="The complete set of slides in the presentation")

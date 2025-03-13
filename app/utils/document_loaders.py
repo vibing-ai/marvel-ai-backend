@@ -26,7 +26,7 @@ import base64
 load_dotenv(find_dotenv())
 
 STRUCTURED_TABULAR_FILE_EXTENSIONS = {"csv", "xls", "xlsx", "gsheet", "xml"}
-FILE_TYPES_TO_CHECK = {'pdf', 'csv', 'txt', 'pptx'}
+FILE_TYPES_TO_CHECK = {'pdf', 'csv', 'txt', 'pptx', 'gdoc'}
 
 
 logger = setup_logger(__name__)
