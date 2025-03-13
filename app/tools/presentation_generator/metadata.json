@@ -1,53 +1,21 @@
 {
     "inputs": [
         {
-            "label": "Grade Level",
-            "name": "grade_level",
-            "type": "text"
+            "label": "Instructional Level",
+            "name": "instructionalLevel",
+            "type": "select",
+            "options": ["Elementary", "High School", "University"]
         },
         {
             "label": "Number of Slides",
-            "name": "n_slides",
-            "type": "number"
+            "name": "slideCount",
+            "type": "number",
+            "min": 5,
+            "max": 20
         },
         {
             "label": "Topic",
-            "name": "topic",
-            "type": "text"
-        },
-        {
-            "label": "Standards/Objectives",
-            "name": "objectives",
-            "type": "text"
-        },
-        {
-            "label": "Additional Comments",
-            "name": "additional_comments",
-            "type": "text"
-        },
-        {
-            "label": "Standards/Objectives File URL",
-            "name": "objectives_file_url",
-            "type": "text"
-        },
-        {
-            "label": "Standards/Objectives File Type",
-            "name": "objectives_file_type",
-            "type": "text"
-        },
-        {
-            "label": "Additional Comments File URL",
-            "name": "additional_comments_file_url",
-            "type": "text"
-        },
-        {
-            "label": "Additional Comments File Type",
-            "name": "additional_comments_file_type",
-            "type": "text"
-        },
-        {
-            "label": "Language",
-            "name": "lang",
+            "name": "text",
             "type": "text"
         }
     ]

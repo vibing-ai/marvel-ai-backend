@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from typing import Optional, List, Any, Literal, Union
+from typing import Optional, List, Any, Literal, Union, Dict
 from enum import Enum
 from app.services.assistant_registry import AssistantInputs
 from app.services.tool_registry import BaseTool
@@ -114,16 +114,15 @@ class ConnectWithThemArgs(BaseModel):
     lang: str = Field(..., description="The language in which the subject is being taught.")
 
 class PresentationGeneratorInput(BaseModel):
-    grade_level: str
-    n_slides: int
-    topic: str
-    objectives: str
-    additional_comments: str
-    objectives_file_url: str
-    objectives_file_type: str
-    additional_comments_file_url: str
-    additional_comments_file_type: str
-    lang: Optional[str] = "en"
+    instructionalLevel: str  # Renamed from grade_level
+    slideCount: int          # Renamed from n_slides
+    text: str                # Renamed from topic
+    objectives: str = ""     # Optional, kept as-is
+    additional_comments: str = ""  # Optional, kept as-is
+    objectives_file_url: str = ""
+    objectives_file_type: str = ""
+    additional_comments_file_url: str = ""
+    additional_comments_file_type: str = ""
 
 class RubricGeneratorArgs(BaseModel):
     grade_level: Literal["pre-k", "kindergarten", "elementary", "middle", "high", "university", "professional"]
@@ -157,3 +156,36 @@ class WritingFeedbackGeneratorArgs(BaseModel):
     writing_to_review_file_url: str
     writing_to_review_file_type: str
     lang: Optional[str] = "en"
+    
+# New output schemas for Presentation Generator
+class SlideContent(BaseModel):
+    topic: str = Field(description="The topic or title of the slide")
+    content: Dict[str, Any] = Field(  # Dict is now defined
+        description="Structured content of the slide",
+        example={
+            "main_points": ["point 1", "point 2"],
+            "examples": ["example 1", "example 2"],
+            "details": "Additional explanation",
+            "visual_notes": "Suggested visuals"
+        }
+    )
+    speaker_notes: str = Field(
+        description="Detailed notes for the presenter to assist in delivering the slide content",
+        example="Begin by introducing the topic, elaborate on the main points with examples, and transition smoothly to the next slide."
+    )
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "topic": "Introduction to World War II",
+                "content": {
+                    "main_points": ["Causes of the war", "Key events"],
+                    "examples": ["Treaty of Versailles", "Pearl Harbor"],
+                    "details": "The war began in 1939...",
+                    "visual_notes": "Timeline of events"
+                },
+                "speaker_notes": "Start with a brief hook about global tensions, explain the causes concisely, and preview the key events we’ll cover next."
+            }
+        }
+
+class PresentationOutput(BaseModel):
+    slides: List[SlideContent] = Field(description="List of slides with their content and speaker notes")

@@ -38,5 +38,13 @@
     "writing-feedback-generator": {
         "path": "tools.writing_feedback_generator.core",
         "metadata_file": "metadata.json"
+    },
+    "outline_generator": {
+        "path": "tools.outline_generator",
+        "metadata_file": "metadata.json"
+    },
+    "slides_generator": {
+        "path": "tools.slides_generator",
+        "metadata_file": "metadata.json"
     }
 }

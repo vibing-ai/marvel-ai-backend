@@ -32,13 +32,11 @@ def load_tool_metadata(tool_id):
         logger.error(f"No tool configuration found for tool_id: {tool_id}")
         raise HTTPException(status_code=404, detail="Tool configuration not found")
     
-    # Ensure the base path is relative to the current file's directory
     base_dir = os.path.dirname(os.path.abspath(__file__))
     logger.debug(f"Base directory: {base_dir}")
     
-    # Construct the directory path
-    module_dir_path = os.path.join(base_dir, '../..', *tool_config['path'].split('.')[:-1])  # Go one level up and then to the path
-    module_dir_path = os.path.abspath(module_dir_path)  # Get absolute path
+    module_dir_path = os.path.join(base_dir, '../..', *tool_config['path'].split('.')[:-1])
+    module_dir_path = os.path.abspath(module_dir_path)
     logger.debug(f"Module directory path: {module_dir_path}")
     
     file_path = os.path.join(module_dir_path, tool_config['metadata_file'])
@@ -82,7 +80,7 @@ def validate_file_input(input_name: str, input_value: Any):
             logger.error(error_message)
             raise InputValidationError(error_message)
         try:
-            ToolFile.model_validate(file_obj, from_attributes=True)  # This will raise a validation error if the structure is incorrect
+            ToolFile.model_validate(file_obj, from_attributes=True)
         except ValidationError:
             error_message = f"Each item in the input `{input_name}` must be a valid ToolFile where a URL is provided"
             logger.error(error_message)
@@ -131,7 +129,7 @@ def execute_tool(tool_id, request_inputs_dict):
             raise HTTPException(status_code=404, detail="Tool executable not found")
 
         execute_function = get_executor_by_name(tool_config['path'])
-        request_inputs_dict['verbose'] = True
+        #request_inputs_dict['verbose'] = True
         
         return execute_function(**request_inputs_dict)
     

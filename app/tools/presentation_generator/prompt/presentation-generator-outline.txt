@@ -1,0 +1,17 @@
+Generate a presentation outline with {slideCount} slide titles based on:
+Text: {text}
+Instructional Level: {instructionalLevel}
+Objectives (if provided): {objectives}
+Additional Comments (if provided): {additional_comments}
+Context (if available, e.g., from uploaded documents): {context}
+
+Ensure the titles are:
+- Specific and detailed, tailored to the instructional level (e.g., simpler for Elementary, analytical for University).
+- Logically structured (e.g., introduction, key points, conclusion).
+- Ready for direct use in a presentation.
+- Informed by objectives, additional comments, and context if provided to enhance relevance and depth.
+
+Example output:
+["Introduction to World War II", "Causes of the War", "Major Battles", "The Aftermath", "Lessons Learned"]
+
+{format_instructions}

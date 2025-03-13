@@ -1,0 +1,26 @@
+Generate a complete presentation based on this outline:
+Outline: {outline}
+Instructional Level: {instructionalLevel}
+Objectives (if provided): {objectives}
+Additional Comments (if provided): {additional_comments}
+Context (if available, e.g., from uploaded documents): {context}
+
+Provide:
+- A main title reflecting the topic, informed by the outline and context if available.
+- Detailed content for each slide (e.g., bullet points or paragraphs) tailored to the instructional level, using objectives and comments to guide depth and focus if provided.
+- Assign a template for each slide (titleBody, titleBullets, twoColumn) based on content structure:
+  - Use "titleBullets" for lists or short points (e.g., newline-separated items or <50 words).
+  - Use "twoColumn" for longer, comparative content (e.g., >100 words).
+  - Use "titleBody" for paragraphs or default cases.
+- Avoid vague placeholders; content must be ready for direct use in a presentation.
+
+Example output:
+{
+  "main_title": "World War II Overview",
+  "list_slides": [
+    {"title": "Introduction to World War II", "content": "World War II (1939-1945) was a global conflict involving major powers...", "template": "titleBody"},
+    {"title": "Causes of the War", "content": "- Treaty of Versailles\n- Rise of Fascism\n- Economic Instability", "template": "titleBullets"}
+  ]
+}
+
+{format_instructions}

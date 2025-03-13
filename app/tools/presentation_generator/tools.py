@@ -4,131 +4,161 @@ import os
 from app.services.logger import setup_logger
 from langchain_chroma import Chroma
 from langchain_core.prompts import PromptTemplate
-from langchain_core.runnables import RunnablePassthrough, RunnableParallel
+from langchain_core.runnables import RunnableParallel, RunnablePassthrough
 from langchain_core.output_parsers import JsonOutputParser
-from langchain_google_genai import GoogleGenerativeAI
+from google.cloud import vertexai
+import vertexai.language_models as lm
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from langchain_core.documents import Document
 
 logger = setup_logger(__name__)
 
 def read_text_file(file_path):
-    # Get the directory containing the script file
     script_dir = os.path.dirname(os.path.abspath(__file__))
-
-    # Combine the script directory with the relative file path
     absolute_file_path = os.path.join(script_dir, file_path)
-
     with open(absolute_file_path, 'r') as file:
         return file.read()
-    
-class PresentationGenerator:
-    def __init__(self, args=None, vectorstore_class=Chroma, prompt=None, embedding_model=None, model=None, parser=None, verbose=False):
-        default_config = {
-            "model": GoogleGenerativeAI(model="gemini-1.5-flash"),
-            "embedding_model": GoogleGenerativeAIEmbeddings(model='models/embedding-001'),
-            "parser": JsonOutputParser(pydantic_object=FullPresentation),
-            "prompt": read_text_file("prompt/presentation-generator-prompt.txt"),
-            "prompt_without_context": read_text_file("prompt/presentation-generator-without-context-prompt.txt"),
-            "vectorstore_class": Chroma
-        }
-
-        self.prompt = prompt or default_config["prompt"]
-        self.prompt_without_context = default_config["prompt_without_context"]
-        self.model = model or default_config["model"]
-        self.parser = parser or default_config["parser"]
-        self.embedding_model = embedding_model or default_config["embedding_model"]
-
-        self.vectorstore_class = vectorstore_class or default_config["vectorstore_class"]
-        self.vectorstore, self.retriever, self.runner = None, None, None
-        self.args = args
-        self.verbose = verbose
-
-        if vectorstore_class is None: raise ValueError("Vectorstore must be provided")
-        if args.grade_level is None: raise ValueError("Grade Level must be provided")
-        if args.n_slides is None: raise ValueError("Number of Slides must be provided")
-        if int(args.n_slides) < 1 or int(args.n_slides) > 10:
-            raise ValueError("Number must be between 1 and 10.")
-        if args.topic is None: raise ValueError("Topic must be provided")
-        if args.objectives is None: raise ValueError("Objectives must be provided")
-        if args.lang is None: raise ValueError("Language must be provided")
-
-    def compile_with_context(self, documents: List[Document]):
-        # Return the chain
-        prompt = PromptTemplate(
-            template=self.prompt,
-            input_variables=["attribute_collection"],
-            partial_variables={"format_instructions": self.parser.get_format_instructions()}
-        )
-
-        if self.runner is None:
-            logger.info(f"Creating vectorstore from {len(documents)} documents") if self.verbose else None
-            self.vectorstore = self.vectorstore_class.from_documents(documents, self.embedding_model)
-            logger.info(f"Vectorstore created") if self.verbose else None
-
-            self.retriever = self.vectorstore.as_retriever()
-            logger.info(f"Retriever created successfully") if self.verbose else None
-
-            self.runner = RunnableParallel(
-                {"context": self.retriever,
-                "attribute_collection": RunnablePassthrough()
-                }
-            )
-
-        chain = self.runner | prompt | self.model | self.parser
-
-        logger.info(f"Chain compilation complete")
-
-        return chain
-    
-    def compile_without_context(self):
-        # Return the chain
-        prompt = PromptTemplate(
-            template=self.prompt_without_context,
-            input_variables=["attribute_collection"],
-            partial_variables={"format_instructions": self.parser.get_format_instructions()}
-        )
-
-        chain = prompt | self.model | self.parser
-
-        logger.info(f"Chain compilation complete")
-
-        return chain
-
-    def generate_presentation(self, documents: Optional[List[Document]]):
-        logger.info(f"Creating the Presentation")
-
-        if(documents):
-            chain = self.compile_with_context(documents)
-        else:
-            chain = self.compile_without_context()
-
-        input_parameters = (
-            f"Grade Level: {self.args.grade_level}, "
-            f"Number of Slides: {self.args.n_slides+1 if self.args.n_slides>9 else self.args.n_slides}, "
-            f"Topic: {self.args.topic}, "
-            f"Standard/Objectives: {self.args.objectives}, "
-            f"Additional Comments: {self.args.additional_comments}, "
-            f"Language (YOU MUST RESPOND IN THIS LANGUAGE): {self.args.lang}"
-        )
-        logger.info(f"Input parameters: {input_parameters}")
-
-        response = chain.invoke(input_parameters)
-
-        logger.info(f"Generated response: {response}")
-
-        if(documents):
-            if self.verbose: print(f"Deleting vectorstore")
-            self.vectorstore.delete_collection()
-
-        return response
 
 class Slide(BaseModel):
-    title: str = Field(..., description="The title of the Slide")
-    content: str = Field(..., description="The content of the Slide. It must be the actual context, not simple indications")
-    suggestions: str = Field(..., description="""Suggestions for visual elements (e.g., charts, images, layouts) 
-                             that enhance understanding and engagement (ONLY IF NEEDED).""")
+    title: str = Field(..., description="The title of the slide")
+    content: str = Field(..., description="The actual content of the slide")
+    template: str = Field(default="titleBody", description="Slide template (e.g., titleBody, titleBullets, twoColumn)")
 
 class FullPresentation(BaseModel):
-    main_title: str = Field(..., description="The main title of the Presentation")
-    list_slides: List[Slide] = Field(..., description="The full collection of slides about the Presentation")
+    main_title: str = Field(..., description="The main title of the presentation")
+    list_slides: List[Slide] = Field(..., description="The full collection of slides")
+
+class PresentationGenerator:
+    def __init__(self, args, vectorstore_class=Chroma, embedding_model=None, verbose=False):
+        vertexai.init(project="marvelai-project", location="us-central1")
+        self.model = lm.TextGenerationModel.from_pretrained("gemini-1.5-pro")
+        self.parser = JsonOutputParser(pydantic_object=FullPresentation)
+        self.prompt_outline = read_text_file("prompt/presentation-generator-outline.txt")
+        self.prompt_slides = read_text_file("prompt/presentation-generator-slides.txt")
+        self.embedding_model = embedding_model or GoogleGenerativeAIEmbeddings(model='models/embedding-001')
+        self.vectorstore_class = vectorstore_class
+        self.args = args
+        self.verbose = verbose
+        self.vectorstore = None
+
+        # Validate PRD-required inputs
+        if not args.text: raise ValueError("Topic must be provided")
+        if not args.slideCount: raise ValueError("Number of slides must be provided")
+        if int(args.slideCount) < 5 or int(args.slideCount) > 20:
+            raise ValueError("Number of slides must be between 5 and 20")
+        if not args.instructionalLevel: raise ValueError("Instructional level must be provided")
+
+    def compile_with_context(self, documents: List[Document]):
+        # Outline prompt with context
+        outline_prompt = PromptTemplate(
+            template=self.prompt_outline,
+            input_variables=["text", "slideCount", "instructionalLevel", "objectives", "additional_comments", "context"],
+            partial_variables={"format_instructions": JsonOutputParser(pydantic_object=list).get_format_instructions()}
+        )
+        slides_prompt = PromptTemplate(
+            template=self.prompt_slides,
+            input_variables=["outline", "instructionalLevel", "objectives", "additional_comments", "context"],
+            partial_variables={"format_instructions": self.parser.get_format_instructions()}
+        )
+
+        # Create vectorstore and retriever
+        if not self.vectorstore:
+            logger.info(f"Creating vectorstore from {len(documents)} documents") if self.verbose else None
+            self.vectorstore = self.vectorstore_class.from_documents(documents, self.embedding_model)
+            retriever = self.vectorstore.as_retriever()
+
+        # Phase 1: Generate outline with context
+        outline_chain = (
+            RunnableParallel({
+                "text": RunnablePassthrough(lambda x: x["text"]),
+                "slideCount": RunnablePassthrough(lambda x: x["slideCount"]),
+                "instructionalLevel": RunnablePassthrough(lambda x: x["instructionalLevel"]),
+                "objectives": RunnablePassthrough(lambda x: x["objectives"]),
+                "additional_comments": RunnablePassthrough(lambda x: x["additional_comments"]),
+                "context": retriever
+            })
+            | outline_prompt
+            | self.model
+            | JsonOutputParser(pydantic_object=list)
+        )
+
+        # Phase 2: Generate slides with context
+        slides_chain = (
+            RunnableParallel({
+                "outline": RunnablePassthrough(),
+                "instructionalLevel": lambda x: self.args.instructionalLevel,
+                "objectives": lambda x: self.args.objectives or "",
+                "additional_comments": lambda x: self.args.additional_comments or "",
+                "context": retriever
+            })
+            | slides_prompt
+            | self.model
+            | self.parser
+        )
+
+        return outline_chain | slides_chain
+
+    def compile_without_context(self):
+        outline_prompt = PromptTemplate(
+            template=self.prompt_outline,
+            input_variables=["text", "slideCount", "instructionalLevel", "objectives", "additional_comments"],
+            partial_variables={"format_instructions": JsonOutputParser(pydantic_object=list).get_format_instructions()}
+        )
+        slides_prompt = PromptTemplate(
+            template=self.prompt_slides,
+            input_variables=["outline", "instructionalLevel", "objectives", "additional_comments"],
+            partial_variables={"format_instructions": self.parser.get_format_instructions()}
+        )
+
+        # Phase 1: Generate outline
+        outline_chain = outline_prompt | self.model | JsonOutputParser(pydantic_object=list)
+
+        # Phase 2: Generate slides
+        slides_chain = (
+            RunnableParallel({
+                "outline": RunnablePassthrough(),
+                "instructionalLevel": lambda x: self.args.instructionalLevel,
+                "objectives": lambda x: self.args.objectives or "",
+                "additional_comments": lambda x: self.args.additional_comments or ""
+            })
+            | slides_prompt
+            | self.model
+            | self.parser
+        )
+
+        return outline_chain | slides_chain
+
+    def generate_presentation(self, documents: Optional[List[Document]] = None):
+        logger.info("Creating the presentation")
+        chain = self.compile_with_context(documents) if documents else self.compile_without_context()
+        input_dict = {
+            "text": self.args.text,
+            "slideCount": self.args.slideCount,
+            "instructionalLevel": self.args.instructionalLevel,
+            "objectives": self.args.objectives or "",
+            "additional_comments": self.args.additional_comments or ""
+        }
+        if documents:
+            input_dict["context"] = "\n".join(doc.page_content for doc in documents)
+        response = chain.invoke(input_dict)
+
+        # Optional: Enforce template assignment consistency
+        for slide in response["list_slides"]:
+            slide["template"] = self.assign_template(slide["content"])
+
+        logger.info(f"Generated response: {response}")
+        if documents and self.vectorstore:
+            if self.verbose: print("Deleting vectorstore")
+            self.vectorstore.delete_collection()
+        return response
+
+    def assign_template(self, content: str) -> str:
+        if "\n" in content or len(content.split()) < 50:
+            return "titleBullets"
+        elif len(content.split()) > 100:
+            return "twoColumn"
+        return "titleBody"
+    
+    # Optional: Enforce template assignment consistency
+    # for slide in response["list_slides"]:
+    # slide["template"] = self.assign_template(slide["content"])
