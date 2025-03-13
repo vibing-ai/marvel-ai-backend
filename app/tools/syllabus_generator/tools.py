@@ -482,9 +482,9 @@ def resume_course_content(course_content: List[CourseContentItem]) -> dict:
         unit_time = content_item["unit_time"]   
         unit_time_value = content_item["unit_time_value"]
         if unit_time in course_length:
-            course_length[unit_time] += 1
+            course_length[unit_time] += unit_time_value
         else:
-            course_length[unit_time] = 1
+            course_length[unit_time] = unit_time_value
         course_topics += f"{unit_time_value} {unit_time}: {['topic']}\n"
     
     return {
@@ -627,7 +627,7 @@ class SyllabusGenerator:
             logger.warning(f"Partial failure in sections: {error_sections}.\n Error rate: {error_rate}")
 
         return {
-            "status": error_rate == 0,
+            "status": "success" if error_rate == 0 else "partial_success",
             "error_rate": error_rate,
             "error_sections": error_sections,
             "success_sections": success_sections
