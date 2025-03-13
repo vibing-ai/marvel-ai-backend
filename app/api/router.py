@@ -4,7 +4,7 @@ from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse
 from typing import Union
 from app.assistants.utils.assistants_utilities import execute_assistant
-from app.services.schemas import GenericAssistantRequest, ToolRequest, ChatRequest, Message, ChatResponse, ToolResponse
+from app.services.schemas import GenericAssistantRequest, ToolRequest, ChatRequest, Message, ChatResponse, ToolResponse, SlideImageRequest
 from app.utils.auth import key_check
 from app.services.logger import setup_logger
 from app.api.error_utilities import InputValidationError, ErrorResponse
@@ -65,3 +65,20 @@ async def assistants( request: GenericAssistantRequest, _ = Depends(key_check) )
     )
     
     return ChatResponse(data=[formatted_response])
+
+# Adds image to slide, saving in Google cloud storage
+# TODO: move this elsewhere
+def generate_slide_image(title: str, content: str, layout: str):
+    ...
+
+
+@router.post("/generate-slide-image")
+async def generate_slide_image_api(request: SlideImageRequest):
+    """
+    API to generate a slide image based on title, content, and layout.
+    """
+    try:
+        image_url = generate_slide_image(request.title, request.content, request.layout)
+        return {"image_url": image_url}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
