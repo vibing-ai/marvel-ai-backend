@@ -28,6 +28,7 @@ import tempfile
 import uuid
 import requests
 import gdown
+from app.tools.utils.tool_utilities import read_text_file
 
 STRUCTURED_TABULAR_FILE_EXTENSIONS = {"csv", "xls", "xlsx", "gsheet", "xml"}
 
@@ -93,15 +94,6 @@ def generate_flashcards(summary: str, lang:str, verbose=False) -> list:
     
     return response
 
-def read_text_file(file_path):
-    # Get the directory containing the script file
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-
-    # Combine the script directory with the relative file path
-    absolute_file_path = os.path.join(script_dir, file_path)
-    
-    with open(absolute_file_path, 'r') as file:
-        return file.read()
     
 class FileHandler:
     def __init__(self, file_loader, file_extension):
@@ -316,7 +308,7 @@ class FileHandlerForGoogleDrive:
                 try:
                     gdown.download(url=url, output=unique_filename, fuzzy=True)
                     logger.info(f"File downloaded successfully to {unique_filename}")
-                except Exception as e:
+        except Exception as e:
                     logger.error(e)
                     logger.error("File content might be private or unavailable, or the URL is incorrect.")
                     raise FileHandlerError("No file content available") from e
@@ -326,9 +318,9 @@ class FileHandlerForGoogleDrive:
                 except Exception as e:
                     logger.error(f"No such file found at {unique_filename}")
                     raise FileHandlerError("No file found", unique_filename) from e
-
-                try:
-                    documents = loader.load()
+        
+        try:
+            documents = loader.load()
                     logger.info("File loaded successfully.")
                 except Exception as e:
                     logger.error(e)
@@ -339,7 +331,7 @@ class FileHandlerForGoogleDrive:
         except Exception as e:
             logger.error("An unexpected error occurred during the file handling process.")
             raise e
-    
+
 def load_gdocs_documents(drive_folder_url: str, verbose=False):
 
     gdocs_loader = FileHandlerForGoogleDrive(Docx2txtLoader)

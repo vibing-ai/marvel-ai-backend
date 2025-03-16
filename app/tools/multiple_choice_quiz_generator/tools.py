@@ -12,6 +12,7 @@ from langchain.retrievers.multi_query import MultiQueryRetriever
 from langsmith import traceable
 
 from app.services.logger import setup_logger
+from app.tools.utils.tool_utilities import read_text_file
 
 relative_path = "tools/multiple_choice_quiz_generator"
 
@@ -33,16 +34,6 @@ def transform_json_dict(input_data: dict) -> dict:
         generated_questions.append(transformed_question)
 
     return generated_questions
-
-def read_text_file(file_path):
-    # Get the directory containing the script file
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-
-    # Combine the script directory with the relative file path
-    absolute_file_path = os.path.join(script_dir, file_path)
-    
-    with open(absolute_file_path, 'r') as file:
-        return file.read()
 
 class QuizBuilderConfig:
     
@@ -570,4 +561,3 @@ class QuizQuestionsList(BaseModel):
 
       }
     
-

@@ -12,21 +12,10 @@ from langchain_core.documents import Document
 from app.services.logger import setup_logger
 from app.services.schemas import SlideImageRequest
 from app.api.router import generate_slide_image_api
+from app.tools.utils.tool_utilities import read_text_file
 
 logger = setup_logger(__name__)
 
-def read_text_file(file_path):
-    # Get the directory containing the script file
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-
-    # Combine the script directory with the relative file path
-    absolute_file_path = os.path.join(script_dir, file_path)
-
-    with open(absolute_file_path, 'r') as file:
-        return file.read()
-    
-
-    
 class SlideGenerator:
     def __init__(self, args=None, vectorstore_class=Chroma, prompt=None, embedding_model=None, model=None, parser=None, verbose=False):
         default_config = {

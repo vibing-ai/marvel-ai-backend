@@ -150,3 +150,13 @@ def execute_tool(tool_id, request_inputs_dict):
     except Exception as e:
         logger.error(f"Encountered error in executing tool: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
+
+def read_text_file(file_path):
+    # Get the directory containing the script file
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+
+    # Combine the script directory with the relative file path
+    absolute_file_path = os.path.join(script_dir, file_path)
+
+    with open(absolute_file_path, 'r') as file:
+        return file.read()
