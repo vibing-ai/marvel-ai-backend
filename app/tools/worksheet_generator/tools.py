@@ -13,18 +13,9 @@ from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from fastapi import HTTPException
 import threading
+from app.tools.utils.tool_utilities import read_text_file
 
 logger = setup_logger()
-
-def read_text_file(file_path):
-    # Get the directory containing the script file
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-
-    # Combine the script directory with the relative file path
-    absolute_file_path = os.path.join(script_dir, file_path)
-    
-    with open(absolute_file_path, 'r') as file:
-        return file.read()
 
 class BaseGenerator:
     def __init__(self, prompt=None, model=None, parser=None, verbose: bool = False):

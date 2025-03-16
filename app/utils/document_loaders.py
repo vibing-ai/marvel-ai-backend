@@ -22,6 +22,7 @@ import shutil
 import io
 import os
 import base64
+from app.tools.utils.tool_utilities import read_text_file
 
 load_dotenv(find_dotenv())
 
@@ -36,15 +37,6 @@ splitter = RecursiveCharacterTextSplitter(
     chunk_overlap = 100
 )
 
-def read_text_file(file_path):
-    # Get the directory containing the script file
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-
-    # Combine the script directory with the relative file path
-    absolute_file_path = os.path.join(script_dir, file_path)
-
-    with open(absolute_file_path, 'r') as file:
-        return file.read()
 
 def get_docs(file_url: str, file_type: str, lang: str = "en", verbose=True):
     file_type = file_type.lower()

@@ -17,6 +17,7 @@ from app.api.error_utilities import VideoTranscriptError
 from langchain_core.messages import HumanMessage
 from app.services.logger import setup_logger
 from langchain_text_splitters import RecursiveCharacterTextSplitter
+from app.tools.utils.tool_utilities import read_text_file
 
 import os
 import tempfile
@@ -32,16 +33,6 @@ splitter = RecursiveCharacterTextSplitter(
     chunk_size = 1000,
     chunk_overlap = 0
 )
-
-def read_text_file(file_path):
-    # Get the directory containing the script file
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-
-    # Combine the script directory with the relative file path
-    absolute_file_path = os.path.join(script_dir, file_path)
-
-    with open(absolute_file_path, 'r') as file:
-        return file.read()
 
 def build_chain(prompt: str):
     prompt_template = read_text_file(prompt)

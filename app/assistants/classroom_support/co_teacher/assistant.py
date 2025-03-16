@@ -3,22 +3,13 @@ from dotenv import load_dotenv, find_dotenv
 import google.generativeai as genai
 from app.services.assistant_registry import UserInfo
 from app.services.logger import setup_logger
+from app.tools.utils.tool_utilities import read_text_file
 
 load_dotenv(find_dotenv())
 
 genai.configure(api_key=os.environ['GOOGLE_API_KEY'])
 
 logger = setup_logger()
-
-def read_text_file(file_path):
-    # Get the directory containing the script file
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-
-    # Combine the script directory with the relative file path
-    absolute_file_path = os.path.join(script_dir, file_path)
-    
-    with open(absolute_file_path, 'r') as file:
-        return file.read()
 
 model = genai.GenerativeModel(model_name='gemini-2.0-flash-exp',
                               system_instruction=read_text_file('prompt/co_teacher_context.txt'),
