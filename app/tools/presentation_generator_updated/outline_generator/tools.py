@@ -9,23 +9,34 @@ from langchain_core.output_parsers import JsonOutputParser
 from langchain_google_genai import GoogleGenerativeAI
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from langchain_core.documents import Document
-from app.tools.utils.tool_utilities import read_text_file
 
 logger = setup_logger(__name__)
 
 class OutlineGenerator:
     def __init__(self, args=None, vectorstore_class=Chroma, embedding_model=None, model=None, parser=None, verbose=False):
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        
+        # Read the prompt files
+        outline_prompt_path = os.path.join(script_dir, "prompt/outline_generator_prompt.txt")
+        outline_prompt_without_context_path = os.path.join(script_dir, "prompt/outline_generator_without_context_prompt.txt")
+        
+        with open(outline_prompt_path, 'r') as f:
+            default_outline_prompt = f.read()
+            
+        with open(outline_prompt_without_context_path, 'r') as f:
+            default_outline_prompt_without_context = f.read()
+            
         default_config = {
             "model": GoogleGenerativeAI(model="gemini-1.5-flash"),
             "embedding_model": GoogleGenerativeAIEmbeddings(model='models/embedding-001'),
             "parser": JsonOutputParser(pydantic_object=Outlines),
-            "prompt_with_context": read_text_file("prompt/outline_prompt_with_context.txt"),
-            "prompt_without_context": read_text_file("prompt/outline_prompt.txt"),
+            "outline_prompt": default_outline_prompt,
+            "outline_prompt_without_context": default_outline_prompt_without_context,
             "vectorstore_class": Chroma
         }
 
-        self.prompt_with_context =  default_config["prompt_with_context"]
-        self.prompt_without_context = default_config["prompt_without_context"]
+        self.outline_prompt = default_config["outline_prompt"]
+        self.outline_prompt_without_context = default_config["outline_prompt_without_context"]
         self.model = model or default_config["model"]
         self.parser = parser or default_config["parser"]
         self.embedding_model = embedding_model or default_config["embedding_model"]
@@ -43,7 +54,7 @@ class OutlineGenerator:
     def compile_with_context(self, documents: List[Document]):
         # Return the chain
         prompt = PromptTemplate(
-            template=self.prompt_with_context,
+            template=self.outline_prompt,
             input_variables=["instructional_level", "n_slides", "topic","context"],
             partial_variables={"format_instructions": self.parser.get_format_instructions()}
         )
@@ -68,7 +79,7 @@ class OutlineGenerator:
     def compile_without_context(self):
         # Return the chain
         prompt = PromptTemplate(
-            template=self.prompt_without_context,
+            template=self.outline_prompt_without_context,
             input_variables=["instructional_level", "n_slides", "topic"],
             partial_variables={"format_instructions": self.parser.get_format_instructions()}
         )

@@ -12,7 +12,6 @@ from langchain.retrievers.multi_query import MultiQueryRetriever
 from langsmith import traceable
 
 from app.services.logger import setup_logger
-from app.tools.utils.tool_utilities import read_text_file
 
 relative_path = "tools/multiple_choice_quiz_generator"
 
@@ -63,8 +62,13 @@ class QuizBuilderConfig:
         self.score_threshold = score_threshold
 
         # load the prompt template
-        self.prompt_template = read_text_file(self.prompt_template_path)
-        self.multi_query_prompt_template = read_text_file(self.multi_query_prompt_path)
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        prompt_path = os.path.join(script_dir, self.prompt_template_path)
+        with open(prompt_path, 'r') as f:
+            self.prompt_template = f.read()
+        multi_query_prompt_path = os.path.join(script_dir, self.multi_query_prompt_path)
+        with open(multi_query_prompt_path, 'r') as f:
+            self.multi_query_prompt_template = f.read()
 
         self.parser = parser or JsonOutputParser(pydantic_object=QuizQuestionsList)
 

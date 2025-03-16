@@ -28,7 +28,6 @@ import tempfile
 import uuid
 import requests
 import gdown
-from app.tools.utils.tool_utilities import read_text_file
 
 STRUCTURED_TABULAR_FILE_EXTENSIONS = {"csv", "xls", "xlsx", "gsheet", "xml"}
 
@@ -43,7 +42,12 @@ splitter = RecursiveCharacterTextSplitter(
 )
 
 def build_chain(prompt: str):
-    prompt_template = read_text_file(prompt)
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    prompt_path = os.path.join(script_dir, prompt)
+    
+    with open(prompt_path, 'r') as f:
+        prompt_template = f.read()
+    
     summarize_prompt = PromptTemplate.from_template(prompt_template)
 
     summarize_model = GoogleGenerativeAI(model="gemini-1.5-flash")
@@ -75,8 +79,16 @@ def generate_flashcards(summary: str, lang:str, verbose=False) -> list:
     
     if verbose: logger.info(f"Beginning to process flashcards from summary")
     
-    template = read_text_file(r"prompt/flashcards-generator-prompt.txt")
-    examples = read_text_file(r"prompt/examples.txt")
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    prompt_path = os.path.join(script_dir, "prompt/flashcards-generator-prompt.txt")
+    
+    with open(prompt_path, 'r') as f:
+        template = f.read()
+    
+    examples_path = os.path.join(script_dir, "prompt/examples.txt")
+    
+    with open(examples_path, 'r') as f:
+        examples = f.read()
     
     cards_prompt = PromptTemplate(
         template=template,
@@ -266,7 +278,7 @@ def load_xlsx_documents(xlsx_url: str, verbose=False):
     if docs: 
 
         split_docs = splitter.split_documents(docs)
-        
+
         if verbose:
             logger.info(f"Found XLSX file")
             logger.info(f"Splitting documents into {len(split_docs)} chunks")
@@ -423,7 +435,12 @@ def summarize_transcript_youtube_url(youtube_url: str, max_video_length=600, ver
         logger.info(f"Combined documents into a single string.")
         logger.info(f"Beginning to process transcript...")
     
-    prompt_template = read_text_file(r"prompt/summarize-youtube-video-prompt.txt")
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    prompt_path = os.path.join(script_dir, "prompt/summarize-youtube-video-prompt.txt")
+    
+    with open(prompt_path, 'r') as f:
+        prompt_template = f.read()
+    
     summarize_prompt = PromptTemplate.from_template(prompt_template)
 
     summarize_model = GoogleGenerativeAI(model="gemini-1.5-flash")
