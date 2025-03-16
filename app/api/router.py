@@ -8,7 +8,7 @@ from app.services.schemas import GenericAssistantRequest, ToolRequest, ChatReque
 from app.utils.auth import key_check
 from app.services.logger import setup_logger
 from app.api.error_utilities import InputValidationError, ErrorResponse
-from app.tools.utils.tool_utilities import load_tool_metadata, execute_tool, finalize_inputs
+from app.tools.utils.tool_utilities import load_tool_metadata, execute_tool, finalize_inputs, generate_slide_image
 from fastapi.responses import FileResponse
 from starlette.background import BackgroundTask
 
@@ -66,18 +66,13 @@ async def assistants( request: GenericAssistantRequest, _ = Depends(key_check) )
     
     return ChatResponse(data=[formatted_response])
 
-# Adds image to slide, saving in Google cloud storage
-# TODO: move this elsewhere
-def generate_slide_image(title: str, content: str, layout: str):
-    ...
-
-
 @router.post("/generate-slide-image")
 async def generate_slide_image_api(request: SlideImageRequest):
     """
     API to generate a slide image based on title, content, and layout.
     """
     try:
+        # Call the utility function to generate the image
         image_url = generate_slide_image(request.title, request.content, request.layout)
         return {"image_url": image_url}
     except Exception as e:

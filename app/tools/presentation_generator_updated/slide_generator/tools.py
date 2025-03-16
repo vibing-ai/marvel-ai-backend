@@ -11,7 +11,8 @@ from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from langchain_core.documents import Document
 from app.services.logger import setup_logger
 from app.services.schemas import SlideImageRequest
-from app.api.router import generate_slide_image_api
+from app.tools.utils.tool_utilities import generate_slide_image, templates_to_aspect_ratios
+from app.api.router import generate_slide_image
 
 logger = setup_logger(__name__)
 
@@ -108,28 +109,64 @@ class SlideGenerator:
         return chain
 
     def generate_slides(self):
-        logger.info(f"Creating the Outlines for the Presentation") 
-        chain = self.compile_context() 
+        """Generate slides based on the provided outline."""
+        
+        slides_titles = self.args.slides_titles
+        instructional_level = self.args.instructional_level
+        topic = self.args.topic
+        lang = self.args.lang or "en"
 
+        logger.info(f"Generating slides for the presentation on topic: {topic}, level: {instructional_level}")
+        logger.info(f"Slide titles: {slides_titles}")
+
+        # Prepare the prompt template
+        prompt = PromptTemplate(
+            template=self.slide_prompt,
+            input_variables=["slides_titles", "instructional_level", "topic", "lang"]
+        )
+
+        # Set up the chain
+        chain = prompt | self.model | self.parser
+
+        # Invoke the chain with the input parameters
         input_parameters = {
-            "instructional_level": self.args.instructional_level,
-            "topic": self.args.topic,
-            "slides_titles": self.args.slides_titles,
-            "lang": self.args.lang
+            "slides_titles": slides_titles,
+            "instructional_level": instructional_level,
+            "topic": topic,
+            "lang": lang
         }
         logger.info(f"Input parameters: {input_parameters}")
 
+        # Generate the slides content
         response = chain.invoke(input_parameters)
+        logger.info(f"Generated slides: {response}")
 
-        logger.info(f"Generated response: {response}")
-         # Add validation metrics
-        validation_results = self.validate_slides_content(response=response, topic=self.args.topic)
-        logger.info(f"Response validation: {validation_results}")
+        # Validate the content
+        self.validate_slides_content(response, topic)
+
+        # Loop through slides and generate images for each
+        logger.info(f"Generating images for slides")
+        for slide in response.slides:
+            try:
+                # Generate image for the slide
+                image_url = generate_slide_image(
+                    title=slide.title,
+                    content=slide.content,
+                    layout=slide.template
+                )
+                
+                # Assign the image URL to the slide
+                slide.image_url = image_url
+                logger.info(f"Generated image for slide: {slide.title}")
+            except Exception as e:
+                logger.error(f"Error generating image for slide '{slide.title}': {str(e)}")
+                # Provide a fallback image URL
+                slide.image_url = f"https://via.placeholder.com/800x450.png?text={slide.title.replace(' ', '+')}"
+
+        # Format the response
+        formatted_response = {"data": {"slides": response.slides}}
+        return formatted_response
         
-        if not validation_results["valid"]:
-            logger.warning(f"Generated content may not fully match the requested topic")
-
-        return response
 
 class Slide(BaseModel):
     title: str = Field(..., description="The title of the slide")
