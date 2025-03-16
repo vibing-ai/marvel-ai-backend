@@ -13,7 +13,6 @@ from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from fastapi import HTTPException
 import threading
-from app.tools.utils.tool_utilities import read_text_file
 
 logger = setup_logger()
 
@@ -33,10 +32,14 @@ class BaseGenerator:
 
 class CourseTypeGenerator(BaseGenerator):
     def get_default_config(self):
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        prompt_path = os.path.join(script_dir, "prompts/generate-topic-prompt.txt")
+        with open(prompt_path, 'r') as f:
+            prompt_template = f.read()
         return {
             "model": GoogleGenerativeAI(model="gemini-1.5-flash"),
             "parser": JsonOutputParser(pydantic_object=CourseTypeSchema),
-            "prompt": read_text_file("prompts/generate-topic-prompt.txt")
+            "prompt": prompt_template
         }
 
     def compile(self):
@@ -65,10 +68,14 @@ class WorksheetQuestionTypeGenerator(BaseGenerator):
         super().__init__(prompt, model, parser, verbose)
 
     def get_default_config(self):
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        prompt_path = os.path.join(script_dir, "prompts/generate-worksheet-question-types-prompt.txt")
+        with open(prompt_path, 'r') as f:
+            prompt_template = f.read()
         return {
             "model": GoogleGenerativeAI(model="gemini-1.5-pro"),
             "parser": JsonOutputParser(pydantic_object=WorksheetQuestionModel),
-            "prompt": read_text_file("prompts/generate-worksheet-question-types-prompt.txt"),
+            "prompt": prompt_template,
             "vectorstore_class": Chroma,
             "embedding_model": GoogleGenerativeAIEmbeddings(model='models/embedding-001')
         }
@@ -119,10 +126,14 @@ class WorksheetGenerator(BaseGenerator):
         super().__init__(prompt, model, parser, verbose)
 
     def get_default_config(self):
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        prompt_path = os.path.join(script_dir, "prompts/generate-worksheet-prompt.txt")
+        with open(prompt_path, 'r') as f:
+            prompt_template = f.read()
         return {
             "model": GoogleGenerativeAI(model="gemini-1.5-pro"),
             "parser": self.get_parser_for_question_type(),
-            "prompt": read_text_file("prompts/generate-worksheet-prompt.txt"),
+            "prompt": prompt_template,
             "vectorstore_class": Chroma,
             "embedding_model": GoogleGenerativeAIEmbeddings(model='models/embedding-001')
         }

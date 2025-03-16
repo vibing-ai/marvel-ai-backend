@@ -12,21 +12,35 @@ from langchain_core.documents import Document
 from app.services.logger import setup_logger
 from app.services.schemas import SlideImageRequest
 from app.api.router import generate_slide_image_api
-from app.tools.utils.tool_utilities import read_text_file
 
 logger = setup_logger(__name__)
 
 class SlideGenerator:
-    def __init__(self, args=None, vectorstore_class=Chroma, prompt=None, embedding_model=None, model=None, parser=None, verbose=False):
+    def __init__(self, args=None, vectorstore_class=Chroma, slide_prompt=None, image_prompt=None, embedding_model=None, model=None, parser=None, verbose=False):
+        # Read prompt files
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        
+        # Read the prompt files
+        slide_prompt_path = os.path.join(script_dir, "prompt/slide_generator_prompt.txt")
+        image_prompt_path = os.path.join(script_dir, "prompt/slide_image_prompt.txt")
+        
+        with open(slide_prompt_path, 'r') as f:
+            default_slide_prompt = f.read()
+            
+        with open(image_prompt_path, 'r') as f:
+            default_image_prompt = f.read()
+            
         default_config = {
             "model": GoogleGenerativeAI(model="gemini-1.5-flash"),
             "embedding_model": GoogleGenerativeAIEmbeddings(model='models/embedding-001'),
             "parser": JsonOutputParser(pydantic_object=SlidePresentation),
-            "prompt": read_text_file("prompt/slide_generator_prompt.txt"),
+            "slide_prompt": default_slide_prompt,
+            "image_prompt": default_image_prompt,
             "vectorstore_class": Chroma
         }
 
-        self.prompt = prompt or default_config["prompt"]
+        self.slide_prompt = slide_prompt or default_config["slide_prompt"]
+        self.image_prompt = image_prompt or default_config["image_prompt"]
         self.model = model or default_config["model"]
         self.parser = parser or default_config["parser"]
         self.embedding_model = embedding_model or default_config["embedding_model"]
@@ -63,15 +77,14 @@ class SlideGenerator:
                 if any(keyword in slide_text.lower() for keyword in topic_keywords):
                     topic_coverage += 1
             
-            # Check for Markdown remnants or excessive newlines
+                # Check for Markdown remnants or excessive newlines
                 if any(char in slide_text for char in ['*', '\n', '`', '_']):
                     garbage_coverage += 1
         
             coverage_percentage = (topic_coverage / len(slides)) * 100
             garbage_coverage_percentage = (garbage_coverage / len(slides)) * 100
         
-            return {
-            
+            return {            
                 "topic_coverage": coverage_percentage,
                 "template_requirements_met": template_requirements_met,
                 "garbage_coverage_percentage": garbage_coverage_percentage,
@@ -84,7 +97,7 @@ class SlideGenerator:
     def compile_context(self):
         # Return the chain
         prompt = PromptTemplate(
-            template=self.prompt,
+            template=self.slide_prompt,
             input_variables=["instructional_level", "topic", "slides_titles"],
             partial_variables={"format_instructions": self.parser.get_format_instructions()}
         )
@@ -115,12 +128,12 @@ class SlideGenerator:
         
         if not validation_results["valid"]:
             logger.warning(f"Generated content may not fully match the requested topic")
+
         return response
 
 class Slide(BaseModel):
     title: str = Field(..., description="The title of the slide")
     template: str = Field(..., description="The slide template type: sectionHeader, titleAndBody, titleAndBullets, twoColumn")
-    #content: Optional[Union[str, list, dict, Any]] = Field(None, description="Content of the slide, can be string, list, dict, or any type")
     content: str | list | dict | Any = Field(None, description="Content of the slide, can be string, list, dict, or any type")
     image_url: Optional[str] = Field(None, description="URL of the image for the slide (if applicable)")
 

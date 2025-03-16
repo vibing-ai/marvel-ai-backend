@@ -22,13 +22,11 @@ import shutil
 import io
 import os
 import base64
-from app.tools.utils.tool_utilities import read_text_file
 
 load_dotenv(find_dotenv())
 
 STRUCTURED_TABULAR_FILE_EXTENSIONS = {"csv", "xls", "xlsx", "gsheet", "xml"}
 FILE_TYPES_TO_CHECK = {'pdf', 'csv', 'txt', 'pptx', 'gdoc'}
-
 
 logger = setup_logger(__name__)
 
