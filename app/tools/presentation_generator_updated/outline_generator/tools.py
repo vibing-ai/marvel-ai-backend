@@ -91,7 +91,7 @@ class OutlineGenerator:
         return chain
 
     def generate_outline(self, documents: Optional[List[Document]]):
-        logger.info(f"Creating the Outlines for the Presentation") 
+        logger.info("Creating the outline for the presentation") 
 
         if(documents):
             chain = self.compile_with_context(documents)
