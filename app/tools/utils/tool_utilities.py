@@ -1,11 +1,16 @@
 import json
 import os
+from datetime import datetime
+import uuid
 from app.services.logger import setup_logger
 from app.services.tool_registry import ToolFile
 from app.api.error_utilities import VideoTranscriptError, InputValidationError, ToolExecutorError
 from typing import Dict, Any, List
 from fastapi import HTTPException
 from pydantic import ValidationError
+import replicate # Image generation - flux dev
+from langchain_google_genai import GoogleGenerativeAI
+from langchain_core.prompts import PromptTemplate
 
 logger = setup_logger(__name__)
 
@@ -151,17 +156,115 @@ def execute_tool(tool_id, request_inputs_dict):
         logger.error(f"Encountered error in executing tool: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
-def generate_slide_image(title: str, content: str, layout: str):
-    input = {
-        "prompt": prompt,
-        "guidance": 3.5,
-        "aspect_ratio": "16:9"
-    }
+templates_to_aspect_ratios = {
+    "titleAndBody": "16:9",  # 1280x720
+    "titleAndBullets": "4:3",  # 1024x768
+    "twoColumn": "4:3",  # 800x600
+    "sectionHeader": "16:9"  # 1600x900
+}
 
-    output = replicate.run(
-        "black-forest-labs/flux-dev",
-        input=input
+def construct_image_generation_prompt(title, content, layout):
+    """
+    Constructs a detailed prompt for image generation based on slide content.
+    Uses the slide_image_prompt.txt template and Google Gemini model to generate
+    a high-quality image prompt.
+    
+    Args:
+        title (str): The slide title
+        content (str/list/dict): The slide content (can be various formats)
+        layout (str): The slide layout/template
+        
+    Returns:
+        str: A structured prompt for image generation
+    """
+    # Extract key elements from content based on its type
+    content_text = ""
+    if isinstance(content, str):
+        content_text = content
+    elif isinstance(content, list):
+        content_text = ". ".join(content)
+    elif isinstance(content, dict):
+        if "leftColumn" in content and "rightColumn" in content:
+            content_text = f"{content['leftColumn']}. {content['rightColumn']}"
+    
+    # Load the slide image prompt template
+    prompt_path = os.path.join(
+        os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 
+        "presentation_generator_updated/slide_generator/prompt/slide_image_prompt.txt"
     )
-    for index, item in enumerate(output):
-        with open(f"flux/p{num}.webp", "wb") as file:
-            file.write(item.read())
+    with open(prompt_path, 'r') as f:
+        slide_image_prompt_template = f.read()
+    prompt = PromptTemplate(
+        template=slide_image_prompt_template,
+        input_variables=["title", "content"]
+    )
+    
+    # Generate the image prompt using Gemini
+    model = GoogleGenerativeAI(model="gemini-1.5-flash", temperature=0.7)
+    try:
+        image_prompt_output = model.invoke(prompt.format({
+            "title": title,
+            "content": content_text
+        }))
+        
+        logger.info(f"Generated image prompt using Gemini: {image_prompt_output[:100]}...")
+        return image_prompt_output
+        
+    except Exception as e:
+        raise Exception(f"Error generating image prompt with Gemini: {str(e)}")
+
+def generate_slide_image(title, content, layout):
+    """
+    Generates an image for a presentation slide and returns the URL.
+    
+    Args:
+        title (str): The slide title
+        content (str/list/dict): The slide content
+        layout (str): The slide layout/template
+        
+    Returns:
+        str: URL to the generated image
+    """    
+    try:
+        # Get aspect ratio based on template
+        aspect_ratio = templates_to_aspect_ratios.get(layout, "16:9")
+        
+        # Construct the prompt
+        prompt = construct_image_generation_prompt(title, content, layout)
+        logger.info(f"Generated image prompt: {prompt[:100]}...")
+        
+        # Call image generation API (Replicate's Flux model)
+        input_params = {
+            "prompt": prompt,
+            "guidance": 7.5,
+            "aspect_ratio": aspect_ratio
+        }
+        
+        # Generate a unique filename
+        timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
+        unique_id = str(uuid.uuid4())[:8]
+        filename = f"slide_{timestamp}_{unique_id}.png"
+        
+        # Call the API
+        logger.info(f"Calling image generation API with aspect ratio: {aspect_ratio}")
+        output = replicate.run(
+            "black-forest-labs/flux-dev",
+            input=input_params
+        )
+        
+        # For now, return the path to local image
+        # In production, you would save this to Google Cloud Storage
+        #image_url = output[0] if output and len(output) > 0 else ""
+        #logger.info(f"Generated image URL: {image_url}")
+        for index, item in enumerate(output):
+            # get number of files in the folder
+            num_files = len(os.listdir("flux_output"))
+            with open(f"flux_output/p{num_files + 1}.webp", "wb") as file:
+                file.write(item.read())
+        num_files = len(os.listdir("flux_output"))
+        return f"flux_output/p{num_files}.webp"
+        
+    except Exception as e:
+        logger.error(f"Error generating slide image: {str(e)}")
+        # Return a placeholder image if generation fails
+        return f"https://via.placeholder.com/800x450.png?text={title.replace(' ', '+')}"
