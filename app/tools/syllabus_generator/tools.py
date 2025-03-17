@@ -127,23 +127,38 @@ class PromptFactory:
                 Course Description: {course_information}
                 
                 # Learning Objectives
-                {objectives}
+                {course_objectives}
                 
                 # Additional Context
                 Course Outline: {course_outline}
                 Summary: {summary}
-                
-                # Instructions
-                1. Create a logical sequence of course units based on the objectives and description
-                2. If no course outline is provided, generate an appropriate one based on the subject and objectives
-                3. Include appropriate time units (weeks, days, months) based on the course scope
-                4. Each unit should build on previous knowledge and support the learning outcomes
-                5. Respond in {lang} language.
-                
-                {format_instructions}
+
+                # Design Instructions
+                1. Create a logical sequence of content units that align with the learning objectives and course description
+                2. For each unit, provide:
+                    - A clear, descriptive title
+                    - A brief description of the unit's focus
+                    - 3-5 key topics or concepts covered
+                    - How this unit connects to the learning objectives
+                3. Ensure content builds progressively, with later units building on earlier foundations
+                4. Include depth and breadth appropriate for the specified grade level
+                5. If no course outline is provided, develop one based on standard curriculum patterns for this subject
+                6. Focus on content organization rather than scheduling aspects
+                7. Each unit should represent a coherent body of knowledge rather than a time period
+                8. Include any specialized vocabulary or frameworks students will need to master
+                9. Respond in {lang} language.
+
+                # Output Guidance
+                ## Answer with a valid JSON object, returning a list of CourseContentItem objects.
+                class CourseContentItem(BaseModel):
+                    unit_sequence: int = Field(description="The sequential unit/module number in the course")
+                    title: str = Field(description="The title of the unit")
+                    description: str = Field(description="A brief summary of the unit's content"")
+                    key_topics: List[str] = Field(description="The key topics for the unit")
+                    learning_outcomes: List[str] = Field(description="The learning outcomes for the unit")
                 """
             ),
-            input_variables=["course_information", "course_outline", "lang", "summary", "objectives"],
+            input_variables=["course_information", "course_outline", "lang", "summary", "course_objectives"],
             partial_variables={"format_instructions": parser_intructions},
         )
     
@@ -188,7 +203,7 @@ class PromptFactory:
                 # Course Context
                 Course Title: {course_title}
                 Grade Level: {grade_level}
-                Learning Objectives: {objectives}
+                Learning Objectives: {course_objectives}
                 
                 # Available Assessment Information
                 Grading Policy: {grading_policy}
@@ -203,7 +218,7 @@ class PromptFactory:
                 {format_instructions}
                 """
             ),
-            input_variables=["grading_policy", "lang", "course_title", "grade_level", "objectives"],
+            input_variables=["grading_policy", "lang", "course_title", "grade_level", "course_objectives"],
             partial_variables={"format_instructions": parser_intructions},
         )
     
@@ -219,7 +234,7 @@ class PromptFactory:
                 Course Title: {course_title}
                 Subject: {subject}
                 Grade Level: {grade_level}
-                
+                Course Content: {course_content}
                 # Available Materials Information
                 Required Materials: {required_materials}
                 
@@ -233,7 +248,7 @@ class PromptFactory:
                 {format_instructions}
                 """
             ),
-            input_variables=["required_materials", "lang", "course_title", "subject", "grade_level"],
+            input_variables=["required_materials", "lang", "course_title", "subject", "grade_level", "course_content"],
             partial_variables={"format_instructions": parser_intructions},
         )
     
@@ -243,27 +258,45 @@ class PromptFactory:
         return PromptTemplate(
             template=(
                 """
-                You are creating a detailed course schedule based on the course content.
+                You are an expert educational planner creating a comprehensive course schedule based on established course content.
                 
                 # Course Information
                 Course Title: {course_title}
                 Grade Level: {grade_level}
-
+                Course outline informed by the user: {course_outline}
                 # Course Content Structure
                 {course_content}
                 
                 # Instructions
-                1. Create a detailed schedule that follows the course content structure
-                2. Match the unit_time format used in the course content (weeks, days, etc.)
-                3. Include specific dates or time periods for each topic
-                4. Add appropriate activities for each topic that support the learning objectives
-                5. Respond in {lang} language.
-                
-                {format_instructions}
+                1. Create a detailed schedule that transforms the course content into a chronological delivery plan
+                2. For each session, provide:
+                    - Session number and date
+                    - Topic from the course content being covered
+                    - Specific learning activities planned for the session
+                3. Ensure appropriate pacing across the entire course timeline
+                4. Include variety in learning activities (lectures, discussions, group work, etc.)
+                5. Allocate sufficient time for complex topics and review sessions
+                6. Schedule assessments at logical points in the learning progression
+                7. Account for any holidays or breaks in the academic calendar
+                8. Respond in {lang} language.
+
+                # OUTPUT GUIDANCE
+                    - Create a realistic schedule that allows sufficient time for each topic
+                    - Balance content coverage with appropriate depth of engagement
+                    - Account for scaffolding and skill development over time
+                    - Ensure assessment timing aligns with learning progression
+                    - Consider student workload and cognitive load in your planning
+
+                # Answer with a valid JSON object, returning a list of CourseScheduleItem objects.
+                class CourseScheduleItem(BaseModel):
+                    session_number: int = Field(description="The sequential session number in the course schedule")
+                    date: str = Field(description="The scheduled date for this session (format: YYYY-MM-DD)")
+                    time_frame: str = Field(description="The duration of the session (e.g., '2 days', '1 week', '1 month')")
+                    topic: str = Field(description="The main topic covered in this session")
+                    activity_desc: str = Field(description="A brief description of the planned learning activity for this session")
                 """
             ),
-            input_variables=["course_outline", "lang", "course_title", "grade_level", "course_content"],
-            partial_variables={"format_instructions": parser_intructions},
+            input_variables=["course_outline", "lang", "course_title", "grade_level", "course_content"]
         )
 
 class LLMCache:
@@ -475,20 +508,22 @@ class SyllabusGeneratorPipeline:
             if self.verbose:
                 logger.info("Successfully compiled the pipeline.")
             
-            # Return hardcoded runnables in execution order
-            return [
-                RunnableParallel({
-                    "course_information": self.steps["course_information"].chain,
-                    "course_description_objectives": self.steps["course_description_objectives"].chain
-                }),
-                self.steps["course_content"].chain,
-                self.steps["policies_procedures"].chain,
-                RunnableParallel({
-                    "assessment_grading_criteria": self.steps["assessment_grading_criteria"].chain,
-                    "learning_resources": self.steps["learning_resources"].chain,
-                    "course_schedule": self.steps["course_schedule"].chain
-                })
-            ]
+            first_runnable = RunnableParallel({
+                "course_information": self.steps["course_information"].chain,
+                "course_description_objectives": self.steps["course_description_objectives"].chain
+            })
+
+            second_runnable = RunnableParallel({
+                "course_content": self.steps["course_content"].chain,
+                "assessment_grading_criteria": self.steps["assessment_grading_criteria"].chain,
+                "policies_procedures": self.steps["policies_procedures"].chain,
+            })
+            
+            third_runnable = RunnableParallel({
+                "course_schedule": self.steps["course_schedule"].chain,
+                "learning_resources": self.steps["learning_resources"].chain,
+            })
+            return [first_runnable, second_runnable, third_runnable]
             
         except Exception as e:
             logger.error(f"Failed to compile pipeline: {e}")
