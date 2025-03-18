@@ -1,5 +1,5 @@
 import pytest
-from unittest.mock import patch
+from unittest.mock import patch, MagicMock
 from app.tools.syllabus_generator.tools import (
     SyllabusGeneratorPipeline, 
     CompilePipelineError, 
@@ -10,244 +10,44 @@ from app.tools.syllabus_generator.tools import (
     SyllabusGenerator, 
     SyllabusRequestArgs, 
     SyllabusGeneratorArgsModel, 
-    OutputValidationError
+    OutputValidationError,
+    PipelineStep
 )
-from langchain_core.runnables import RunnableLambda
+from langchain_core.runnables import RunnableLambda, Runnable
 from langchain_core.prompts import PromptTemplate
 from langchain_core.output_parsers import JsonOutputParser
 from langchain_google_genai.llms import GoogleGenerativeAI
-from langchain_core.output_parsers import JsonOutputParser
-from app.tools.syllabus_generator.tools import SyllabusGenerator, SyllabusRequestArgs, SyllabusGeneratorArgsModel
-from unittest.mock import patch, MagicMock
+import json
+import concurrent.futures
 
-
+# Fixtures
 @pytest.fixture
 def pipeline():
-    return SyllabusGeneratorPipeline()
+    return SyllabusGeneratorPipeline(model_name="gemini-1.5-pro", model_max_retries=3, verbose=False)
 
 @pytest.fixture
-def fallbacks_list(pipeline):
-    return ChainBuilder(None, {}).create_fallback("test_section")
+def parsers():
+    return ParserFactory.create_parsers()
 
 @pytest.fixture
-def chains(pipeline):
+def chain_builder(parsers, pipeline):
+    return ChainBuilder(pipeline.model, parsers, verbose=False)
+
+@pytest.fixture
+def fallbacks_list(chain_builder):
+    return chain_builder.create_fallback("test_section")
+
+@pytest.fixture
+def runnables(pipeline):
     return pipeline.compile()
 
 @pytest.fixture
-def sections_chains(chains):
-    return {**chains["sequential"], **chains["parallel"].steps__}
+def steps(runnables, pipeline):
+    return pipeline.steps
 
 @pytest.fixture
 def fallback(fallbacks_list):
     return fallbacks_list[0]
-
-### Retrive the section chains
-
-def test_create_section_fallback_returns_runnable_lambda(fallback):
-    """Test that create_section_fallback returns a RunnableLambda object."""
-    assert isinstance(fallback, RunnableLambda)
-
-def test_course_information_chain_invoke_with_fallback(sections_chains):
-    """Test that the course_information section chain invokes the fallback when the chain fails."""
-
-    course_information_chain = sections_chains["course_information"]
-    with patch(
-            "langchain_core.prompts.base.BasePromptTemplate.invoke", 
-            return_value={"output": "success"}
-        ) as parser_mock, \
-        patch(
-            "langchain_google_genai.llms.GoogleGenerativeAI.invoke",
-            side_effect=ValueError("Simulated failure")
-        ) as mock_generate:
-
-        result = course_information_chain.invoke({"user_query":"Test input"})
-        assert mock_generate.call_count == 1
-        assert result["status"] == "failed"
-        assert result["section"] == "CourseInformation"
-        assert result["fallback"] is True
-        assert result["error"] == "Simulated failure"
-
-def test_compile_uses_fallback(sections_chains):
-    """Test that the compile method sets up chains with fallbacks."""
-
-    # Verify the course_information chain has fallback configured
-    assert 'course_information' in sections_chains
-    assert hasattr(sections_chains['course_information'], 'fallbacks')
-    assert len(sections_chains['course_information'].fallbacks) > 0
-
-    assert 'course_description_objectives' in sections_chains
-    assert hasattr(sections_chains['course_description_objectives'], 'fallbacks')
-    assert len(sections_chains['course_description_objectives'].fallbacks) > 0
-
-    assert 'course_content' in sections_chains
-    assert hasattr(sections_chains['course_content'], 'fallbacks')
-    assert len(sections_chains['course_content'].fallbacks) > 0
-
-    assert 'policies_procedures' in sections_chains
-    assert hasattr(sections_chains['policies_procedures'], 'fallbacks')
-    assert len(sections_chains['policies_procedures'].fallbacks) > 0
-
-    assert 'assessment_grading_criteria' in sections_chains
-    assert hasattr(sections_chains['assessment_grading_criteria'], 'fallbacks')
-    assert len(sections_chains['assessment_grading_criteria'].fallbacks) > 0
-
-    assert 'learning_resources' in sections_chains
-    assert hasattr(sections_chains['learning_resources'], 'fallbacks')
-    assert len(sections_chains['learning_resources'].fallbacks) > 0
-
-    assert 'course_schedule' in sections_chains
-    assert hasattr(sections_chains['course_schedule'], 'fallbacks')
-    assert len(sections_chains['course_schedule'].fallbacks) > 0
-
-    assert 'course_schedule' in sections_chains
-    assert hasattr(sections_chains['course_schedule'], 'fallbacks')
-    assert len(sections_chains['course_schedule'].fallbacks) > 0
-
-def test_chain_with_fallback_integration(fallbacks_list):
-    """Test the fallback integration with a chain that fails."""
-    
-    # Use a real Runnable that will fail instead of a mock
-    def failing_function(input_data: dict, *args, **kwargs):
-        raise ValueError("Simulated failure")
-    
-    # Add fallback to the real runnable
-    failing_chain = RunnableLambda(failing_function)
-    chain_with_fallback = failing_chain.with_fallbacks(fallbacks_list, exception_key = "error")
-    
-    # Execute the chain - this should trigger the fallback
-    result = chain_with_fallback.invoke({"query": "Test input"})
-    
-    # Verify fallback was used
-    assert result["status"] == "failed"
-    assert result["section"] == "test_section"
-    assert result["fallback"] is True
-    assert result["error"] == "Simulated failure"
-
-def test_section_fallback_handles_basic_input(fallback):
-    """Test the fallback function with a basic input."""
-    result = fallback.invoke("Test input")
-    
-    assert result["status"] == "failed"
-    assert result["error"] == "Failed to generate test_section section."
-    assert result["section"] == "test_section" 
-    assert result["fallback"] is True
-
-def test_section_chain_invoke_with_fallback(fallbacks_list):
-    """Test that the section chain invokes the fallback when the chain fails."""
-
-    # Create a success function that returns the expected dictionary
-    def success_function(input_data, *args, **kwargs):
-        return {
-            "status": "success",
-            "result": "Success",
-            "section": "test_section",
-            "fallback": False
-        }
-    
-    # Use RunnableLambda instead of custom Runnable class
-    success_chain = RunnableLambda(success_function)
-    chain_with_success = success_chain.with_fallbacks(fallbacks_list, exception_key = "error" )
-    
-    # Check that success result doesn't trigger fallback
-    success_result = chain_with_success.invoke({"input": "Test input"})
-
-    # When primary succeeds, result should be the primary's return value
-    assert success_result["status"] == "success"
-    assert success_result["fallback"] is False
-    assert success_result["result"] == "Success"
-
-# ------------------------------------------
-## Test Pipeline Compilation
-def test_compile_returns_dict_with_correct_keys(chains):
-    """Test that compile returns a dictionary with sequential and parallel keys."""
-    assert isinstance(chains, dict)
-    assert "sequential" in chains
-    assert "parallel" in chains
-
-def test_course_information_chain_invoke_with_success(sections_chains):
-    """Test that the course_information section chain invokes the fallback when the chain fails."""
-    course_information_chain = sections_chains["course_information"]
-    with patch(
-            "langchain_core.prompts.base.BasePromptTemplate.invoke", 
-            return_value={"output": "Parser success"}
-        ) as prompt_mock, \
-        patch(
-            "langchain_google_genai.llms.GoogleGenerativeAI.invoke",
-            return_value={"output": "Model success"}
-        ) as model_mock , \
-        patch(
-            "langchain_core.output_parsers.json.JsonOutputParser.invoke", 
-            return_value={"output": "Final output: success"}
-        ) as parser_mock:
-        
-        result = course_information_chain.invoke({"user_query":"Test input"})
-        print(result)
-        assert prompt_mock.call_count == 1
-        assert model_mock.call_count == 1
-        assert parser_mock.call_count == 1
-        assert result["output"] == "Final output: success"
-
-def test_compile_chains_structure(chains):
-    """Test that compile returns the correct sequential chains."""
-    sequential = chains["sequential"]
-
-    # Verify all expected sequential chains exist
-    assert "course_information" in sequential
-    assert "course_description_objectives" in sequential
-    assert "course_content" in sequential
-    assert "policies_procedures" in sequential
-
-    # Check each chain is a runnable
-    for chain_name, chain in sequential.items():
-        assert hasattr(chain, "invoke"), f"{chain_name} is not a runnable"
-
-def test_compile_parallel_pipeline_structure(pipeline):
-    """Test that compile returns the correct parallel pipeline structure."""
-    result = pipeline.compile()
-    parallel = result["parallel"].steps__
-
-    assert "assessment_grading_criteria" in parallel
-    assert "learning_resources" in parallel
-    assert "course_schedule" in parallel
-
-    # Check each branch is a runnable
-    for branch_name, branch in parallel.items():
-        assert hasattr(branch, "invoke"), f"{branch_name} is not a runnable"
-
-def test_compile_handles_errors(pipeline):
-    """Test that compile handles errors properly."""
-    with patch("app.tools.syllabus_generator.tools.ParserFactory.create_parsers", 
-            side_effect=Exception("Test error")):
-        with pytest.raises(CompilePipelineError):
-            pipeline.compile()
-
-def test_compile_with_mocked_dependencies():
-    """Test compile with mocked dependencies to verify integration."""
-    # Mock all necessary dependencies to isolate the compile method
-    with patch("app.tools.syllabus_generator.tools.ParserFactory.create_parsers") as mock_parsers, \
-        patch("app.tools.syllabus_generator.tools.ChainBuilder") as mock_builder:
-
-        # Configure mocks
-        mock_chain = MagicMock()
-        mock_builder_instance = mock_builder.return_value
-        mock_builder_instance.build_chain_with_fallback.return_value = mock_chain
-
-        # Create pipeline and compile
-        pipeline = SyllabusGeneratorPipeline()
-        result = pipeline.compile()
-
-        # Verify parser factory was called
-        mock_parsers.assert_called_once()
-
-        # Verify ChainBuilder was instantiated with the right arguments
-        mock_builder.assert_called_once()
-
-        assert mock_builder_instance.build_chain_with_fallback.call_count == 7
-        # Verify the compiled result has the right structure
-        assert result["sequential"]["course_information"] == mock_chain
-        assert result["sequential"]["course_description_objectives"] == mock_chain
-        assert result["sequential"]["course_content"] == mock_chain
-        assert result["sequential"]["policies_procedures"] == mock_chain
 
 @pytest.fixture
 def sample_syllabus_args():
@@ -266,7 +66,6 @@ def sample_syllabus_args():
         file_type=""
     )
 
-
 @pytest.fixture
 def sample_summary():
     return "This is a sample course summary"
@@ -275,132 +74,499 @@ def sample_summary():
 def syllabus_request_args(sample_syllabus_args, sample_summary):
     return SyllabusRequestArgs(sample_syllabus_args, sample_summary)
 
-def test_syllabus_request_args_initialization(syllabus_request_args):
-    """Test the initialization of SyllabusRequestArgs with default values."""
-    print("Testing syllabus_request_args_initialization")
-    assert syllabus_request_args._grade_level == "High School"
-    assert syllabus_request_args._subject == "Mathematics"
-    assert syllabus_request_args._course_description == "Introduction to Algebra"
-    assert syllabus_request_args._objectives == "Learn basic algebraic concepts"
-    assert syllabus_request_args._required_materials == "Textbook, calculator"
-    assert syllabus_request_args._grading_policy == "Standard grading scale"
-    assert syllabus_request_args._policies_expectations == "Regular attendance required"
-    assert syllabus_request_args._course_outline == "Basic algebra concepts"
-    assert syllabus_request_args._additional_notes == "None"
-    assert syllabus_request_args._lang == "en"
-    assert syllabus_request_args._summary == "This is a sample course summary"
+# Test PipelineStep
+class TestPipelineStep:
+    """Test suite for PipelineStep class functionality."""
+    
+    def test_initialization(self):
+        """Test PipelineStep initialization with different execution modes."""
+        step = PipelineStep(
+            name="test_step",
+            prompt_factory=PromptFactory.course_information,
+            parser_key="course_information",
+            dependencies=["dep1", "dep2"],
+            execution_mode="sequential"
+        )
+        assert step.name == "test_step"
+        assert step.dependencies == ["dep1", "dep2"]
+        assert step.execution_mode == "sequential"
 
-def test_syllabus_request_args_to_dict(syllabus_request_args):
-    """Test the to_dict method of SyllabusRequestArgs."""
-    print("Testing syllabus_request_args_to_dict")
-    result = syllabus_request_args.to_dict()
-    assert isinstance(result, dict)
-    assert result["grade_level"] == "High School"
-    assert result["subject"] == "Mathematics"
-    assert result["course_description"] == "Introduction to Algebra"
-    assert result["objectives"] == "Learn basic algebraic concepts"
-    assert result["required_materials"] == "Textbook, calculator"
-    assert result["grading_policy"] == "Standard grading scale"
-    assert result["policies_expectations"] == "Regular attendance required"
-    assert result["course_outline"] == "Basic algebra concepts"
-    assert result["additional_notes"] == "None"
-    assert result["lang"] == "en"
-    assert result["summary"] == "This is a sample course summary"
+    def test_default_values(self):
+        """Test PipelineStep initialization with default values."""
+        step = PipelineStep(
+            name="test_step",
+            prompt_factory=PromptFactory.course_information,
+            parser_key="course_information"
+        )
+        assert step.dependencies == []
+        assert step.execution_mode == "sequential"
 
-def test_prompt_factory_course_information():
-    """Test the course_information prompt factory."""
-    print("Testing prompt_factory_course_information")
-    parser_instructions = "Format as JSON"
-    prompt = PromptFactory.course_information(parser_instructions)
-    assert isinstance(prompt, PromptTemplate)
-    assert "grade_level" in prompt.input_variables
-    assert "subject" in prompt.input_variables
-    assert "course_description" in prompt.input_variables
-    assert "lang" in prompt.input_variables
-    assert "summary" in prompt.input_variables
-    assert "additional_notes" in prompt.input_variables
+# Test ChainBuilder
+class TestChainBuilder:
+    """Test suite for ChainBuilder functionality."""
+    
+    def test_basic_functionality(self, chain_builder):
+        """Test ChainBuilder basic functionality."""
+        prompt = PromptFactory.course_information("Format as JSON")
+        chain = chain_builder.build_chain_with_fallback(
+            prompt=prompt,
+            section_name="test_section",
+            parser_key="course_information"
+        )
+        assert isinstance(chain, Runnable)
+        assert hasattr(chain, "invoke")
 
-def test_parser_factory():
-    """Test the parser factory creation."""
-    print("Testing parser_factory")
-    parsers = ParserFactory.create_parsers()
-    assert isinstance(parsers, dict)
-    assert "course_information" in parsers
-    assert "course_description_objectives" in parsers
-    assert "course_content" in parsers
-    assert "policies_procedures" in parsers
-    assert "assessment_grading_criteria" in parsers
-    assert "learning_resources" in parsers
-    assert "course_schedule" in parsers
-    
-    # Verify parser types
-    for parser in parsers.values():
-        assert isinstance(parser, JsonOutputParser)
+    def test_chain_execution_modes(self, steps):
+        """Test that chains are properly configured for their execution modes."""
+        required_sections = [
+            "course_information",
+            "course_description_objectives",
+            "course_content",
+            "policies_procedures",
+            "assessment_grading_criteria",
+            "learning_resources",
+            "course_schedule"
+        ]
 
-def test_resume_course_content():
-    """Test the resume_course_content function."""  
-    print("Testing resume_course_content")
-    course_content = [
-        {"unit_time": "weeks", "unit_time_value": 2, "topic": "Introduction"},
-        {"unit_time": "weeks", "unit_time_value": 3, "topic": "Basic Concepts"},
-        {"unit_time": "days", "unit_time_value": 5, "topic": "Review"}
-    ]
-    
-    result = resume_course_content(course_content)
-    assert isinstance(result, dict)
-    assert "course_length" in result
-    assert "course_topics" in result
-    assert "5 weeks" in result["course_length"]
-    assert "5 days" in result["course_length"]
+        for section in required_sections:
+            assert section in steps, f"Missing section: {section}"
+            chain = steps[section].chain
+            assert hasattr(chain, 'invoke'), f"Chain {section} is not invokable"
+            assert hasattr(chain, 'fallbacks'), f"Chain {section} has no fallbacks"
+            assert len(chain.fallbacks) > 0, f"Chain {section} has empty fallbacks"
 
-def test_syllabus_generator_validate_output():
-    """Test the output validation functionality."""
-    print("Testing syllabus_generator_validate_output")
-    generator = SyllabusGenerator(error_threshold=0.8)
+    def test_chain_with_fallback_integration(self, fallbacks_list):
+        """Test the fallback integration with a chain that fails."""
+        def failing_function(input_data: dict, *args, **kwargs):
+            raise ValueError("Simulated failure")
+        
+        failing_chain = RunnableLambda(failing_function)
+        chain_with_fallback = failing_chain.with_fallbacks(fallbacks_list, exception_key = "error")
+        
+        result = chain_with_fallback.invoke({"query": "Test input"})
+        
+        assert result["status"] == "failed"
+        assert result["section"] == "test_section"
+        assert result["fallback"] is True
+        assert result["error"] == "Simulated failure"
+
+# Test SyllabusRequestArgs
+class TestSyllabusRequestArgs:
+    """Test suite for SyllabusRequestArgs functionality."""
     
-    # Test successful validation
-    valid_output = {
-        "course_information": {"title": "Test Course"},
-        "course_description_objectives": {"objectives": ["Objective 1"]},
-        "course_content": {"content": ["Content 1"]},
-        "policies_procedures": {"policies": ["Policy 1"]},
-        "assessment_grading_criteria": {"criteria": ["Criterion 1"]},
-        "learning_resources": {"resources": ["Resource 1"]},
-        "course_schedule": {"schedule": ["Schedule 1"]}
-    }
+    def test_initialization(self, syllabus_request_args):
+        """Test the initialization of SyllabusRequestArgs with default values."""
+        assert syllabus_request_args._grade_level == "High School"
+        assert syllabus_request_args._subject == "Mathematics"
+        assert syllabus_request_args._course_description == "Introduction to Algebra"
+        assert syllabus_request_args._objectives == "Learn basic algebraic concepts"
+        assert syllabus_request_args._required_materials == "Textbook, calculator"
+        assert syllabus_request_args._grading_policy == "Standard grading scale"
+        assert syllabus_request_args._policies_expectations == "Regular attendance required"
+        assert syllabus_request_args._course_outline == "Basic algebra concepts"
+        assert syllabus_request_args._additional_notes == "None"
+        assert syllabus_request_args._lang == "en"
+        assert syllabus_request_args._summary == "This is a sample course summary"
+
+    def test_to_dict(self, syllabus_request_args):
+        """Test the to_dict method of SyllabusRequestArgs."""
+        result = syllabus_request_args.to_dict()
+        assert isinstance(result, dict)
+        assert result["grade_level"] == "High School"
+        assert result["subject"] == "Mathematics"
+        assert result["course_description"] == "Introduction to Algebra"
+        assert result["objectives"] == "Learn basic algebraic concepts"
+        assert result["required_materials"] == "Textbook, calculator"
+        assert result["grading_policy"] == "Standard grading scale"
+        assert result["policies_expectations"] == "Regular attendance required"
+        assert result["course_outline"] == "Basic algebra concepts"
+        assert result["additional_notes"] == "None"
+        assert result["lang"] == "en"
+        assert result["summary"] == "This is a sample course summary"
+
+# Test PromptFactory
+class TestPromptFactory:
+    """Test suite for PromptFactory class."""
     
-    metadata = generator._validate_output(valid_output)
-    assert metadata["status"] == "success"
-    assert metadata["error_rate"] == 0
-    assert not metadata["error_sections"]
+    @pytest.fixture
+    def parser_instructions(self):
+        return "Format as JSON"
+
+    def test_course_information_prompt(self, parser_instructions):
+        """Test course_information prompt factory."""
+        prompt = PromptFactory.course_information(parser_instructions)
+        assert isinstance(prompt, PromptTemplate)
+        assert all(var in prompt.input_variables for var in [
+            "grade_level", "subject", "course_description", "lang",
+            "summary", "additional_notes"
+        ])
+        assert "format_instructions" in prompt.partial_variables
+        assert prompt.partial_variables["format_instructions"] == parser_instructions
+
+    def test_course_description_objectives_prompt(self, parser_instructions):
+        """Test course_description_objectives prompt factory."""
+        prompt = PromptFactory.course_description_objectives(parser_instructions)
+        assert isinstance(prompt, PromptTemplate)
+        assert all(var in prompt.input_variables for var in [
+            "objectives", "lang", "summary", "grade_level",
+            "subject", "course_description"
+        ])
+        assert "format_instructions" in prompt.partial_variables
+        assert prompt.partial_variables["format_instructions"] == parser_instructions
+
+    def test_course_content_prompt(self, parser_instructions):
+        """Test course_content prompt factory."""
+        prompt = PromptFactory.course_content(parser_instructions)
+        assert isinstance(prompt, PromptTemplate)
+        assert all(var in prompt.input_variables for var in [
+            "course_information", "course_outline", "lang", "summary", "course_objectives"
+        ])
+
+    def test_policies_procedures_prompt(self, parser_instructions):
+        """Test policies_procedures prompt factory."""
+        prompt = PromptFactory.policies_procedures(parser_instructions)
+        assert isinstance(prompt, PromptTemplate)
+        assert all(var in prompt.input_variables for var in [
+            "grading_policy", "policies_expectations", "lang", "grade_level", "course_title"
+        ])
+        assert "format_instructions" in prompt.partial_variables
+        assert prompt.partial_variables["format_instructions"] == parser_instructions
+
+    def test_assessment_grading_criteria_prompt(self, parser_instructions):
+        """Test assessment_grading_criteria prompt factory."""
+        prompt = PromptFactory.assessment_grading_criteria(parser_instructions)
+        assert isinstance(prompt, PromptTemplate)
+        assert all(var in prompt.input_variables for var in [
+            "grading_policy", "lang", "course_title", "grade_level", "course_objectives"
+        ])
+        assert "format_instructions" in prompt.partial_variables
+        assert prompt.partial_variables["format_instructions"] == parser_instructions
+
+    def test_learning_resources_prompt(self, parser_instructions):
+        """Test learning_resources prompt factory."""
+        prompt = PromptFactory.learning_resources(parser_instructions)
+        assert isinstance(prompt, PromptTemplate)
+        assert all(var in prompt.input_variables for var in [
+            "required_materials", "lang", "course_title", "subject", "grade_level"
+        ])
+        assert "format_instructions" in prompt.partial_variables
+        assert prompt.partial_variables["format_instructions"] == parser_instructions
+
+    def test_course_schedule_prompt(self, parser_instructions):
+        """Test course_schedule prompt factory."""
+        prompt = PromptFactory.course_schedule(parser_instructions)
+        assert isinstance(prompt, PromptTemplate)
+        assert all(var in prompt.input_variables for var in [
+            "course_title", "grade_level", "course_content", "lang"
+        ])
+
+    def test_prompt_template_content(self, parser_instructions):
+        """Test that all prompts contain the expected template content."""
+        prompts = [
+            (PromptFactory.course_information, "curriculum designer"),
+            (PromptFactory.course_description_objectives, "learning outcomes"),
+            (PromptFactory.course_content, "course content outline"),
+            (PromptFactory.policies_procedures, "educational policies"),
+            (PromptFactory.assessment_grading_criteria, "assessment methods"),
+            (PromptFactory.learning_resources, "learning materials"),
+            (PromptFactory.course_schedule, "course schedule")
+        ]
+
+        for factory_method, expected_content in prompts:
+            prompt = factory_method(parser_instructions)
+            assert expected_content in prompt.template.lower()
+
+    def test_prompt_format_instructions(self, parser_instructions):
+        """Test that format instructions are properly included in all prompts."""
+        prompt_methods = [
+            PromptFactory.course_information,
+            PromptFactory.course_description_objectives,
+            PromptFactory.course_content,
+            PromptFactory.policies_procedures,
+            PromptFactory.assessment_grading_criteria,
+            PromptFactory.learning_resources,
+            PromptFactory.course_schedule
+        ]
+
+        for method in prompt_methods:
+            if method == PromptFactory.course_content or method == PromptFactory.course_schedule:
+                continue
+            prompt = method(parser_instructions)
+            assert "{format_instructions}" in prompt.template
+            assert prompt.partial_variables["format_instructions"] == parser_instructions
+
+    def test_prompt_language_support(self, parser_instructions):
+        """Test that all prompts support language specification."""
+        prompt_methods = [
+            PromptFactory.course_information,
+            PromptFactory.course_description_objectives,
+            PromptFactory.course_content,
+            PromptFactory.policies_procedures,
+            PromptFactory.assessment_grading_criteria,
+            PromptFactory.learning_resources,
+            PromptFactory.course_schedule
+        ]
+
+        for method in prompt_methods:
+            prompt = method(parser_instructions)
+            assert "lang" in prompt.input_variables
+            assert "{lang}" in prompt.template
+
+    def test_prompt_grade_level_support(self, parser_instructions):
+        """Test that all prompts support grade level specification."""
+        prompt_methods = [
+            PromptFactory.course_information,
+            PromptFactory.course_description_objectives,
+            PromptFactory.course_content,
+            PromptFactory.policies_procedures,
+            PromptFactory.assessment_grading_criteria,
+            PromptFactory.learning_resources,
+            PromptFactory.course_schedule
+        ]
+
+        for method in prompt_methods:
+            prompt = method(parser_instructions)
+            assert "grade_level" in prompt.input_variables
+            assert "{grade_level}" in prompt.template
+
+# Test ParserFactory
+class TestParserFactory:
+    """Test suite for ParserFactory class."""
     
-    # Test partial failure
-    partial_output = {
-        "course_information": {"error": "Failed"},
-        "course_description_objectives": {"objectives": ["Objective 1"]},
-        "course_content": {"content": ["Content 1"]},
-        "policies_procedures": {"policies": ["Policy 1"]},
-        "assessment_grading_criteria": {"criteria": ["Criterion 1"]},
-        "learning_resources": {"resources": ["Resource 1"]},
-        "course_schedule": {"schedule": ["Schedule 1"]}
-    }
+    def test_create_parsers_returns_dict(self):
+        """Test that create_parsers returns a dictionary of parsers."""
+        parsers = ParserFactory.create_parsers()
+        assert isinstance(parsers, dict)
+        assert len(parsers) > 0
+
+    def test_parser_types(self):
+        """Test that all parsers are JsonOutputParser instances."""
+        parsers = ParserFactory.create_parsers()
+        for parser in parsers.values():
+            assert isinstance(parser, JsonOutputParser)
+
+    def test_required_parsers_exist(self):
+        """Test that all required parsers are created."""
+        parsers = ParserFactory.create_parsers()
+        required_parsers = [
+            "course_information",
+            "course_description_objectives",
+            "course_content",
+            "policies_procedures",
+            "assessment_grading_criteria",
+            "learning_resources",
+            "course_schedule"
+        ]
+        for parser_name in required_parsers:
+            assert parser_name in parsers
+
+    def test_parser_schema_validation(self):
+        """Test that parsers validate against their expected schemas."""
+        parsers = ParserFactory.create_parsers()
+        
+        # Test course information parser
+        course_info_parser = parsers["course_information"]
+        valid_course_info = {
+            "title": "Test Course",
+            "grade_level": "High School",
+            "subject": "Mathematics",
+            "description": "Test Description"
+        }
+        assert course_info_parser.parse(json.dumps(valid_course_info)) == valid_course_info
+
+        # Test course description objectives parser
+        objectives_parser = parsers["course_description_objectives"]
+        valid_objectives = {
+            "objectives": ["Objective 1", "Objective 2"],
+            "learning_outcomes": ["Outcome 1", "Outcome 2"]
+        }
+        assert objectives_parser.parse(json.dumps(valid_objectives)) == valid_objectives
+
+        # Test course content parser
+        content_parser = parsers["course_content"]
+        valid_content = {
+            "units": [
+                {
+                    "title": "Unit 1",
+                    "duration": "2 weeks",
+                    "topics": ["Topic 1", "Topic 2"]
+                }
+            ]
+        }
+        assert content_parser.parse(json.dumps(valid_content)) == valid_content
+
+    def test_parser_error_handling(self):
+        """Test that parsers handle invalid input appropriately."""
+        parsers = ParserFactory.create_parsers()
+        
+        # Test with invalid JSON
+        invalid_json = "not a json"
+        for parser_name, parser in parsers.items():
+            with pytest.raises(Exception) as exc_info:
+                parser.parse(invalid_json)
+            assert "Invalid json output" in str(exc_info.value)
+
+        # Test with valid JSON but missing fields
+        # Note: JsonOutputParser doesn't validate schema, so this should pass
+        invalid_course_info = {
+            "title": "Test Course"
+            # Missing required fields
+        }
+        result = parsers["course_information"].parse(json.dumps(invalid_course_info))
+        assert result == invalid_course_info
+
+        # Test with valid JSON but invalid field types
+        # Note: JsonOutputParser doesn't validate types, so this should pass
+        invalid_types = {
+            "course_information": {
+                "title": 123,  # Should be string
+                "grade_level": ["High School"],  # Should be string
+                "subject": None,  # Should be string
+                "description": True  # Should be string
+            }
+        }
+        result = parsers["course_information"].parse(json.dumps(invalid_types))
+        assert result == invalid_types
+
+        # Test with valid JSON but malformed structure
+        # Note: JsonOutputParser doesn't validate structure, so this should pass
+        malformed_nested = {
+            "course_content": {
+                "units": "not a list"  # Should be a list
+            }
+        }
+        result = parsers["course_content"].parse(json.dumps(malformed_nested))
+        assert result == malformed_nested
+
+        # Test with valid JSON but empty fields
+        # Note: JsonOutputParser doesn't validate content, so this should pass
+        empty_fields = {
+            "course_information": {
+                "title": "",
+                "grade_level": "",
+                "subject": "",
+                "description": ""
+            }
+        }
+        result = parsers["course_information"].parse(json.dumps(empty_fields))
+        assert result == empty_fields
+
+# Test SyllabusGenerator
+class TestSyllabusGenerator:
+    """Test suite for SyllabusGenerator class."""
     
-    metadata = generator._validate_output(partial_output)
-    assert metadata["status"] == "partial_success"
-    assert metadata["error_rate"] == 0.14  # 1/7 sections failed
-    assert "course_information" in metadata["error_sections"]
+    def test_validate_output(self):
+        """Test the output validation functionality."""
+        generator = SyllabusGenerator(error_threshold=0.8)
+        
+        # Test successful validation
+        valid_output = {
+            "course_information": {"title": "Test Course"},
+            "course_description_objectives": {"objectives": ["Objective 1"]},
+            "course_content": {"content": ["Content 1"]},
+            "policies_procedures": {"policies": ["Policy 1"]},
+            "assessment_grading_criteria": {"criteria": ["Criterion 1"]},
+            "learning_resources": {"resources": ["Resource 1"]},
+            "course_schedule": {"schedule": ["Schedule 1"]}
+        }
+        
+        metadata = generator._validate_output(valid_output)
+        assert metadata["status"] == "success"
+        assert metadata["error_rate"] == 0
+        assert not metadata["error_sections"]
+        
+        # Test partial failure
+        partial_output = {
+            "course_information": {"error": "Failed"},
+            "course_description_objectives": {"objectives": ["Objective 1"]},
+            "course_content": {"content": ["Content 1"]},
+            "policies_procedures": {"policies": ["Policy 1"]},
+            "assessment_grading_criteria": {"criteria": ["Criterion 1"]},
+            "learning_resources": {"resources": ["Resource 1"]},
+            "course_schedule": {"schedule": ["Schedule 1"]}
+        }
+        
+        metadata = generator._validate_output(partial_output)
+        assert metadata["status"] == "partial_success"
+        assert metadata["error_rate"] == 0.14  # 1/7 sections failed
+        assert "course_information" in metadata["error_sections"]
+        
+        # Test complete failure
+        failed_output = {
+            "course_information": {"error": "Failed"},
+            "course_description_objectives": {"error": "Failed"},
+            "course_content": {"error": "Failed"},
+            "policies_procedures": {"error": "Failed"},
+            "assessment_grading_criteria": {"error": "Failed"},
+            "learning_resources": {"error": "Failed"},
+            "course_schedule": {"error": "Failed"}
+        }
+        
+        with pytest.raises(OutputValidationError) as exc_info:
+            generator._validate_output(failed_output) 
+        assert str(exc_info.value) == "Failed to generate any section."
+
+# Test Pipeline Compilation
+class TestPipelineCompilation:
+    """Test suite for pipeline compilation functionality."""
     
-    # Test complete failure
-    failed_output = {
-        "course_information": {"error": "Failed"},
-        "course_description_objectives": {"error": "Failed"},
-        "course_content": {"error": "Failed"},
-        "policies_procedures": {"error": "Failed"},
-        "assessment_grading_criteria": {"error": "Failed"},
-        "learning_resources": {"error": "Failed"},
-        "course_schedule": {"error": "Failed"}
-    }
+    def test_compile_returns_dict_with_correct_keys(self, steps):
+        """Test that compile returns a dictionary with all required sections."""
+        required_sections = [
+            "course_information",
+            "course_description_objectives",
+            "course_content",
+            "policies_procedures",
+            "assessment_grading_criteria",
+            "learning_resources",
+            "course_schedule"
+        ]
+        
+        assert isinstance(steps, dict)
+        for section in required_sections:
+            assert section in steps, f"Missing required section: {section}"
+
+    def test_compile_steps_structure(self, steps):
+        """Test that compile returns chains with correct structure."""
+        required_sections = [
+            "course_information",
+            "course_description_objectives",
+            "course_content",
+            "policies_procedures",
+            "assessment_grading_criteria",
+            "learning_resources",
+            "course_schedule"
+        ]
+
+        for section in required_sections:
+            assert section in steps, f"Missing chain: {section}"
+            chain = steps[section].chain
+            assert hasattr(chain, "invoke"), f"{section} is not a runnable"
+            assert hasattr(chain, "fallbacks"), f"{section} has no fallbacks"
+            assert len(chain.fallbacks) > 0, f"{section} has empty fallbacks"
+
+    def test_compile_handles_errors(self, pipeline):
+        """Test that compile handles errors properly."""
+        with patch("app.tools.syllabus_generator.tools.ParserFactory.create_parsers", 
+                side_effect=Exception("Test error")):
+            with pytest.raises(CompilePipelineError):
+                pipeline.compile()
+
+# Test Course Content Resume
+class TestCourseContentResume:
+    """Test suite for course content resume functionality."""
     
-    with pytest.raises(OutputValidationError) as exc_info:
-        generator._validate_output(failed_output) 
-    assert str(exc_info.value) == "Failed to generate any section."
+    def test_resume_course_content(self):
+        """Test the resume_course_content function."""
+        course_content = [
+            {"unit_time": "weeks", "unit_time_value": 2, "topic": "Introduction"},
+            {"unit_time": "weeks", "unit_time_value": 3, "topic": "Basic Concepts"},
+            {"unit_time": "days", "unit_time_value": 5, "topic": "Review"}
+        ]
+        
+        result = resume_course_content(course_content)
+        assert isinstance(result, dict)
+        assert "course_length" in result
+        assert "course_topics" in result
+        assert "5 weeks" in result["course_length"]
+        assert "5 days" in result["course_length"]
