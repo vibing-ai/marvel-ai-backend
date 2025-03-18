@@ -1,6 +1,6 @@
 from app.services.logger import setup_logger
 from app.tools.syllabus_generator.tools import SyllabusRequestArgs
-from app.tools.syllabus_generator.tools import generate_syllabus
+from app.tools.syllabus_generator.tools import SyllabusGenerator
 from app.utils.document_loaders_summarization import (
     generate_summary_from_img, 
     summarize_transcript_youtube_url, 
@@ -25,17 +25,21 @@ def executor(grade_level: str,
              lang: str,
              verbose: bool = True):
     
-    if verbose:
-        logger.info(f"File URL loaded: {file_url}")
-    
     try:
+        logger.info("Generating syllabus...") if verbose else None
         
-        if file_type == 'img':
-            summary = generate_summary_from_img(file_url)
-        elif file_type == 'youtube_url':
-            summary = summarize_transcript_youtube_url(file_url, verbose=verbose)
+        if file_url != "":
+            logger.info(f"File URL loaded: {file_url}") if verbose else None
+
+            if file_type == 'img':
+                summary = generate_summary_from_img(file_url)
+            elif file_type == 'youtube_url':
+                summary = summarize_transcript_youtube_url(file_url, verbose=verbose)
+            else:
+                summary = get_summary(file_url, file_type, verbose=verbose)
         else:
-            summary = get_summary(file_url, file_type, verbose=verbose)
+            logger.info("No file URL provided")
+            summary = ""
     
         syllabus_args_model = SyllabusGeneratorArgsModel(
             grade_level = grade_level,
@@ -56,7 +60,7 @@ def executor(grade_level: str,
                                 syllabus_args_model,
                                 summary)
         
-        syllabus = generate_syllabus(request_args, verbose=verbose)
+        syllabus = SyllabusGenerator(verbose=verbose).generate_syllabus(request_args)
 
     except Exception as e:
         logger.error(f"Failed to generate syllabus: {str(e)}")
