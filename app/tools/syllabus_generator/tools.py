@@ -7,6 +7,7 @@ from functools import lru_cache
 from langchain_core.output_parsers import JsonOutputParser
 from langchain_core.prompts import PromptTemplate
 from langchain_core.runnables import Runnable, RunnableParallel, RunnableLambda  
+from langchain_core.tracers.schemas import Run
 from langchain_google_genai import GoogleGenerativeAI
 import langsmith as ls
 from langsmith import trace
@@ -126,23 +127,38 @@ class PromptFactory:
                 Course Description: {course_information}
                 
                 # Learning Objectives
-                {objectives}
+                {course_objectives}
                 
                 # Additional Context
                 Course Outline: {course_outline}
                 Summary: {summary}
-                
-                # Instructions
-                1. Create a logical sequence of course units based on the objectives and description
-                2. If no course outline is provided, generate an appropriate one based on the subject and objectives
-                3. Include appropriate time units (weeks, days, months) based on the course scope
-                4. Each unit should build on previous knowledge and support the learning outcomes
-                5. Respond in {lang} language.
-                
-                {format_instructions}
+
+                # Design Instructions
+                1. Create a logical sequence of content units that align with the learning objectives and course description
+                2. For each unit, provide:
+                    - A clear, descriptive title
+                    - A brief description of the unit's focus
+                    - 3-5 key topics or concepts covered
+                    - How this unit connects to the learning objectives
+                3. Ensure content builds progressively, with later units building on earlier foundations
+                4. Include depth and breadth appropriate for the specified grade level
+                5. If no course outline is provided, develop one based on standard curriculum patterns for this subject
+                6. Focus on content organization rather than scheduling aspects
+                7. Each unit should represent a coherent body of knowledge rather than a time period
+                8. Include any specialized vocabulary or frameworks students will need to master
+                9. Respond in {lang} language.
+
+                # Output Guidance
+                ## Answer with a valid JSON object, returning a list of CourseContentItem objects.
+                class CourseContentItem(BaseModel):
+                    unit_sequence: int = Field(description="The sequential unit/module number in the course")
+                    title: str = Field(description="The title of the unit")
+                    description: str = Field(description="A brief summary of the unit's content"")
+                    key_topics: List[str] = Field(description="The key topics for the unit")
+                    learning_outcomes: List[str] = Field(description="The learning outcomes for the unit")
                 """
             ),
-            input_variables=["course_information", "course_outline", "lang", "summary", "objectives"],
+            input_variables=["course_information", "course_outline", "lang", "summary", "course_objectives"],
             partial_variables={"format_instructions": parser_intructions},
         )
     
@@ -187,7 +203,7 @@ class PromptFactory:
                 # Course Context
                 Course Title: {course_title}
                 Grade Level: {grade_level}
-                Learning Objectives: {objectives}
+                Learning Objectives: {course_objectives}
                 
                 # Available Assessment Information
                 Grading Policy: {grading_policy}
@@ -202,7 +218,7 @@ class PromptFactory:
                 {format_instructions}
                 """
             ),
-            input_variables=["grading_policy", "lang", "course_title", "grade_level", "objectives"],
+            input_variables=["grading_policy", "lang", "course_title", "grade_level", "course_objectives"],
             partial_variables={"format_instructions": parser_intructions},
         )
     
@@ -218,7 +234,7 @@ class PromptFactory:
                 Course Title: {course_title}
                 Subject: {subject}
                 Grade Level: {grade_level}
-                
+                Course Content: {course_content}
                 # Available Materials Information
                 Required Materials: {required_materials}
                 
@@ -232,7 +248,7 @@ class PromptFactory:
                 {format_instructions}
                 """
             ),
-            input_variables=["required_materials", "lang", "course_title", "subject", "grade_level"],
+            input_variables=["required_materials", "lang", "course_title", "subject", "grade_level", "course_content"],
             partial_variables={"format_instructions": parser_intructions},
         )
     
@@ -242,27 +258,45 @@ class PromptFactory:
         return PromptTemplate(
             template=(
                 """
-                You are creating a detailed course schedule based on the course content.
+                You are an expert educational planner creating a comprehensive course schedule based on established course content.
                 
                 # Course Information
                 Course Title: {course_title}
                 Grade Level: {grade_level}
-
+                Course outline informed by the user: {course_outline}
                 # Course Content Structure
-                {course_resumed_content}
+                {course_content}
                 
                 # Instructions
-                1. Create a detailed schedule that follows the course content structure
-                2. Match the unit_time format used in the course content (weeks, days, etc.)
-                3. Include specific dates or time periods for each topic
-                4. Add appropriate activities for each topic that support the learning objectives
-                5. Respond in {lang} language.
-                
-                {format_instructions}
+                1. Create a detailed schedule that transforms the course content into a chronological delivery plan
+                2. For each session, provide:
+                    - Session number and date
+                    - Topic from the course content being covered
+                    - Specific learning activities planned for the session
+                3. Ensure appropriate pacing across the entire course timeline
+                4. Include variety in learning activities (lectures, discussions, group work, etc.)
+                5. Allocate sufficient time for complex topics and review sessions
+                6. Schedule assessments at logical points in the learning progression
+                7. Account for any holidays or breaks in the academic calendar
+                8. Respond in {lang} language.
+
+                # OUTPUT GUIDANCE
+                    - Create a realistic schedule that allows sufficient time for each topic
+                    - Balance content coverage with appropriate depth of engagement
+                    - Account for scaffolding and skill development over time
+                    - Ensure assessment timing aligns with learning progression
+                    - Consider student workload and cognitive load in your planning
+
+                # Answer with a valid JSON object, returning a list of CourseScheduleItem objects.
+                class CourseScheduleItem(BaseModel):
+                    session_number: int = Field(description="The sequential session number in the course schedule")
+                    date: str = Field(description="The scheduled date for this session (format: YYYY-MM-DD)")
+                    time_frame: str = Field(description="The duration of the session (e.g., '2 days', '1 week', '1 month')")
+                    topic: str = Field(description="The main topic covered in this session")
+                    activity_desc: str = Field(description="A brief description of the planned learning activity for this session")
                 """
             ),
-            input_variables=["course_outline", "lang", "course_title", "grade_level", "course_resumed_content"],
-            partial_variables={"format_instructions": parser_intructions},
+            input_variables=["course_outline", "lang", "course_title", "grade_level", "course_content"]
         )
 class LLMCache:
     """LRU cache for LLM responses to reduce redundant calls."""
@@ -331,6 +365,14 @@ class ChainBuilder:
         self._cache = cache
         self.verbose = verbose
     
+    @staticmethod
+    def fn_start(run_obj: Run):
+        logger.info(f"Generating section: {run_obj.name}, start_time: {run_obj.start_time.strftime('%Y-%m-%d %H:%M:%S')}")
+
+    @staticmethod
+    def fn_end(run_obj: Run):
+        logger.info(f"Completed section: {run_obj.name}, end_time: {run_obj.end_time.strftime('%Y-%m-%d %H:%M:%S')}")
+
     def create_fallback(self, section_name: str) -> list[RunnableLambda]:
         """Create a fallback function for a section chain."""
         def section_fallback(input):
@@ -352,162 +394,159 @@ class ChainBuilder:
             self.create_fallback(section_name), 
             exception_key="error"
         )
-        return chain_with_fallback.with_config(run_name=section_name)
+        return chain_with_fallback.with_config(run_name=section_name).with_listeners(on_start=self.fn_start, on_end=self.fn_end)
 
-    def build_chain_with_cache_fallback(
-            self, 
-            prompt: PromptTemplate, 
-            section_name: str, 
-            parser_key: str) -> Runnable:
-        """Build a chain with a prompt, model, parser, and caching and fallback."""
+    # TODO: Add caching to the chain
+    # def build_chain_with_cache_fallback(       
+    #         self, 
+    #         prompt: PromptTemplate, 
+    #         section_name: str, 
+    #         parser_key: str) -> Runnable:
+    #     """Build a chain with a prompt, model, parser, and caching and fallback."""
 
-        chain_with_fallback = self.build_chain_with_fallback(prompt, section_name, parser_key)
+    #     chain_with_fallback = self.build_chain_with_fallback(prompt, section_name, parser_key)
 
-        def cached_invoke(input_dict):
-            """Execute chain with caching."""
-            # Check cache first
-            logger.info(f"Checking cache for {section_name}...") if self.verbose else None
-            logger.info(input_dict.keys()) if self.verbose else None
-            if self._cache:
-                try:
-                    cached_result = self._cache.get(input_dict)
+    #     def cached_invoke(input_dict):
+    #         """Execute chain with caching."""
+    #         # Check cache first
+    #         logger.info(f"Checking cache for {section_name}...") if self.verbose else None
+    #         logger.info(input_dict.keys()) if self.verbose else None
+    #         if self._cache:
+    #             try:
+    #                 cached_result = self._cache.get(input_dict)
 
-                    if cached_result:
-                        logger.info("Using cached result") if self.verbose else None
-                        logger.info(cached_result.keys()) if self.verbose else None
-                        return cached_result
+    #                 if cached_result:
+    #                     logger.info("Using cached result") if self.verbose else None
+    #                     logger.info(cached_result.keys()) if self.verbose else None
+    #                     return cached_result
                     
-                    logger.info("No cache hit, invoking chain") if self.verbose else None
-                    result = chain_with_fallback.invoke(input_dict)
+    #                 logger.info("No cache hit, invoking chain") if self.verbose else None
+    #                 result = chain_with_fallback.invoke(input_dict)
                     
-                    # Cache the result
-                    self._cache.set(input_dict, result)
-                    return result 
-                except Exception as e:
-                    logger.error(f"Cache failed: {e}")
-            else:
-                logger.info("Cache disabled, invoking chain") if self.verbose else None
+    #                 # Cache the result
+    #                 self._cache.set(input_dict, result)
+    #                 return result 
+    #             except Exception as e:
+    #                 logger.error(f"Cache failed: {e}")
+    #         else:
+    #             logger.info("Cache disabled, invoking chain") if self.verbose else None
 
-            # No cache or cache failed, invoke chain
-            return chain_with_fallback.invoke(input_dict)
+    #         # No cache or cache failed, invoke chain
+    #         return chain_with_fallback.invoke(input_dict)
         
-        return RunnableLambda(cached_invoke)
+    #     return RunnableLambda(cached_invoke)
         
+class PipelineStep:
+    """Represents a single step in the pipeline with its dependencies and execution mode."""
+    def __init__(self, name: str, prompt_factory, parser_key: str, dependencies: List[str] = None, 
+                 execution_mode: str = "sequential"):
+        self.name = name
+        self.prompt_factory = prompt_factory
+        self.parser_key = parser_key
+        self.dependencies = dependencies or []
+        self.execution_mode = execution_mode  # "sequential" or "parallel"
+        self.chain = None
+
 class SyllabusGeneratorPipeline:
     """Class to compile a hybrid pipeline for generating syllabuses."""
     def __init__(self, model_name="gemini-1.5-pro", model_max_retries=3, verbose=False):
         self.verbose = verbose
         self.model = GoogleGenerativeAI(model=model_name, max_retries=model_max_retries)
-        self.cache = LLMCache()  # Initialize the cache  
+        self.cache = None
+        # self.cache = LLMCache() 
+        # Cache implementation is on hold for now as it is needed a more robust caching mechanism
+        
+        # Define pipeline steps with their dependencies
+        self.steps = {
+            "course_information": PipelineStep(
+                name="course_information",
+                prompt_factory=PromptFactory.course_information,
+                parser_key="course_information"
+            ),
+            "course_description_objectives": PipelineStep(
+                name="course_description_objectives",
+                prompt_factory=PromptFactory.course_description_objectives,
+                parser_key="course_description_objectives",
+                dependencies=["course_information"]
+            ),
+            "course_content": PipelineStep(
+                name="course_content",
+                prompt_factory=PromptFactory.course_content,
+                parser_key="course_content",
+                dependencies=["course_information", "course_description_objectives"]
+            ),
+            "policies_procedures": PipelineStep(
+                name="policies_procedures",
+                prompt_factory=PromptFactory.policies_procedures,
+                parser_key="policies_procedures",
+                dependencies=["course_information"]
+            ),
+            "assessment_grading_criteria": PipelineStep(
+                name="assessment_grading_criteria",
+                prompt_factory=PromptFactory.assessment_grading_criteria,
+                parser_key="assessment_grading_criteria",
+                dependencies=["course_information", "course_description_objectives"],
+                execution_mode="parallel"
+            ),
+            "learning_resources": PipelineStep(
+                name="learning_resources",
+                prompt_factory=PromptFactory.learning_resources,
+                parser_key="learning_resources",
+                dependencies=["course_information"],
+                execution_mode="parallel"
+            ),
+            "course_schedule": PipelineStep(
+                name="course_schedule",
+                prompt_factory=PromptFactory.course_schedule,
+                parser_key="course_schedule",
+                dependencies=["course_content"],
+                execution_mode="parallel"
+            )
+        }
 
-    def compile(self) -> dict:
-        """Compile a hybrid pipeline with sequential and parallel components."""
+    def _build_chain(self, chain_builder, step: PipelineStep) -> Runnable:
+        """Build a chain for a given step."""
+        return chain_builder.build_chain_with_fallback(
+            step.prompt_factory(chain_builder.parsers[step.parser_key].get_format_instructions()),
+            step.name.capitalize(),
+            step.parser_key
+        )
+
+    def compile(self) -> List[Runnable]:
+        """Compile the pipeline and return a list of runnables in execution order."""
+
         try:
             parsers = ParserFactory.create_parsers()
             chain_builder = ChainBuilder(self.model, parsers, self.cache, self.verbose)
-
-            chains = {}
-            chains["course_information"] = chain_builder.build_chain_with_fallback(
-                PromptFactory.course_information(
-                    parsers["course_information"].get_format_instructions()
-                ),
-                "CourseInformation",
-                "course_information"
-            )
-            chains["course_description_objectives"] = chain_builder.build_chain_with_fallback(
-                PromptFactory.course_description_objectives(
-                    parsers["course_description_objectives"].get_format_instructions()
-                ),
-                "DescriptionObjectives",
-                "course_description_objectives"
-            )
-            chains["course_content"] = chain_builder.build_chain_with_fallback(
-                PromptFactory.course_content(
-                    parsers["course_content"].get_format_instructions()
-                ),
-                "CourseContent",
-                "course_content"
-            )
-            chains["policies_procedures"] = chain_builder.build_chain_with_fallback(
-                PromptFactory.policies_procedures(
-                    parsers["policies_procedures"].get_format_instructions()
-                ),
-                "PoliciesProcedures",
-                "policies_procedures"
-            )
-            chains["assessment_grading_criteria"] = chain_builder.build_chain_with_fallback(
-                PromptFactory.assessment_grading_criteria(
-                    parsers["assessment_grading_criteria"].get_format_instructions()
-                ),
-                "AssessmentGradingCriteria",
-                "assessment_grading_criteria"
-            )   
-            chains["learning_resources"] = chain_builder.build_chain_with_fallback(
-                PromptFactory.learning_resources(
-                    parsers["learning_resources"].get_format_instructions()
-                ),
-                "LearningResources",
-                "learning_resources"
-            )
-            chains["course_schedule"] = chain_builder.build_chain_with_fallback(
-                PromptFactory.course_schedule(
-                    parsers["course_schedule"].get_format_instructions()
-                ),
-                "CourseSchedule",
-                "course_schedule"
-            )  
-
-            # Build a parallel pipeline for the chains that can be executed concurrently
-            parallel_pipeline = RunnableParallel(
-                branches={
-                    "assessment_grading_criteria": chains["assessment_grading_criteria"],
-                    "learning_resources": chains["learning_resources"],
-                    "course_schedule": chains["course_schedule"],
-                }
-            )
-
+            
+            # Build all chains
+            for step in self.steps.values():
+                step.chain = self._build_chain(chain_builder, step)
+            
             if self.verbose:
-                logger.info("Successfully compiled the hybrid pipeline with context chaining.")
+                logger.info("Successfully compiled the pipeline.")
+            
+            first_runnable = RunnableParallel({
+                "course_information": self.steps["course_information"].chain,
+                "course_description_objectives": self.steps["course_description_objectives"].chain
+            })
 
-            return {
-                "sequential": {
-                    "course_information": chains["course_information"],
-                    "course_description_objectives": chains["course_description_objectives"],
-                    "course_content": chains["course_content"],
-                    "policies_procedures": chains["policies_procedures"],
-                },
-                "parallel": parallel_pipeline
-            }    
-
+            second_runnable = RunnableParallel({
+                "course_content": self.steps["course_content"].chain,
+                "assessment_grading_criteria": self.steps["assessment_grading_criteria"].chain,
+                "policies_procedures": self.steps["policies_procedures"].chain,
+            })
+            
+            third_runnable = RunnableParallel({
+                "course_schedule": self.steps["course_schedule"].chain,
+                "learning_resources": self.steps["learning_resources"].chain,
+            })
+            return [first_runnable, second_runnable, third_runnable]
+            
         except Exception as e:
             logger.error(f"Failed to compile pipeline: {e}")
             raise CompilePipelineError(str(e))
-    
-def resume_course_content(course_content: List[CourseContentItem]) -> dict:
-    """
-    Resume the course content with course length and topics for course schedule.
-    
-    Args:
-        course_content: List of CourseContentItem objects
-        
-    Returns:
-        dict: Resumed course content with course length and topics
-    """ 
-    course_length = {}
-    course_topics = ""
-    for content_item in course_content:
-        unit_time = content_item["unit_time"]   
-        unit_time_value = content_item["unit_time_value"]
-        if unit_time in course_length:
-            course_length[unit_time] += 1
-        else:
-            course_length[unit_time] = 1
-        course_topics += f"{unit_time_value} {unit_time}: {content_item['topic']}\n"
-    
-    return {
-        "course_length": "".join([f"{v} {k}, " for k, v in course_length.items()])[:-2],
-        "course_topics": course_topics
-    }
+
 class SyllabusGenerator:
     """
     Main class responsible for generating complete syllabuses using LLM.
@@ -516,7 +555,9 @@ class SyllabusGenerator:
     Uses configurable error thresholds to determine if enough sections were 
     successfully generated.
     """
-    def __init__(self , error_threshold:float=0.3, verbose=False):
+
+    def __init__(self, error_threshold:float=0.8, verbose=False):
+
         self.verbose = verbose
         self.error_threshold = error_threshold
 
@@ -538,71 +579,58 @@ class SyllabusGenerator:
             start_time = time.time()
 
             # Create a new pipeline factory
-            pipeline_factory =  SyllabusGeneratorPipeline(verbose=self.verbose)
-            # Compile the new hybrid pipeline (sequential + parallel)
-            pipeline = pipeline_factory.compile()
+            pipeline_factory = SyllabusGeneratorPipeline(verbose=self.verbose)
+            # Compile the pipeline to get list of runnables
+            runnables = pipeline_factory.compile()
         
             # Convert request args to dictionary
             request_dict = request_args.to_dict()
 
-            # Start a trace for the pipeline. This will log all steps and errors in one root trace.
-            with ls.trace("Syllabus Generator Pipeline", "chain", project_name="syllabus_generator", inputs=request_dict) as rt:
-                # --- Step 1: Generate course_information ---
-                logger.info("Generating course information...") if verbose else None
-                course_information = pipeline["sequential"]["course_information"].invoke(request_dict)
-                # Inject the output into the request for chained prompts
-                request_dict["course_information"] = course_information
-
-                request_dict["course_title"] = course_information["course_title"]
-                request_dict["grade_level"] = course_information["grade_level"]
-                # --- Step 2: Generate course_description_objectives ---
-                logger.info("Generating course description and objectives...") if verbose else None
-                course_description_objectives = pipeline["sequential"]["course_description_objectives"].invoke(request_dict)
-                 
-                if "objectives" in course_description_objectives:
-                    request_dict["course_objectives"] = course_description_objectives["objectives"] 
-                else:
-                    # Fallback to the original objectives if the parser fails
-                    request_dict["course_objectives"] = request_dict["objectives"]
-
-                # --- Step 3: Generate course_content using the chained course_information ---
-                logger.info("Generating course content...") if verbose else None
-                course_content = pipeline["sequential"]["course_content"].invoke(request_dict)
-
-                if isinstance(course_content, list) and len(course_content) > 0 and course_description_objectives.get("status") != "failed":
-                    # Only resume course content if it's a valid list, not a fallback error response
-                    try:
-                        request_dict["course_resumed_content"] = resume_course_content(course_content)
-                    except Exception as e:
-                        logger.warning(f"Failed to resume course content: {e}")
-                        request_dict["course_resumed_content"] = {
-                            "course_length": "Not specified",
-                            "course_topics": "Topics will be determined based on course objectives and content."
-                        }
-                else:
-                    # Fallback to more informative content if the parser fails
-                    request_dict["course_resumed_content"] = {
-                        "course_length": "Not specified",
-                        "course_topics": "Topics will be determined based on course objectives and content."
+            # Start a trace for the pipeline
+            with ls.trace("Syllabus Pipeline", "chain", project_name="syllabus_generator", inputs=request_dict) as rt:
+                # Execute each runnable in sequence
+                results = {}
+                for i, runnable in enumerate(runnables):
+                    query_dict = {
+                        **request_dict,
+                        **results
                     }
+                    if isinstance(runnable, RunnableParallel):
+                        parallel_results = runnable.invoke(query_dict)
+                        for step_name, value in parallel_results.items():
+                            results[step_name] = value
+                            
+                            # Special handling for course_information
+                            if step_name == "course_information":
+                                request_dict["course_title"] = value.get("course_title")
+                                request_dict["grade_level"] = value.get("grade_level")
+                            
+                            # Special handling for course_description_objectives
+                            if step_name == "course_description_objectives":
+                                if "objectives" in value:
+                                    request_dict["course_objectives"] = value["objectives"]
+                                else:
+                                    request_dict["course_objectives"] = request_dict.get("objectives", "")
+                    else:
+                        # Handle sequential execution
+                        step_name = runnable.config.get("run_name", "").lower()
+                        result = runnable.invoke(query_dict)
+                        # Update request_dict and results with the step name as key
+                        if isinstance(result, dict) or isinstance(result, list):
+                            results[step_name] = result 
+         
 
-                # --- Step 4: Generate policies_procedures ---
-                logger.info("Generating policies and procedures...") if verbose else None
-                policies_procedures = pipeline["sequential"]["policies_procedures"].invoke(request_dict)
-
-                # --- Step 5: # Create a trace for the parallel components
-                logger.info("Generating assessment, learning resources, and course schedule...") if verbose else None
-                parallel_outputs = pipeline["parallel"].invoke(request_dict)
-
+                # Create the final syllabus model
                 model = SyllabusSchema(
-                    course_information=course_information,
-                    course_description_objectives=course_description_objectives,
-                    course_content=course_content,
-                    policies_procedures=policies_procedures,
-                    assessment_grading_criteria=parallel_outputs["branches"]["assessment_grading_criteria"],
-                    learning_resources=parallel_outputs["branches"]["learning_resources"],
-                    course_schedule=parallel_outputs["branches"]["course_schedule"],
+                    course_information=results.get("course_information"),
+                    course_description_objectives=results.get("course_description_objectives"),
+                    course_content=results.get("course_content"),
+                    policies_procedures=results.get("policies_procedures"),
+                    assessment_grading_criteria=results.get("assessment_grading_criteria"),
+                    learning_resources=results.get("learning_resources"),
+                    course_schedule=results.get("course_schedule"),
                 )
+
                 logger.info("Syllabus generated successfully.")
 
                 model = model.dict()
@@ -654,7 +682,7 @@ class SyllabusGenerator:
             logger.warning(f"Partial failure in sections: {error_sections}.\n Error rate: {error_rate}")
 
         return {
-            "status": error_rate == 0,
+            "status": "success" if error_rate == 0 else "partial_success",
             "error_rate": error_rate,
             "error_sections": error_sections,
             "success_sections": success_sections

@@ -25,17 +25,21 @@ def executor(grade_level: str,
              lang: str,
              verbose: bool = True):
     
-    if verbose:
-        logger.info(f"File URL loaded: {file_url}")
-    
     try:
+        logger.info("Generating syllabus...") if verbose else None
         
-        if file_type == 'img':
-            summary = generate_summary_from_img(file_url)
-        elif file_type == 'youtube_url':
-            summary = summarize_transcript_youtube_url(file_url, verbose=verbose)
+        if file_url != "":
+            logger.info(f"File URL loaded: {file_url}") if verbose else None
+
+            if file_type == 'img':
+                summary = generate_summary_from_img(file_url)
+            elif file_type == 'youtube_url':
+                summary = summarize_transcript_youtube_url(file_url, verbose=verbose)
+            else:
+                summary = get_summary(file_url, file_type, verbose=verbose)
         else:
-            summary = get_summary(file_url, file_type, verbose=verbose)
+            logger.info("No file URL provided")
+            summary = ""
     
         syllabus_args_model = SyllabusGeneratorArgsModel(
             grade_level = grade_level,
