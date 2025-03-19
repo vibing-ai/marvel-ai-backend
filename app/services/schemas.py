@@ -53,8 +53,9 @@ class ToolResponse(BaseModel):
     data: Any
 
 class SlideImageRequest(BaseModel):
+    model: str
     title: str
-    content: List[str]
+    content: Union[str, list, dict]
     layout: str
 
 class ChatMessage(BaseModel):

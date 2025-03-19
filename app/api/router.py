@@ -73,7 +73,7 @@ async def generate_slide_image_api(request: SlideImageRequest):
     """
     try:
         # Call the utility function to generate the image
-        image_url = generate_slide_image(request.title, request.content, request.layout)
+        image_url = generate_slide_image(request.title, request.content, request.layout, request.model)
         return {"image_url": image_url}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
