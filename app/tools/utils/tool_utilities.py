@@ -2,15 +2,18 @@ import json
 import os
 from datetime import datetime
 import uuid
+import time
 from app.services.logger import setup_logger
 from app.services.tool_registry import ToolFile
 from app.api.error_utilities import VideoTranscriptError, InputValidationError, ToolExecutorError
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Union
 from fastapi import HTTPException
 from pydantic import ValidationError
 import replicate # Image generation - flux dev
 from langchain_google_genai import GoogleGenerativeAI
 from langchain_core.prompts import PromptTemplate
+import vertexai
+from vertexai.preview.vision_models import ImageGenerationModel
 
 logger = setup_logger(__name__)
 
@@ -163,7 +166,7 @@ templates_to_aspect_ratios = {
     "sectionHeader": "16:9"  # 1600x900
 }
 
-def construct_image_generation_prompt(title, content, layout):
+def construct_image_generation_prompt(title: str, content: Union[str, list, dict], layout: str) -> str:
     """
     Constructs a detailed prompt for image generation based on slide content.
     Uses the slide_image_prompt.txt template and Google Gemini model to generate
@@ -202,18 +205,17 @@ def construct_image_generation_prompt(title, content, layout):
     # Generate the image prompt using Gemini
     model = GoogleGenerativeAI(model="gemini-1.5-flash", temperature=0.7)
     try:
-        image_prompt_output = model.invoke(prompt.format({
-            "title": title,
-            "content": content_text
-        }))
-        
-        logger.info(f"Generated image prompt using Gemini: {image_prompt_output[:100]}...")
+        image_prompt_output = model.invoke(prompt.format(
+            title=title,
+            content=content_text
+        ))
+
         return image_prompt_output
         
     except Exception as e:
         raise Exception(f"Error generating image prompt with Gemini: {str(e)}")
 
-def generate_slide_image(title, content, layout):
+def generate_slide_image(title: str, content: Union[str, list, dict], layout: str, model: str = "flux") -> str:
     """
     Generates an image for a presentation slide and returns the URL.
     
@@ -231,7 +233,7 @@ def generate_slide_image(title, content, layout):
         
         # Construct the prompt
         prompt = construct_image_generation_prompt(title, content, layout)
-        logger.info(f"Generated image prompt: {prompt[:100]}...")
+        logger.info(f"Generated image prompt: {prompt}...")
         
         # Call image generation API (Replicate's Flux model)
         input_params = {
@@ -243,26 +245,56 @@ def generate_slide_image(title, content, layout):
         # Generate a unique filename
         timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
         unique_id = str(uuid.uuid4())[:8]
-        filename = f"slide_{timestamp}_{unique_id}.png"
+        filename = f"slide_{timestamp}_{unique_id}.jpg"
         
         # Call the API
-        logger.info(f"Calling image generation API with aspect ratio: {aspect_ratio}")
-        output = replicate.run(
-            "black-forest-labs/flux-dev",
-            input=input_params
-        )
-        
-        # For now, return the path to local image
-        # In production, you would save this to Google Cloud Storage
-        #image_url = output[0] if output and len(output) > 0 else ""
-        #logger.info(f"Generated image URL: {image_url}")
-        for index, item in enumerate(output):
-            # get number of files in the folder
-            num_files = len(os.listdir("flux_output"))
-            with open(f"flux_output/p{num_files + 1}.webp", "wb") as file:
-                file.write(item.read())
-        num_files = len(os.listdir("flux_output"))
-        return f"flux_output/p{num_files}.webp"
+        logger.info(f"Calling image generation API for {model} model with aspect ratio: {aspect_ratio}")
+        # time it
+        start_time = time.time()
+        if model == "flux":
+            output = replicate.run(
+                "black-forest-labs/flux-dev",
+                input=input_params
+            )
+            end_time = time.time()
+            logger.info(f"Flux image generation took {end_time - start_time} seconds")
+            
+            # For now, return the path to local image
+            # In production, you would save this to Google Cloud Storage
+            #image_url = output[0] if output and len(output) > 0 else ""
+            #logger.info(f"Generated image URL: {image_url}")
+            flux_output_dir = "flux_output"
+            if not os.path.exists(flux_output_dir):
+                os.makedirs(flux_output_dir)
+            for index, item in enumerate(output):
+                # get number of files in the folder
+                num_files = len(os.listdir(flux_output_dir))
+                with open(f"{flux_output_dir}/p{num_files + 1}.webp", "wb") as file:
+                    file.write(item.read())
+            num_files = len(os.listdir(flux_output_dir))
+            return f"{flux_output_dir}/p{num_files}.webp"
+        # Imagen
+        else:
+            # project_id = os.getenv("GCP_PROJECT_ID")
+            # vertexai.init(project=project_id, location=location)
+
+            imagen_output_dir = "imagen_output"
+            if not os.path.exists(imagen_output_dir):
+                os.makedirs(imagen_output_dir)
+
+            model = ImageGenerationModel.from_pretrained("imagen-3.0-generate-002")
+
+            images = model.generate_images(
+                prompt=prompt,
+                number_of_images=1,
+                aspect_ratio=aspect_ratio,
+                add_watermark=False,
+            )
+
+            images[0].save(location=f"{imagen_output_dir}/{filename}")
+            num_files = len(os.listdir(imagen_output_dir))
+            return f"{imagen_output_dir}/p{num_files}.jpg"
+
         
     except Exception as e:
         logger.error(f"Error generating slide image: {str(e)}")

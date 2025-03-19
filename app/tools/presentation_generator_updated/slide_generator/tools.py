@@ -10,24 +10,19 @@ from langchain_google_genai import GoogleGenerativeAI
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from langchain_core.documents import Document
 from app.services.logger import setup_logger
-from app.services.schemas import SlideImageRequest
 from app.tools.utils.tool_utilities import generate_slide_image, templates_to_aspect_ratios
 from app.api.router import generate_slide_image
 
 logger = setup_logger(__name__)
 
 class SlideGenerator:
-    def __init__(self, args=None, vectorstore_class=Chroma, slide_prompt=None, image_prompt=None, embedding_model=None, model=None, parser=None, verbose=False):
+    def __init__(self, args=None, vectorstore_class=Chroma, slide_prompt=None, image_prompt=None, embedding_model=None, model=None, image_model=None, parser=None, verbose=False):
         # Read prompt files
         script_dir = os.path.dirname(os.path.abspath(__file__))
-        
-        # Read the prompt files
         slide_prompt_path = os.path.join(script_dir, "prompt/slide_generator_prompt.txt")
         image_prompt_path = os.path.join(script_dir, "prompt/slide_image_prompt.txt")
-        
         with open(slide_prompt_path, 'r') as f:
-            default_slide_prompt = f.read()
-            
+            default_slide_prompt = f.read()     
         with open(image_prompt_path, 'r') as f:
             default_image_prompt = f.read()
             
@@ -37,6 +32,7 @@ class SlideGenerator:
             "parser": JsonOutputParser(pydantic_object=SlidePresentation),
             "slide_prompt": default_slide_prompt,
             "image_prompt": default_image_prompt,
+            "image_model": "flux",
             "vectorstore_class": Chroma
         }
 
@@ -45,6 +41,7 @@ class SlideGenerator:
         self.model = model or default_config["model"]
         self.parser = parser or default_config["parser"]
         self.embedding_model = embedding_model or default_config["embedding_model"]
+        self.image_model = image_model or default_config["image_model"]
 
         self.vectorstore_class = vectorstore_class or default_config["vectorstore_class"]
         self.vectorstore, self.retriever, self.runner = None, None, None
@@ -109,62 +106,52 @@ class SlideGenerator:
         return chain
 
     def generate_slides(self):
-        """Generate slides based on the provided outline."""
-        
-        slides_titles = self.args.slides_titles
-        instructional_level = self.args.instructional_level
-        topic = self.args.topic
-        lang = self.args.lang or "en"
+        logger.info(f"Creating the Outlines for the Presentation") 
+        chain = self.compile_context() 
 
-        logger.info(f"Generating slides for the presentation on topic: {topic}, level: {instructional_level}")
-        logger.info(f"Slide titles: {slides_titles}")
-
-        # Prepare the prompt template
-        prompt = PromptTemplate(
-            template=self.slide_prompt,
-            input_variables=["slides_titles", "instructional_level", "topic", "lang"]
-        )
-
-        # Set up the chain
-        chain = prompt | self.model | self.parser
-
-        # Invoke the chain with the input parameters
         input_parameters = {
-            "slides_titles": slides_titles,
-            "instructional_level": instructional_level,
-            "topic": topic,
-            "lang": lang
+            "instructional_level": self.args.instructional_level,
+            "topic": self.args.topic,
+            "slides_titles": self.args.slides_titles,
+            "lang": self.args.lang
         }
-        logger.info(f"Input parameters: {input_parameters}")
 
-        # Generate the slides content
         response = chain.invoke(input_parameters)
-        logger.info(f"Generated slides: {response}")
 
-        # Validate the content
-        self.validate_slides_content(response, topic)
+        logger.info(f"Generated response: {response}")
+        # Add validation metrics
+        validation_results = self.validate_slides_content(response=response, topic=self.args.topic)
+        logger.info(f"Response validation: {validation_results}")
+        
+        if not validation_results["valid"]:
+            logger.warning(f"Generated content may not fully match the requested topic")
 
         # Loop through slides and generate images for each
         logger.info(f"Generating images for slides")
-        for slide in response.slides:
+        new_slides = []
+        for slide in response['slides']:
             try:
+                logger.debug(f"slide: {type(slide)} ---- {slide.keys()}")
                 # Generate image for the slide
                 image_url = generate_slide_image(
-                    title=slide.title,
-                    content=slide.content,
-                    layout=slide.template
+                    title=slide['title'],
+                    content=slide['content'],
+                    layout=slide['template'],
+                    model=self.image_model
                 )
                 
                 # Assign the image URL to the slide
-                slide.image_url = image_url
-                logger.info(f"Generated image for slide: {slide.title}")
+                slide['image_url'] = image_url
+                logger.info(f"Generated image for slide: {slide['title']}")
             except Exception as e:
-                logger.error(f"Error generating image for slide '{slide.title}': {str(e)}")
+                logger.error(f"Error generating image for slide '{slide['title']}': {str(e)}")
                 # Provide a fallback image URL
-                slide.image_url = f"https://via.placeholder.com/800x450.png?text={slide.title.replace(' ', '+')}"
+                slide['image_url'] = f"https://via.placeholder.com/800x450.png?text={slide['title'].replace(' ', '+')}"
+            
+            new_slides.append(slide)
 
         # Format the response
-        formatted_response = {"data": {"slides": response.slides}}
+        formatted_response = {"data": {"slides": new_slides}}
         return formatted_response
         
 
