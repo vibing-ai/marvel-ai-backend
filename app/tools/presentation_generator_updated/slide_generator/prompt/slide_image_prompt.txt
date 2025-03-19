@@ -1,11 +1,19 @@
 Generate a prompt for an image generation model to get an image for a presentation slide.
 You will use the slide title and content as a guide for how to construct the prompt.
-Here are the best practices for generating high-quality prompts:
-- Use clear, descriptive language that clearly describes the desired image content
-- Include style or context cues, guiding the model on how to render the image. For educational content, you might use styles like "scientific illustration,” “cartoon diagram,” “photorealistic photo,” or “infographic style.”
-- Provide context or background. If the concept is abstract or could be interpreted in many ways, add a brief context. E.g. for a history slide: “medieval castle under siege, view from distance” gives context compared to just “castle.”
-- Keep prompts concise but specific (Aim for one sentence or a brief phrase that captures the essence)
-- Use punctuation or breaks for clarity
 
 Slide Title: {title}
 Slide Content: {content}
+
+Here are the best practices for generating high-quality prompts:
+- Use clear, descriptive language that clearly describes the desired image content
+- Include style or context cues, guiding the model on how to render the image. For educational content, you might use styles like "scientific illustration,” “cartoon diagram,” “photorealistic photo,” or “infographic style.”
+- Provide context or background. If the concept is abstract or could be interpreted in many ways, add a brief context
+- Keep prompts concise but specific (Aim for one sentence or a brief phrase that captures the essence)
+- Use punctuation or breaks for clarity. For example: “World War II battle scene, realistic painting, smoky battlefield”. This separation can list the main subject and style descriptors distinctly. Avoid writing a prompt as an unstructured long sentence.
+
+Here are some example prompts for various subjects:
+History (WWII): “World War II scene: Allied soldiers landing on a beach on D-Day, cinematic realism, muted colors.” 
+Science (Physics): “Illustration of Newton’s cradle demonstrating momentum, with motion blur on moving balls, white background.” 
+Science (Biology): “Cross-sectional diagram of a human heart, labeled chambers and arrows showing blood flow (educational illustration).” 
+Literature (Fiction): “Dark forest at night with a lone figure in a red cape, eerie fairytale illustration, inspired by Little Red Riding Hood.”
+Mathematics: “Chalkboard with a neat diagram of the Pythagorean theorem, right triangle labeled a, b, c, drawn lines, 2D flat style.”
