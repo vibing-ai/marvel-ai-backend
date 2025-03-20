@@ -167,7 +167,7 @@ def generate_syllabus(request_args: SyllabusRequestArgs, verbose=True):
         logger.error(f"Failed to generate syllabus: {e}")
         raise HTTPException(status_code=500, detail="Failed to generate syllabus from LLM.")
 
-    
+
 class CourseInformation(BaseModel):
     course_title: str = Field(description="The course title")
     grade_level: str = Field(description="The grade level")

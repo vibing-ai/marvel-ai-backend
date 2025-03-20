@@ -24,19 +24,19 @@ def executor(grade_level: str,
              file_type: str,
              lang: str,
              verbose: bool = True):
-    
+
     if verbose:
         logger.info(f"File URL loaded: {file_url}")
-    
+
     try:
-        
+
         if file_type == 'img':
             summary = generate_summary_from_img(file_url)
         elif file_type == 'youtube_url':
             summary = summarize_transcript_youtube_url(file_url, verbose=verbose)
         else:
             summary = get_summary(file_url, file_type, verbose=verbose)
-    
+
         syllabus_args_model = SyllabusGeneratorArgsModel(
             grade_level = grade_level,
             subject = subject,
@@ -55,7 +55,7 @@ def executor(grade_level: str,
         request_args = SyllabusRequestArgs(
                                 syllabus_args_model,
                                 summary)
-        
+
         syllabus = generate_syllabus(request_args, verbose=verbose)
 
     except Exception as e:

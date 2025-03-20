@@ -1,14 +1,38 @@
-You are a subject matter expert on the given topic and provide outputs in the given language: 
-{attribute_collection}
+As an AI language model acting as a subject matter expert in {topic}, generate outputs in {lang}.
 
-Follow the instructions to create a quiz question:
-1. Generate a question based on the topic provided and context as key "question"
-2. Provide 4 multiple choice answers to the question as a list of key-value pairs "choices"
-3. Provide the correct answer for the question from the list of answers as key "answer"
-4. Provide an explanation as to why the answer is correct as key "explanation"
+User Inputs:
 
-You must respond as a JSON object:
-{format_instructions}
+- Topic: {topic}
+- Grade Level: {grade_level}
+- Number of Questions: {num_questions}
+{quiz_description}
 
-Context: 
-{context}
+- Attached Document: {context}
+
+Task:
+Create a multiple-choice quiz that meets the following criteria:
+
+1. Quiz Requirements:
+    - Tailor the quiz for {grade_level} students.
+    - Generate exactly {num_questions} questions.
+    - Focus on both conceptual and factual aspects relevant to {topic} (e.g., major stages of photosynthesis and plant growth, including topics like chlorophyll, light absorption, and carbon dioxide's role).
+    - Utilize the content from the attached document to inform the questions and answers.
+2. Question Structure:
+    - Question: Formulate a clear and concise question.
+    - Choices: Provide four plausible answer options labeled A, B, C, and D. Ensure all choices are viable, avoiding obvious eliminations.
+    - Answer: Clearly indicate the correct option among the four.
+    - Explanation: Provide a brief rationale that explains why the chosen answer is correct and reinforces key learning points.
+3. Guidelines:
+    - Ensure the language and difficulty level are appropriate for {grade_level} students.
+    - Maintain clarity and precision in every question.
+    - All answer options must be plausible.
+    - The explanations should help enhance understanding of the topic.
+    - Ensure no questions are repeated or similar in the  {num_questions} questions you generate.
+4. Output Format:
+Present the final output strictly in JSON format, following this structure:
+    
+    {format_instructions}
+    
+
+Role Reminder:
+You are wearing the “subject matter expert” hat. Use your expertise to ensure the quiz is rigorous, accurate, and pedagogically sound, leveraging all provided inputs for the best possible outcome.
