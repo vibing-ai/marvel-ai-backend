@@ -35,6 +35,7 @@ class SlideGenerator:
         self.model = model or default_config["model"]
         self.parser = parser or default_config["parser"]
         self.embedding_model = embedding_model or default_config["embedding_model"]
+        self.image_model = image_model or default_config["image_model"]
 
         self.vectorstore_class = vectorstore_class or default_config["vectorstore_class"]
         self.vectorstore, self.retriever, self.runner = None, None, None
@@ -68,7 +69,7 @@ class SlideGenerator:
                 if any(keyword in slide_text.lower() for keyword in topic_keywords):
                     topic_coverage += 1
             
-            # Check for Markdown remnants or excessive newlines
+                # Check for Markdown remnants or excessive newlines
                 if any(char in slide_text for char in ['*', '\n', '`', '_']):
                     garbage_coverage += 1
         
@@ -85,11 +86,10 @@ class SlideGenerator:
         except ValueError as e:
             raise ValueError(e)
 
-
     def compile_context(self):
         # Return the chain
         prompt = PromptTemplate(
-            template=self.prompt,
+            template=self.slide_prompt,
             input_variables=["instructional_level", "topic", "slides_titles"],
             partial_variables={"format_instructions": self.parser.get_format_instructions()}
         )
@@ -109,12 +109,11 @@ class SlideGenerator:
             "slides_titles": self.args.slides_titles,
             "lang": self.args.lang
         }
-        logger.info(f"Input parameters: {input_parameters}")
 
         response = chain.invoke(input_parameters)
 
         logger.info(f"Generated response: {response}")
-         # Add validation metrics
+        # Add validation metrics
         validation_results = self.validate_slides_content(response=response, topic=self.args.topic)
         logger.info(f"Response validation: {validation_results}")
         
@@ -144,7 +143,6 @@ class SlideGenerator:
         # Format the response
         formatted_response = {"data": {"slides": new_slides}}
         return formatted_response
-
 
 class Slide(BaseModel):
     title: str = Field(..., description="The title of the slide")
