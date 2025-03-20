@@ -1,0 +1,21 @@
+{
+    "inputs": [
+        {
+            "label": "Slides",
+            "name": "slides",
+            "type": "list",
+            "item_type": "object",
+            "properties": {
+                "title": {
+                    "type": "string"
+                },
+                "template": {
+                    "type": "string"
+                },
+                "content": {
+                    "type": "any"
+                }
+            }
+        }
+    ]
+}
