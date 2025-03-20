@@ -38,3 +38,4 @@ pydub
 ffmpeg-python
 speechrecognition
 google-cloud-speech
+google-cloud-speech

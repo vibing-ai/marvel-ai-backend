@@ -1,0 +1,9 @@
+Generate a slide deck outline for a {instructional_level} presentation on '{topic}'. Use the provided document, which covers {context}.
+
+Requirements:
+
+Provide only the slide titles for a {n_slides} slide presentation.
+Ensure the titles follow a logical teaching sequence, starting with an introduction, covering key concepts, including real-world examples, and ending with a summary/conclusion.
+Emphasize critical concepts, ensuring each major topic is covered with at least one slide.
+Include interactive or hands-on elements where applicable.
+The response should be a list of slide titles only, without descriptionsin {format_instructions}

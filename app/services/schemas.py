@@ -154,3 +154,25 @@ class WritingFeedbackGeneratorArgs(BaseModel):
     writing_to_review_file_url: str
     writing_to_review_file_type: str
     lang: Optional[str] = "en"
+
+class NoteGeneratorArgs(BaseModel):
+    focus: str
+    page_layout: str
+    text_input: str
+    file_type: str
+    file_url: str
+    lang: Optional[str] = "en"
+
+class OutlineGeneratorInput(BaseModel):
+    n_slides: int
+    topic: str
+    instructional_level: str
+    file_url: str
+    file_type: str
+    lang: Optional[str] = "en"
+
+class SlideGeneratorInput(BaseModel):
+    slides_titles: List[str]
+    instructional_level: str
+    topic: str
+    lang: Optional[str] = "en"

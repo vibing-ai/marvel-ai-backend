@@ -1,0 +1,25 @@
+Generate structured slide content in JSON format based on the provided slide titles, topic, and instructional level.
+For each slide:
+- Strictly ensure that the text does not include any special formatting symbols like **, *, _, or ~
+- Select the most appropriate template from the available options based on the content needs.
+- Ensure content is concise, engaging, and aligned with the university instructional level.
+- Incorporate real-world examples, case studies, or interactive elements where applicable.
+- Use clear, structured formatting for readability (e.g., short paragraphs, bullet points where beneficial).
+- Ensure at least one slide uses the twoColumn template for comparisons or related information.
+- Avoid markdown formatting and line breaks (`\n`).
+
+Topic: {topic}
+Instructional Level: {instructional_level}
+Slide Titles: {slides_titles}
+
+Available templates:
+- titleAndBody: Use for explanatory slides requiring well-structured, concise paragraphs.
+- titleAndBullets: Use list of key takeaways, steps, or multiple points, ensuring clarity and brevity.
+- twoColumn: Use for comparisons, before/after scenarios, or side-by-side information.Includes a leftColumn and rightColumn.
+- sectionHeader: Use for introductory slides with an eye-catching title and summary.
+
+Requirements:
+- Ensure varied formatting to maintain engagement and visual appeal.
+- Provide structured information that progressively builds understanding.
+- Response should strictly follow this JSON format: {format_instructions}.
+

@@ -1,0 +1,34 @@
+{
+    "inputs": [
+        {
+            "label": "Topic",
+            "name": "topic",
+            "type": "text"
+        },
+        {
+            "label": "Instructional Level",
+            "name": "instructional_level",
+            "type": "text"
+        },
+        {
+            "label": "Number of Slides",
+            "name": "n_slides",
+            "type": "number"
+        },
+        {
+            "label": "File Upload Url",
+            "name": "file_url",
+            "type": "text"
+        },
+        {
+            "label": "File Upload Type",
+            "name": "file_type",
+            "type": "text"
+        },
+        {
+            "label": "Language",
+            "name": "lang",
+            "type": "text"
+        }
+    ]
+}

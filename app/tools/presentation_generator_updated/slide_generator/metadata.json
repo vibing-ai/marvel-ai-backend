@@ -1,0 +1,25 @@
+{
+    "inputs": [
+    {
+        "label": "Slide Titles",
+        "name": "slides_titles",
+        "type": "list",
+        "item_type": "text"
+    },
+    {
+        "label": "Topic",
+        "name": "topic",
+        "type": "text"
+    },
+    {
+        "label": "Instructional Level",
+        "name": "instructional_level",
+        "type": "text"
+    },
+    {
+        "label": "Language",
+        "name": "lang",
+        "type": "text"
+    }
+]
+}

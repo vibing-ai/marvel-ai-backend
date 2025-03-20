@@ -1,0 +1,7 @@
+Create a sequence of compelling slide titles for a {n_slides}-slide presentation on {topic} at a {instructional_level} instructional level.
+The titles should:
+1. Be concise yet descriptive (5-10 words each)
+2. Follow a logical progression from introduction to conclusion
+3. Reflect the appropriate technical depth for the specified instructional level
+4. Use engaging language that captures audience interest
+Return ONLY the numbered slide titles without additional outline details or explanations in this structure:{format_instructions}.
