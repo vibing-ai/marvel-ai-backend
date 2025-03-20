@@ -126,64 +126,23 @@ class SlideGenerator:
         new_slides = []
         i = 1 # i is slide ID
         for slide in response['slides']:
-            # Add a status field to track image generation status
-            slide['image_generation_status'] = 'pending'
+            # Generate image for the slide
+            image_url = self.image_generator.generate_slide_image(
+                id=i,
+                title=slide['title'],
+                content=slide['content'],
+                layout=slide['template'],
+            )
             
-            max_retries = 1
-            retry_count = 0
-            success = False
-            
-            while retry_count <= max_retries and not success:
-                try:
-                    if retry_count > 0:
-                        logger.info(f"Retrying image generation for slide: {slide['title']} (Attempt {retry_count + 1})")
-                    
-                    # Generate image for the slide
-                    image_url = self.image_generator.generate_slide_image(
-                        id=i,
-                        title=slide['title'],
-                        content=slide['content'],
-                        layout=slide['template'],
-                    )
-                    
-                    # Assign the image URL to the slide
-                    slide['image_url'] = image_url
-                    slide['image_generation_status'] = 'success'
-                    logger.info(f"Generated image for slide: {slide['title']}")
-                    success = True
-                    
-                except Exception as e:
-                    retry_count += 1
-                    error_message = str(e)
-                    logger.warning(f"Image generation attempt {retry_count} failed for slide '{slide['title']}': {error_message}")
-                    
-                    # If we've exhausted all retries, set the placeholder and log the error
-                    if retry_count > max_retries:
-                        logger.error(f"All image generation attempts failed for slide '{slide['title']}': {error_message}")
-                        # Provide a fallback image URL
-                        slide['image_url'] = f"https://via.placeholder.com/800x450.png?text={slide['title'].replace(' ', '+')}"
-                        slide['image_generation_status'] = 'failed'
-                        slide['image_generation_error'] = error_message
+            # Assign the image URL to the slide
+            slide['image_url'] = image_url
+            logger.info(f"Generated image for slide: {slide['title']}")
             
             new_slides.append(slide)
             i += 1
 
-        # Count failed images for user notification
-        failed_images = sum(1 for slide in new_slides if slide['image_generation_status'] == 'failed')
-        if failed_images > 0:
-            logger.warning(f"{failed_images} out of {len(new_slides)} images failed to generate")
-        
         # Format the response
-        formatted_response = {
-            "data": {
-                "slides": new_slides,
-                "metadata": {
-                    "total_slides": len(new_slides),
-                    "failed_images": failed_images,
-                    "user_notification": f"Some slide images ({failed_images}) could not be generated and were replaced with placeholders." if failed_images > 0 else None
-                }
-            }
-        }
+        formatted_response = {"data": {"slides": new_slides}}
         return formatted_response
 
 

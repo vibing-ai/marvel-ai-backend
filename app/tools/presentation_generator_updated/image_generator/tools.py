@@ -86,7 +86,7 @@ class ImageGenerator:
 
     def generate_slide_image(self, slide_id: int, title: str, content: Union[str, list, dict], layout: str) -> str:
         """
-        Generates an image for a presentation slide and returns the URL.
+        Generates an image for a presentation slide and returns the URL. Attempts a second time if first fails.
         
         Args:
             slide_id (int): The slide ID
@@ -97,77 +97,80 @@ class ImageGenerator:
         Returns:
             str: Public URL to the generated image on Google Cloud Storage
         """    
-        try:
-            # Get aspect ratio based on template
-            aspect_ratio = templates_to_aspect_ratios.get(layout, "16:9")
-            
-            # Construct the prompt
-            prompt = self._construct_image_generation_prompt(title, content, layout)
-            logger.info(f"Generated image prompt: {prompt}...")
-            
-            # Call image generation API (Replicate's Flux model)
-            input_params = {
-                "prompt": prompt,
-                "guidance": 7.5,
-                "aspect_ratio": aspect_ratio
-            }
-            
-            # Generate a unique filename
-            filename = f"{slide_id}-{uuid.uuid4()}.png"
-            
-            logger.info(f"Calling image generation API for {self.image_model} model with aspect ratio: {aspect_ratio}")
-            if self.image_model == "flux":
-                start_time = time.time()
-                output = replicate.run(
-                    "black-forest-labs/flux-dev",
-                    input=input_params
-                )
-                end_time = time.time()
-                logger.info(f"Flux image generation took {end_time - start_time} seconds")
+        max_retries = 1
+        retry_count = 0
+        last_error = None
+        logger.info(f"Generating image for slide with title \"{title}\"")
+        
+        while retry_count <= max_retries:
+            try:
+                # Get aspect ratio based on slide layout
+                aspect_ratio = templates_to_aspect_ratios.get(layout, "16:9")
+                
+                prompt = self._construct_image_generation_prompt(title, content, layout)
+                logger.info(f"Generated image prompt: {prompt}...")
+                
+                logger.info(f"Calling image generation API for {self.image_model} model with aspect ratio: {aspect_ratio}")
+                if self.image_model == "flux":
+                    start_time = time.time()
+                    output = replicate.run(
+                        "black-forest-labs/flux-dev",
+                        input={
+                            "prompt": prompt,
+                    "guidance": 7.5,
+                    "aspect_ratio": aspect_ratio
+                        }
+                    )
+                    end_time = time.time()
+                    logger.info(f"Flux image generation took {end_time - start_time} seconds")
 
-                output = output[0]
-                # Read the FileOutput into a BytesIO object
-                bio = BytesIO(output.read())
-            # Imagen
-            else:
-                # project_id = os.getenv("GCP_PROJECT_ID")
-                # vertexai.init(project=project_id, location=location)
+                    output = output[0]
+                    bio = BytesIO(output.read())
+                    
+                # Imagen
+                else:
+                    model = ImageGenerationModel.from_pretrained("imagen-3.0-generate-002")
+                    start_time = time.time()
+                    images = model.generate_images(
+                        prompt=prompt,
+                        number_of_images=1,
+                        aspect_ratio=aspect_ratio,
+                        add_watermark=False,
+                    )
+                    end_time = time.time()
+                    logger.info(f"Imagen image generation took {end_time - start_time} seconds")
 
-                imagen_output_dir = "imagen_output"
-                if not os.path.exists(imagen_output_dir):
-                    os.makedirs(imagen_output_dir)
+                    bio = BytesIO()
+                    images[0]._pil_image.save(bio, format="PNG")
 
-                model = ImageGenerationModel.from_pretrained("imagen-3.0-generate-002")
+                # Reset buffer position
+                bio.seek(0)
 
-                start_time = time.time()
-                images = model.generate_images(
-                    prompt=prompt,
-                    number_of_images=1,
-                    aspect_ratio=aspect_ratio,
-                    add_watermark=False,
-                )
-                end_time = time.time()
-                logger.info(f"Imagen image generation took {end_time - start_time} seconds")
+                # Upload (public URL) to GCS, with unique file name
+                client = storage.Client()
+                bucket = client.bucket(GCS_BUCKET)
+                filename = f"{slide_id}-{uuid.uuid4()}.png"
+                blob = bucket.blob(filename)
+                blob.upload_from_file(bio, content_type="image/png")
+                blob.make_public()
 
-                bio = BytesIO()
-                # Use the underlying PIL image object and save it with an explicit format
-                images[0]._pil_image.save(bio, format="PNG")
-
-            # Reset buffer position
-            bio.seek(0)
-
-            # Upload to GCS
-            client = storage.Client()
-            bucket = client.bucket(GCS_BUCKET)
-            blob = bucket.blob(filename)
-            blob.upload_from_file(bio, content_type="image/png")
-            blob.make_public()
-
-            public_url = blob.public_url
-            logger.info(f"Generated image was uploaded to {filename} in Google Cloud Storage. URL: {public_url}")
-            return public_url
-            
-        except Exception as e:
-            logger.error(f"Error generating slide image: {str(e)}")
-            # Return a placeholder image if generation fails
-            return f"https://via.placeholder.com/800x450.png?text={title.replace(' ', '+')}"
+                public_url = blob.public_url
+                logger.info(f"Generated image was uploaded to {filename} in Google Cloud Storage. URL: {public_url}")
+                return public_url
+                
+            except Exception as e:
+                retry_count += 1
+                last_error = e
+                error_message = str(e)
+                
+                if retry_count <= max_retries:
+                    logger.warning(f"Image generation attempt {retry_count} failed for slide '{title}'. Retrying... Error: {error_message}")
+                else:
+                    logger.error(f"All image generation attempts failed for slide '{title}': {error_message}")
+        
+        # If we've reached here, all retries have failed
+        logger.error(f"Failed to generate image after {max_retries + 1} attempts: {str(last_error)}")
+        # Return a placeholder image if generation fails (accessible to all users)
+        # This image will contain a message indicating that image generation failed (transparency)
+        # TODO: If this PR gets approved, put the fallback image in official GCS bucket and provide the link here
+        return f"https://via.placeholder.com/800x450.png?text={title.replace(' ', '+')}"
