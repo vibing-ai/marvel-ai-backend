@@ -129,11 +129,13 @@ class SlideGenerator:
         # Loop through slides and generate images for each
         logger.info(f"Generating images for slides")
         new_slides = []
+        i = 1 # i is slide ID
         for slide in response['slides']:
             try:
                 logger.debug(f"slide: {type(slide)} ---- {slide.keys()}")
                 # Generate image for the slide
                 image_url = generate_slide_image(
+                    id=i,
                     title=slide['title'],
                     content=slide['content'],
                     layout=slide['template'],
@@ -149,6 +151,7 @@ class SlideGenerator:
                 slide['image_url'] = f"https://via.placeholder.com/800x450.png?text={slide['title'].replace(' ', '+')}"
             
             new_slides.append(slide)
+            i += 1
 
         # Format the response
         formatted_response = {"data": {"slides": new_slides}}

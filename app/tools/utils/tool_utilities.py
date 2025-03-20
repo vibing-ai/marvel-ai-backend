@@ -2,6 +2,7 @@ import json
 import os
 from datetime import datetime
 import uuid
+from io import BytesIO
 import time
 from app.services.logger import setup_logger
 from app.services.tool_registry import ToolFile
@@ -14,6 +15,7 @@ from langchain_google_genai import GoogleGenerativeAI
 from langchain_core.prompts import PromptTemplate
 import vertexai
 from vertexai.preview.vision_models import ImageGenerationModel
+from google.cloud import storage
 
 logger = setup_logger(__name__)
 
@@ -215,17 +217,18 @@ def construct_image_generation_prompt(title: str, content: Union[str, list, dict
     except Exception as e:
         raise Exception(f"Error generating image prompt with Gemini: {str(e)}")
 
-def generate_slide_image(title: str, content: Union[str, list, dict], layout: str, model: str = "flux") -> str:
+def generate_slide_image(slide_id: int, title: str, content: Union[str, list, dict], layout: str, model: str = "flux") -> str:
     """
     Generates an image for a presentation slide and returns the URL.
     
     Args:
+        slide_id (int): The slide ID
         title (str): The slide title
         content (str/list/dict): The slide content
         layout (str): The slide layout/template
         
     Returns:
-        str: URL to the generated image
+        str: Public URL to the generated image on Google Cloud Storage
     """    
     try:
         # Get aspect ratio based on template
@@ -243,13 +246,9 @@ def generate_slide_image(title: str, content: Union[str, list, dict], layout: st
         }
         
         # Generate a unique filename
-        timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
-        unique_id = str(uuid.uuid4())[:8]
-        filename = f"slide_{timestamp}_{unique_id}.jpg"
+        filename = f"{slide_id}-{uuid.uuid4()}.png"
         
-        # Call the API
         logger.info(f"Calling image generation API for {model} model with aspect ratio: {aspect_ratio}")
-        # time it
         start_time = time.time()
         if model == "flux":
             output = replicate.run(
@@ -258,21 +257,10 @@ def generate_slide_image(title: str, content: Union[str, list, dict], layout: st
             )
             end_time = time.time()
             logger.info(f"Flux image generation took {end_time - start_time} seconds")
-            
-            # For now, return the path to local image
-            # In production, you would save this to Google Cloud Storage
-            #image_url = output[0] if output and len(output) > 0 else ""
-            #logger.info(f"Generated image URL: {image_url}")
-            flux_output_dir = "flux_output"
-            if not os.path.exists(flux_output_dir):
-                os.makedirs(flux_output_dir)
-            for index, item in enumerate(output):
-                # get number of files in the folder
-                num_files = len(os.listdir(flux_output_dir))
-                with open(f"{flux_output_dir}/p{num_files + 1}.webp", "wb") as file:
-                    file.write(item.read())
-            num_files = len(os.listdir(flux_output_dir))
-            return f"{flux_output_dir}/p{num_files}.webp"
+
+            output = output[0]
+            # Read the FileOutput into a BytesIO object
+            bio = BytesIO(output.read())
         # Imagen
         else:
             # project_id = os.getenv("GCP_PROJECT_ID")
@@ -291,10 +279,23 @@ def generate_slide_image(title: str, content: Union[str, list, dict], layout: st
                 add_watermark=False,
             )
 
-            images[0].save(location=f"{imagen_output_dir}/{filename}")
-            num_files = len(os.listdir(imagen_output_dir))
-            return f"{imagen_output_dir}/p{num_files}.jpg"
+            bio = BytesIO()
+            # Use the underlying PIL image object and save it with an explicit format
+            images[0]._pil_image.save(bio, format="PNG")
 
+        # Reset buffer position
+        bio.seek(0)
+
+        # Upload to GCS
+        client = storage.Client()
+        bucket = client.bucket("slide-images-bucket")
+        blob = bucket.blob(filename)
+        blob.upload_from_file(bio, content_type="image/png")
+        blob.make_public()
+
+        public_url = blob.public_url
+        logger.info(f"Generated image was uploaded to {filename} in Google Cloud Storage. URL: {public_url}")
+        return public_url
         
     except Exception as e:
         logger.error(f"Error generating slide image: {str(e)}")

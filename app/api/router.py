@@ -68,12 +68,8 @@ async def assistants( request: GenericAssistantRequest, _ = Depends(key_check) )
 
 @router.post("/generate-slide-image")
 async def generate_slide_image_api(request: SlideImageRequest):
-    """
-    API to generate a slide image based on title, content, and layout.
-    """
     try:
-        # Call the utility function to generate the image
-        image_url = generate_slide_image(request.title, request.content, request.layout, request.model)
+        image_url = generate_slide_image(1, request.title, request.content, request.layout, request.model)
         return {"image_url": image_url}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
