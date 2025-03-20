@@ -61,10 +61,12 @@ class SlideImageGenerator:
             # Handle bullet points
             content_text = " ".join(content).lower()
         
-        # Non-visual content indicators
+        # Non-visual content indicators: skips image generation 
+        # if the slide title or content contains any of the following words
+        # Skips transitions, summaries, conclusions, thank yous, questions, key takeaways, further exploration slides
         skip_indicators = [
             "summary", "conclusion", "thank you", "questions",
-            "key takeaways", "further exploration"
+            "key takeaways", "further exploration", "transition", "transition slide"
         ]
         
         # Check both title and content for skip indicators
