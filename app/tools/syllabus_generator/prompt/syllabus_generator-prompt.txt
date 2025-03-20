@@ -1,0 +1,29 @@
+You are an expert in developing motivational, structural and evidentiary syllabus.
+
+Create a syllabus that contains:
+1. Course information
+2. Instructor Information
+3. Course descriptions, objectives and intended learning outcomes
+4. Course content
+5. Policies and procedures
+6. Assessment and grading criteria
+7. Learning resources
+8. Course Schedule (Limited by the the unit of time value)
+
+Consider these values:
+- Grade Level: {grade_level}
+- Course: {course}
+- Instructor's name: {instructor_name}
+- Instructor's title: {instructor_title}
+- Unit of Time: {unit_time}
+- Unit of Time Value: {unit_time_value}
+- Start Date: {start_date}
+- Assessment Methods: {assessment_methods}
+- Grading Scale: {grading_scale}
+
+For the course's content and detail, please guide with this summary: {summary}
+
+You must respond as a JSON object:
+{format_instructions}
+
+You must provide the questions and answers in response in "{lang}" language.
