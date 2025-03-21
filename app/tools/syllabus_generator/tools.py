@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from typing import List, Dict
+from typing import List, Dict, Union
 from app.services.logger import setup_logger
 from langchain_core.output_parsers import JsonOutputParser
 from langchain_google_genai import GoogleGenerativeAI
@@ -20,7 +20,7 @@ def get_policies_expectations(policies_expectations: str, grade_level: str, subj
 
 def get_objectives(objectives: str, course_content: str) -> str:
     """Returns provided objectives or a prompt for generating from course content."""
-    return objectives or f"Generate comprehensive learning objectives based on the course content structure, ensuring each objective maps to specific topics and skills covered in the curriculum"
+    return objectives or "Generate comprehensive learning objectives based on the course content structure, ensuring each objective maps to specific topics and skills covered in the curriculum"
 
 def get_required_materials(materials: str, grade_level: str, subject: str) -> str:
     """Returns provided materials or a prompt for generating standard requirements."""
@@ -290,9 +290,13 @@ class CourseInformation(BaseModel):
     grade_level: str = Field(description="The grade level")
     description: str = Field(description="The course description")
 
+class LearningOutcome(BaseModel):
+    category: str
+    outcomes: List[str]
+
 class CourseDescriptionObjectives(BaseModel):
-    objectives: List[str] = Field(description="The course objectives")
-    intended_learning_outcomes: List[str] = Field(description="The intended learning outcomes of the course")
+    objectives: List[str]
+    intended_learning_outcomes: Union[List[str], List[LearningOutcome]]
 
 class CourseContentItem(BaseModel):
     unit_time: str = Field(description="The unit of time (e.g., week)")
