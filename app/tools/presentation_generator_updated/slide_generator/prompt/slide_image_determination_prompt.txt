@@ -1,0 +1,14 @@
+Your job is to determine whether a slide needs an associated image with it.
+Here are the rules:
+
+YES if: 
+- The slide discusses historical events, places, people, or processes.
+- The slide content contains data or statistics.
+- The text is long, needing visual summarization.
+
+NO if: 
+- The content is purely conceptual without visual elements.
+
+Slide content: {slide_content}
+
+ONLY respond with YES or NO, and nothing else.

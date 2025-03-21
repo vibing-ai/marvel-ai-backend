@@ -117,8 +117,8 @@ class ImageGenerator:
                         "black-forest-labs/flux-dev",
                         input={
                             "prompt": prompt,
-                    "guidance": 7.5,
-                    "aspect_ratio": aspect_ratio
+                            "guidance": 7.5,
+                            "aspect_ratio": aspect_ratio
                         }
                     )
                     end_time = time.time()

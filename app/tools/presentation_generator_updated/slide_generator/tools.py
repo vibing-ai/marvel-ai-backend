@@ -10,7 +10,7 @@ from langchain_google_genai import GoogleGenerativeAI
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from langchain_core.documents import Document
 from app.services.logger import setup_logger
-from app.tools.image_generator.tools import ImageGenerator
+from app.tools.presentation_generator_updated.image_generator.tools import ImageGenerator
 
 logger = setup_logger(__name__)
         
@@ -19,7 +19,10 @@ class SlideGenerator:
         script_dir = os.path.dirname(os.path.abspath(__file__))
         slide_prompt_path = os.path.join(script_dir, "prompt/slide_generator_prompt.txt")
         with open(slide_prompt_path, 'r') as f:
-            default_slide_prompt = f.read()     
+            default_slide_prompt = f.read()
+        slide_image_determination_prompt_path = os.path.join(script_dir, "prompt/slide_image_determination_prompt.txt")
+        with open(slide_image_determination_prompt_path, 'r') as f:
+            slide_image_determination_prompt = f.read()
 
         default_config = {
             "model": GoogleGenerativeAI(model="gemini-1.5-flash"),
@@ -31,6 +34,7 @@ class SlideGenerator:
         }
 
         self.prompt = prompt or default_config["prompt"]
+        self.slide_image_determination_prompt = slide_image_determination_prompt
         self.image_generator = ImageGenerator(image_model=image_model or default_config["image_model"])
         self.model = model or default_config["model"]
         self.parser = parser or default_config["parser"]
@@ -88,20 +92,26 @@ class SlideGenerator:
 
     def compile_context(self):
         # Return the chain
-        prompt = PromptTemplate(
+        generate_prompt = PromptTemplate(
             template=self.slide_prompt,
             input_variables=["instructional_level", "topic", "slides_titles"],
             partial_variables={"format_instructions": self.parser.get_format_instructions()}
         )
-        chain = prompt | self.model | self.parser
+        generate_chain = generate_prompt | self.model | self.parser
 
-        logger.info(f"Chain compilation complete")
+        image_determination_prompt = PromptTemplate(
+            template=self.slide_image_determination_prompt,
+            input_variables=["slide_content"]
+        )
+        image_determination_chain = image_determination_prompt | GoogleGenerativeAI(model="gemini-1.5-flash", temperature=0.0)
 
-        return chain
+        logger.info(f"Chain compilations complete")
+
+        return (generate_chain, image_determination_chain)
 
     def generate_slides(self):
         logger.info(f"Creating the Outlines for the Presentation") 
-        chain = self.compile_context() 
+        generate_chain, image_determination_chain = self.compile_context() 
 
         input_parameters = {
             "instructional_level": self.args.instructional_level,
@@ -110,7 +120,7 @@ class SlideGenerator:
             "lang": self.args.lang
         }
 
-        response = chain.invoke(input_parameters)
+        response = generate_chain.invoke(input_parameters)
 
         logger.info(f"Generated response: {response}")
         # Add validation metrics
@@ -120,23 +130,34 @@ class SlideGenerator:
         if not validation_results["valid"]:
             logger.warning(f"Generated content may not fully match the requested topic")
         
-        # Loop through slides and generate images for each
+        # Loop through slides and generate images for each one needing a slide
         logger.info(f"Generating images for slides...")
         new_slides = []
-        i = 1 # i is slide ID
+        i = 1
         for slide in response['slides']:
-            # Generate image for the slide
-            image_url = self.image_generator.generate_slide_image(
-                id=i,
-                title=slide['title'],
-                content=slide['content'],
-                layout=slide['template'],
-            )
+            # Does the slide need an image?
+            slide_content = slide['content']
+            image_determination = image_determination_chain.invoke({
+                "slide_content": slide_content
+            })
+            if image_determination.strip().lower() == "yes":
+                slide['needs_image'] = True
             
-            # Assign the image URL to the slide
-            slide['image_url'] = image_url
-            logger.info(f"Generated image for slide: {slide['title']}")
+                # Generate image for the slide
+                image_url = self.image_generator.generate_slide_image(
+                    id=i,
+                    title=slide['title'],
+                    content=slide_content,
+                    layout=slide['template'],
+                )
+                
+                # Assign the image URL to the slide
+                slide['image_url'] = image_url
+                logger.info(f"Generated image for slide: {slide['title']}")
+            else:
+                slide['needs_image'] = False
             
+            logger.debug(f"DEBUG - adding this slide with needs image set to {slide['needs_image']}")
             new_slides.append(slide)
             i += 1
 
@@ -148,6 +169,7 @@ class Slide(BaseModel):
     title: str = Field(..., description="The title of the slide")
     template: str = Field(..., description="The slide template type: sectionHeader, titleAndBody, titleAndBullets, twoColumn")
     content: str | list | dict | Any = Field(None, description="Content of the slide, can be string, list, dict, or any type")
+    needs_image: bool = Field(None, description="Whether the slide needs an image")
     image_url: Optional[str] = Field(None, description="URL of the image for the slide (if applicable)")
 
 class SlidePresentation(BaseModel):
