@@ -12,19 +12,27 @@ logger = setup_logger(__name__)
 
 def get_grading_policy(grading_policy: str, grade_level: str, subject: str) -> str:
     """Returns provided grading policy or a prompt for generating one."""
-    return grading_policy or f"Generate an appropriate grading policy based on the course content, {subject} subject matter, and {grade_level} level requirements"
+    if grading_policy is None or grading_policy.strip() == "":
+        return f"Generate an appropriate grading policy based on the course content, {subject} subject matter, and {grade_level} level requirements"
+    return grading_policy
 
 def get_policies_expectations(policies_expectations: str, grade_level: str, subject: str) -> str:
     """Returns provided policies or a prompt for generating standard ones."""
-    return policies_expectations or f"Generate standard policies and expectations appropriate for a {grade_level} level {subject} course"
+    if policies_expectations is None or policies_expectations.strip() == "":
+        return f"Generate standard policies and expectations appropriate for a {grade_level} level {subject} course"
+    return policies_expectations
 
-def get_objectives(objectives: str, course_content: str) -> str:
+def get_objectives(objectives: str, course_outline: str) -> str:
     """Returns provided objectives or a prompt for generating from course content."""
-    return objectives or "Generate comprehensive learning objectives based on the course content structure, ensuring each objective maps to specific topics and skills covered in the curriculum"
+    if objectives is None or objectives.strip() == "":
+        return f"Generate comprehensive learning objectives based on the following course outline: {course_outline}"
+    return objectives
 
 def get_required_materials(materials: str, grade_level: str, subject: str) -> str:
     """Returns provided materials or a prompt for generating standard requirements."""
-    return materials or f"Based on the course content, recommend essential learning materials and resources appropriate for {grade_level} level {subject} instruction"
+    if materials is None or materials.strip() == "":
+        return f"Based on the course content, recommend essential learning materials and resources appropriate for {grade_level} level {subject} instruction"
+    return materials
 
 class SyllabusRequestArgs:
     def __init__(self, syllabus_generator_args: SyllabusGeneratorArgsModel, summary: str):
