@@ -167,3 +167,13 @@ cython_debug/
 service.yaml
 devcontainer.env
 keyfile.json
+
+# google cloud service account credentials
+marvel-ai-backend-credentials.json
+
+# Credentials files (added for security)
+*credentials.json
+*credentials*.json
+*-credentials.json
+*-credentials*.json
+*credential*
