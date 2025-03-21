@@ -52,12 +52,6 @@ class ChatResponse(BaseModel):
 class ToolResponse(BaseModel):
     data: Any
 
-class SlideImageRequest(BaseModel):
-    model: str
-    title: str
-    content: Union[str, list, dict]
-    layout: str
-
 class ChatMessage(BaseModel):
     role: str
     type: str

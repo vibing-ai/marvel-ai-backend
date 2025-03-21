@@ -4,12 +4,11 @@ from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse
 from typing import Union
 from app.assistants.utils.assistants_utilities import execute_assistant
-from app.services.schemas import GenericAssistantRequest, ToolRequest, ChatRequest, Message, ChatResponse, ToolResponse, SlideImageRequest
+from app.services.schemas import GenericAssistantRequest, ToolRequest, ChatRequest, Message, ChatResponse, ToolResponse
 from app.utils.auth import key_check
 from app.services.logger import setup_logger
 from app.api.error_utilities import InputValidationError, ErrorResponse
 from app.tools.utils.tool_utilities import load_tool_metadata, execute_tool, finalize_inputs
-from app.tools.presentation_generator_updated.image_generator.core import executor as image_generator_executor
 from fastapi.responses import FileResponse
 from starlette.background import BackgroundTask
 
@@ -66,19 +65,3 @@ async def assistants( request: GenericAssistantRequest, _ = Depends(key_check) )
     )
     
     return ChatResponse(data=[formatted_response])
-
-@router.post("/generate-slide-image")
-async def generate_slide_image_api(request: SlideImageRequest):
-    try:
-        # Use the executor function from image_generator/core.py
-        image_url = image_generator_executor(
-            slide_id=1,
-            title=request.title,
-            content=request.content,
-            layout=request.layout,
-            image_model=request.model,
-            verbose=True
-        )
-        return {"image_url": image_url}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
