@@ -106,11 +106,10 @@ class OutlineGenerator:
             "lang": self.args.lang,
             "context":self.context
         }
-        logger.info(f"Input parameters: {input_parameters}")
 
         response = chain.invoke(input_parameters)
 
-        logger.info(f"Generated response: {response}")
+        logger.info(f"Generated outline!")
 
         if(documents):
             if self.verbose: print(f"Deleting vectorstore")

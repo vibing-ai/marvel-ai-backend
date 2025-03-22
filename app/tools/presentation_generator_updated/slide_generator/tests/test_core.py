@@ -292,10 +292,10 @@ ONLY respond with YES or NO, and nothing else."""
         result = generator.generate_slides()
         
         # Assertions
-        assert len(result["data"]["slides"]) == 2
-        assert result["data"]["slides"][0]["needs_image"] == True
-        assert "image_url" in result["data"]["slides"][0]
-        assert result["data"]["slides"][1]["needs_image"] == False
+        assert len(result["slides"]) == 2
+        assert result["slides"][0]["needs_image"] == True
+        assert "image_url" in ["slides"][0]
+        assert result["slides"][1]["needs_image"] == False
         
         # Verify correct parameters for generate_slide_image
         mock_image_generator.generate_slide_image.assert_called_once_with(

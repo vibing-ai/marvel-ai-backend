@@ -114,7 +114,6 @@ class PresentationGenerator:
             f"Additional Comments: {self.args.additional_comments}, "
             f"Language (YOU MUST RESPOND IN THIS LANGUAGE): {self.args.lang}"
         )
-        logger.info(f"Input parameters: {input_parameters}")
 
         response = chain.invoke(input_parameters)
 

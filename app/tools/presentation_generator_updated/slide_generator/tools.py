@@ -93,7 +93,7 @@ class SlideGenerator:
     def compile_context(self):
         # Return the chain
         generate_prompt = PromptTemplate(
-            template=self.slide_prompt,
+            template=self.prompt,
             input_variables=["instructional_level", "topic", "slides_titles"],
             partial_variables={"format_instructions": self.parser.get_format_instructions()}
         )
@@ -122,7 +122,7 @@ class SlideGenerator:
 
         response = generate_chain.invoke(input_parameters)
 
-        logger.info(f"Generated response: {response}")
+        logger.info(f"Generated slides!")
         # Add validation metrics
         validation_results = self.validate_slides_content(response=response, topic=self.args.topic)
         logger.info(f"Response validation: {validation_results}")
@@ -145,7 +145,7 @@ class SlideGenerator:
             
                 # Generate image for the slide
                 image_url = self.image_generator.generate_slide_image(
-                    id=i,
+                    slide_id=i,
                     title=slide['title'],
                     content=slide_content,
                     layout=slide['template'],
@@ -157,12 +157,11 @@ class SlideGenerator:
             else:
                 slide['needs_image'] = False
             
-            logger.debug(f"DEBUG - adding this slide with needs image set to {slide['needs_image']}")
             new_slides.append(slide)
             i += 1
 
         # Format the response
-        formatted_response = {"data": {"slides": new_slides}}
+        formatted_response = {"slides": new_slides}
         return formatted_response
 
 class Slide(BaseModel):

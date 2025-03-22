@@ -9,6 +9,7 @@ import replicate
 from google.cloud import storage
 from langchain_core.prompts import PromptTemplate
 from langchain_google_genai import GoogleGenerativeAI
+import vertexai
 from vertexai.preview.vision_models import ImageGenerationModel
 
 from app.services.logger import setup_logger
@@ -129,6 +130,7 @@ class ImageGenerator:
                     
                 # Imagen
                 else:
+                    vertexai.init(project=os.getenv("GCP_PROJECT_ID"))
                     model = ImageGenerationModel.from_pretrained("imagen-3.0-generate-002")
                     start_time = time.time()
                     images = model.generate_images(
@@ -147,7 +149,7 @@ class ImageGenerator:
                 bio.seek(0)
 
                 # Upload (public URL) to GCS, with unique file name
-                client = storage.Client()
+                client = storage.Client(project=os.getenv("GCP_PROJECT_ID"))
                 bucket = client.bucket(GCS_BUCKET)
                 filename = f"{slide_id}-{uuid.uuid4()}.png"
                 blob = bucket.blob(filename)
