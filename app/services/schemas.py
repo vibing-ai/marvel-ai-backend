@@ -51,7 +51,7 @@ class ChatResponse(BaseModel):
 
 class ToolResponse(BaseModel):
     data: Any
-    
+
 class ChatMessage(BaseModel):
     role: str
     type: str

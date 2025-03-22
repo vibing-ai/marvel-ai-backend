@@ -17,7 +17,6 @@ from app.api.error_utilities import VideoTranscriptError
 from langchain_core.messages import HumanMessage
 from app.services.logger import setup_logger
 from langchain_text_splitters import RecursiveCharacterTextSplitter
-
 import os
 import tempfile
 import uuid
@@ -33,18 +32,13 @@ splitter = RecursiveCharacterTextSplitter(
     chunk_overlap = 0
 )
 
-def read_text_file(file_path):
-    # Get the directory containing the script file
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-
-    # Combine the script directory with the relative file path
-    absolute_file_path = os.path.join(script_dir, file_path)
-
-    with open(absolute_file_path, 'r') as file:
-        return file.read()
-
 def build_chain(prompt: str):
-    prompt_template = read_text_file(prompt)
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    prompt_path = os.path.join(script_dir, prompt)
+    
+    with open(prompt_path, 'r') as f:
+        prompt_template = f.read()
+        
     summarize_prompt = PromptTemplate.from_template(prompt_template)
 
     summarize_model = GoogleGenerativeAI(model="gemini-1.5-flash")
@@ -395,7 +389,12 @@ def summarize_transcript_youtube_url(youtube_url: str, max_video_length=600, ver
         logger.info(f"Combined documents into a single string.")
         logger.info(f"Beginning to process transcript...")
 
-    prompt_template = read_text_file("prompts_for_summarization/summarize_youtube_video_prompt.txt")
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    prompt_path = os.path.join(script_dir, "prompts_for_summarization/summarize_youtube_video_prompt.txt")
+    
+    with open(prompt_path, 'r') as f:
+        prompt_template = f.read()
+        
     summarize_prompt = PromptTemplate.from_template(prompt_template)
 
     summarize_model = GoogleGenerativeAI(model="gemini-1.5-flash")

@@ -12,24 +12,27 @@ from app.services.logger import setup_logger
 
 logger = setup_logger(__name__)
 
-def read_text_file(file_path):
-    # Get the directory containing the script file
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-
-    # Combine the script directory with the relative file path
-    absolute_file_path = os.path.join(script_dir, file_path)
-    
-    with open(absolute_file_path, 'r') as file:
-        return file.read()
-    
 class RubricGenerator:
     def __init__(self, args=None, vectorstore_class=Chroma, prompt=None, embedding_model=None, model=None, parser=None, verbose=False):
+        # Read prompt files
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        
+        # Read the prompt files
+        prompt_path = os.path.join(script_dir, "prompt/rubric-generator-prompt.txt")
+        prompt_without_context_path = os.path.join(script_dir, "prompt/rubric-generator-without-context-prompt.txt")
+        
+        with open(prompt_path, 'r') as f:
+            default_prompt = f.read()
+            
+        with open(prompt_without_context_path, 'r') as f:
+            default_prompt_without_context = f.read()
+            
         default_config = {
             "model": GoogleGenerativeAI(model="gemini-1.5-flash"),
             "embedding_model": GoogleGenerativeAIEmbeddings(model='models/embedding-001'),
             "parser": JsonOutputParser(pydantic_object=RubricOutput),
-            "prompt": read_text_file("prompt/rubric-generator-prompt.txt"),
-            "prompt_without_context": read_text_file("prompt/rubric-generator-without-context-prompt.txt"),
+            "prompt": default_prompt,
+            "prompt_without_context": default_prompt_without_context,
             "vectorstore_class": Chroma
         }
 
@@ -183,4 +186,3 @@ class RubricOutput(BaseModel):
     grade_level: str = Field(..., description="The grade level for which the rubric is created")
     criterias: List[RubricCriteria] = Field(..., description="The grading criteria for the rubric")
     feedback: str = Field(..., description="the feedback provided by the AI model on the generated rubric")
-    

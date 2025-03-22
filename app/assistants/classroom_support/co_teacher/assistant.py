@@ -10,18 +10,15 @@ genai.configure(api_key=os.environ['GOOGLE_API_KEY'])
 
 logger = setup_logger()
 
-def read_text_file(file_path):
-    # Get the directory containing the script file
-    script_dir = os.path.dirname(os.path.abspath(__file__))
+# Read the system instruction file
+script_dir = os.path.dirname(os.path.abspath(__file__))
+system_instruction_path = os.path.join(script_dir, 'prompt/co_teacher_context.txt')
 
-    # Combine the script directory with the relative file path
-    absolute_file_path = os.path.join(script_dir, file_path)
-    
-    with open(absolute_file_path, 'r') as file:
-        return file.read()
+with open(system_instruction_path, 'r') as f:
+    system_instruction = f.read()
 
 model = genai.GenerativeModel(model_name='gemini-2.0-flash-exp',
-                              system_instruction=read_text_file('prompt/co_teacher_context.txt'),
+                              system_instruction=system_instruction,
                               )
 
 def run_co_teacher_assistant(user_query: str, chat_context: str, user_info: UserInfo):

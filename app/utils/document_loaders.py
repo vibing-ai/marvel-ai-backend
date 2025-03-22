@@ -26,8 +26,7 @@ import base64
 load_dotenv(find_dotenv())
 
 STRUCTURED_TABULAR_FILE_EXTENSIONS = {"csv", "xls", "xlsx", "gsheet", "xml"}
-FILE_TYPES_TO_CHECK = {'pdf', 'csv', 'txt', 'pptx'}
-
+FILE_TYPES_TO_CHECK = {'pdf', 'csv', 'txt', 'pptx', 'gdoc'}
 
 logger = setup_logger(__name__)
 
@@ -36,15 +35,6 @@ splitter = RecursiveCharacterTextSplitter(
     chunk_overlap = 100
 )
 
-def read_text_file(file_path):
-    # Get the directory containing the script file
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-
-    # Combine the script directory with the relative file path
-    absolute_file_path = os.path.join(script_dir, file_path)
-
-    with open(absolute_file_path, 'r') as file:
-        return file.read()
 
 def get_docs(file_url: str, file_type: str, lang: str = "en", verbose=True):
     file_type = file_type.lower()
@@ -73,6 +63,9 @@ def get_docs(file_url: str, file_type: str, lang: str = "en", verbose=True):
             error_message = exception_map.get(type(e), f"Request failed: {e}")
             logger.error(error_message)
             raise FileHandlerError(error_message, file_url)
+    else:
+        logger.error(f"Unsupported file type: {file_type}")
+        raise FileHandlerError(f"Document loading failed", file_url)
   
     try:
         file_loader = file_loader_map[FileType(file_type)]
