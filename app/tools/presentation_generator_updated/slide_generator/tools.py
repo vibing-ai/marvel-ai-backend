@@ -102,12 +102,12 @@ class SlideGenerator:
         )
         chain = prompt | self.model | self.parser
 
-        logger.info(f"Chain compilation complete")
+        logger.info("Chain compilation complete")
 
         return chain
 
     def generate_slides(self):
-        logger.info(f"Creating the Outlines for the Presentation") 
+        logger.info("Creating the Outlines for the Presentation") 
         chain = self.compile_context() 
 
         input_parameters = {
@@ -126,7 +126,7 @@ class SlideGenerator:
         logger.info(f"Response validation: {validation_results}")
         
         if not validation_results["valid"]:
-            logger.warning(f"Generated content may not fully match the requested topic")
+            logger.warning("Generated content may not fully match the requested topic")
         return response
 
 class Slide(BaseModel):

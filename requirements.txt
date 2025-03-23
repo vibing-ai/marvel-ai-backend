@@ -11,7 +11,8 @@ google-ai-generativelanguage
 google-cloud-secret-manager
 google-cloud-logging
 google-auth
-google-cloud-storage
+google-cloud-storage>=2.14.0
+google-cloud-aiplatform>=1.40.0
 firebase-admin
 chroma
 pypdf

@@ -176,3 +176,6 @@ compose*.yaml
 # vscode
 .vscode/
 
+# Google Cloud Service Account credentials
+marvel-ai-backend-credentials.json
+

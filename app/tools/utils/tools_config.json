@@ -50,5 +50,9 @@
     "slide-generator": {
         "path": "tools.presentation_generator_updated.slide_generator.core",
         "metadata_file": "metadata.json"
+    },
+    "slide-image-generator": {
+        "path": "tools.presentation_generator_updated.slide_image_generator.core",
+        "metadata_file": "metadata.json"
     }
 }
