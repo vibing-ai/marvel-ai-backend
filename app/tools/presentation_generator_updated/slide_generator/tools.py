@@ -9,6 +9,8 @@ from langchain_core.output_parsers import JsonOutputParser
 from langchain_google_genai import GoogleGenerativeAI
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from langchain_core.documents import Document
+# from app.tools.presentation_generator_updated.slide_generator.image_generator import ImageGenerator, image_generation_pipeline
+from app.tools.presentation_generator_updated.image_generator.core import executor as image_executor
 import re
 logger = setup_logger(__name__)
 
@@ -117,11 +119,12 @@ class SlideGenerator:
             "lang": self.args.lang
         }
         logger.info(f"Input parameters: {input_parameters}")
-
+        
         response = chain.invoke(input_parameters)
 
         logger.info(f"Generated response: {response}")
-         # Add validation metrics
+        output = image_executor(response, self.args.lang)
+        
         validation_results = self.validate_slides_content(response=response, topic=self.args.topic)
         logger.info(f"Response validation: {validation_results}")
         

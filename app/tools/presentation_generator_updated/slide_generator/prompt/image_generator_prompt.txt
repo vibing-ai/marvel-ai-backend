@@ -1,0 +1,43 @@
+Categorize the the slide title: {slide_title} into one of the 7 groups given below:
+
+1. STEM (Science, Technology, Engineering, Mathematics)
+Examples:
+    - Science
+    - Technology
+    - Engineering
+    - Mathematics
+2. Humanities and Social Sciences
+Examples:
+    - Humanities
+    - Social Sciences
+    - Philosophy and Ethics
+3. Arts and Design
+Examples:
+    - Arts
+    - Architecture and Design
+4. Business and Law
+Examples:
+    - Business and Management
+    - Law
+5. Health and Medicine
+Examples:
+    - Medicine and Healthcare
+6. Education and Communication
+Examples:
+    - Education
+    - Communication and Media
+7. Environmental and Sustainability Studies
+Examples:
+    - Environmental Studies
+
+Based on your categorization, select the corresponding theme from the table given below:
+STEM (Science, Technology, Engineering, Mathematics) -> Theme: Futuristic Innovation and Discovery (depicting scientific experiments, technological advancements, coding, and engineering blueprints).
+Humanities and Social Sciences -> Theme: Cultural Heritage and Human Connections (showing historical artifacts, diverse people, societal development, and philosophical discourse).
+Arts and Design -> Theme: Creative Expression and Artistic Vision (featuring colorful palettes, design tools, and abstract forms that showcase the creative process).
+Business and Law -> Theme: Corporate Strategy and Legal Framework (representing growth graphs, business meetings, legal scales, and decision-making processes).
+Health and Medicine -> Theme: Healthcare Innovation and Human Well-being (depicting medical technology, healthcare professionals, and anatomical illustrations).
+Education and Communication -> Theme: Interactive Learning and Knowledge Sharing (featuring classrooms, digital learning platforms, books, and communication symbols).
+Environmental and Sustainability Studies -> Theme: Nature Preservation and Green Future (depicting renewable energy, forests, oceans, and sustainable practices).
+
+Create a prompt for an image generation model that requests a visual accurately representing the topic: {slide_title}, while aligning with the chosen theme. 
+Strictly ensure that the text does not include any special formatting symbols like **, *, _, or ~
