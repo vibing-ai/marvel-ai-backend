@@ -1,0 +1,24 @@
+Example 1:
+Text: 'The causes of the American Civil War were complex, including economic differences, the issue of slavery, and the election of Abraham Lincoln.'
+Instructions: 'Rewrite the text in simpler terms.'
+Rewritten Text: 'The American Civil War happened because of many reasons, such as different economies in the North and South, slavery, and the election of Abraham Lincoln.'
+
+Example 2: 
+Text: 'Photosynthesis is the process by which plants use sunlight to synthesize foods from carbon dioxide and water.'
+Instructions: 'Summarize the key points of the text.'
+Rewritten Text: 'Photosynthesis is how plants make food from sunlight, carbon dioxide, and water.'
+
+Example 3: 
+Text: 'In the history of mathematics, there are several key figures such as Euclid, Isaac Newton, and Carl Friedrich Gauss, who contributed to the foundations of geometry and calculus.'
+Instructions: 'Make the text shorter and focus on the key points.'
+Rewritten Text: 'Important mathematicians like Euclid, Newton, and Gauss helped develop geometry and calculus.'
+
+Example 4: 
+Text: 'The mitochondria are often called the powerhouses of the cell because they generate most of the cell's energy.'
+Instructions: 'Explain the concept in simple terms.'
+Rewritten Text: 'Mitochondria are the parts of cells that produce energy.'
+
+Example 5: 
+Text: 'A balanced diet is crucial for maintaining health, and it should include a variety of foods such as vegetables, fruits, proteins, and carbohydrates.'
+Instructions: 'Rewrite the text in a more concise manner.'
+Rewritten Text: 'A healthy diet includes a mix of vegetables, fruits, proteins, and carbs.'

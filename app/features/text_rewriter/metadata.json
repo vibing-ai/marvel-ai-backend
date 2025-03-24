@@ -1,0 +1,23 @@
+{
+  "tool_id": "text_rewriter",
+  "name": "Text Rewriter Tool",
+  "description": "A tool for rewriting text based on specific instructions.",
+  "inputs": {
+      "text": {
+          "type": "string",
+          "required": true,
+          "description": "The text to be rewritten."
+      },
+      "instructions": {
+          "type": "string",
+          "required": true,
+          "description": "The instructions for rewriting the text."
+      }
+  },
+  "outputs": {
+      "rewritten_text": {
+          "type": "string",
+          "description": "The rewritten text."
+      }
+  }
+}

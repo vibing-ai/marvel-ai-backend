@@ -1,0 +1,40 @@
+# Environment files
+.env
+text_rewriter.env
+
+# System files
+.DS_Store
+Thumbs.db
+
+# Python-related files
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+
+# Logs
+*.log
+*.sqlite3
+
+# Compiled files
+*.pyc
+*.pyo
+*.pyd
+
+# Ignore virtual environment
+Ai/
+env/
+Lab/
+
+# VS Code configuration
+.vscode/
+
+# Output files
+output.txt
+
+# Ignore additional Ai/ and output.txt files
+Ai/
+output.txt
+.vscode/
+.env
