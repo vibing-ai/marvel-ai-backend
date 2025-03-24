@@ -12,6 +12,9 @@ from app.tools.utils.tool_utilities import load_tool_metadata, execute_tool, fin
 from fastapi.responses import FileResponse
 from starlette.background import BackgroundTask
 
+# ✅ Import the new image generator route
+from app.api.endpoints import image_generator
+
 logger = setup_logger(__name__)
 router = APIRouter()
 
@@ -20,22 +23,16 @@ def read_root():
     return {"Hello": "World"}
 
 @router.post("/submit-tool", response_model=Union[ToolResponse, ErrorResponse])
-async def submit_tool( data: ToolRequest, _ = Depends(key_check)):     
-    try: 
-        # Unpack GenericRequest for tool data
+async def submit_tool(data: ToolRequest, _ = Depends(key_check)):
+    try:
         request_data = data.tool_data
-        
         requested_tool = load_tool_metadata(request_data.tool_id)
-        
         request_inputs_dict = finalize_inputs(request_data.inputs, requested_tool['inputs'])
-
         result = execute_tool(request_data.tool_id, request_inputs_dict)
-        
         return ToolResponse(data=result)
     
     except InputValidationError as e:
         logger.error(f"InputValidationError: {e}")
-
         return JSONResponse(
             status_code=400,
             content=jsonable_encoder(ErrorResponse(status=400, message=e.message))
@@ -49,8 +46,7 @@ async def submit_tool( data: ToolRequest, _ = Depends(key_check)):
         )
 
 @router.post("/assistant-chat", response_model=ChatResponse)
-async def assistants( request: GenericAssistantRequest, _ = Depends(key_check) ):
-    
+async def assistants(request: GenericAssistantRequest, _ = Depends(key_check)):
     assistant_group = request.assistant_inputs.assistant_group
     assistant_name = request.assistant_inputs.assistant_name
     user_info = request.assistant_inputs.user_info
@@ -65,3 +61,6 @@ async def assistants( request: GenericAssistantRequest, _ = Depends(key_check) )
     )
     
     return ChatResponse(data=[formatted_response])
+
+# ✅ Register the new route
+router.include_router(image_generator.router)
