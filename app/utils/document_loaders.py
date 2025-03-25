@@ -35,18 +35,7 @@ splitter = RecursiveCharacterTextSplitter(
     chunk_size = 1000,
     chunk_overlap = 100
 )
-class LocalFileHandler:
-    def __init__(self, file_loader):
-        self.file_loader = file_loader
 
-    def load(self, file_path):
-        try:
-            loader = self.file_loader(file_path=file_path)
-            documents = loader.load()
-            return documents
-        except Exception as e:
-            logger.error(f"Failed to load local file: {e}")
-            raise FileHandlerError(f"Failed to load file", file_path)
 def read_text_file(file_path):
     # Get the directory containing the script file
     script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -59,9 +48,8 @@ def read_text_file(file_path):
 
 def get_docs(file_url: str, file_type: str, lang: str = "en", verbose=True):
     file_type = file_type.lower()
-    
+
     if file_type in FILE_TYPES_TO_CHECK:
-      
         try:
             # Make a HEAD request to get content type
             head_response = requests.head(file_url, allow_redirects=True)
@@ -85,9 +73,11 @@ def get_docs(file_url: str, file_type: str, lang: str = "en", verbose=True):
             error_message = exception_map.get(type(e), f"Request failed: {e}")
             logger.error(error_message)
             raise FileHandlerError(error_message, file_url)
+    else:
+        logger.error(f"Unsupported file type: {file_type}")
+        raise FileHandlerError(f"Document loading failed", file_url)
   
     try:
-        print("test")
         file_loader = file_loader_map[FileType(file_type)]
         if "generate_docs_from_audio_gcloud" in file_loader.__name__:
             docs = file_loader(file_url, lang, verbose)
