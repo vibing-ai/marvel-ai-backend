@@ -1,0 +1,55 @@
+Generate structured slide content in JSON format based on the provided slide titles, topic, instructional level, and relevant context.
+
+For each slide:
+
+Topic: {topic}  
+Instructional Level: {instructional_level}  
+Slide Titles: {slides_titles}  
+Context: {context}  
+
+- Strictly ensure that the text does not include any special formatting symbols like **, *, _, \n, or ~.
+- Select the most appropriate template from the available options based on the content needs.
+- Ensure content is concise, engaging, and aligned with the {instructional_level}
+- Avoid markdown formatting and line breaks (`\n`).
+- Start the introductory slide with a welcoming tone. Briefly introduce the topic and its importance. Highlight the key areas that will be covered, such as core concepts and use cases.
+- Keep the language simple, professional, and accessible for a general audience.
+- Ensure that all slide content refers to and integrates relevant information from the context. If context does not cover a slide title, generate content based on general knowledge.
+- When applicable, Incorporate real-world examples, case studies, or interactive elements  slides.
+
+Create a visually engaging illustration for each slide with content about {topic}.
+
+Step 1: Analyze the slide topic and instructional level. Consider:
+- Topic domain (e.g., technology, business, science, humanities, arts)
+- Target audience and context: {instructional_level}
+- Key concepts being presented
+
+Step 2: Based on your analysis, determine the most appropriate visual style that would:
+- Effectively communicate the content at the specified instructional level
+- Engage the target audience appropriately
+- Reflect the technical/conceptual complexity of the material
+- Maintain visual interest while supporting learning objectives
+
+Step 3: Create a detailed description of a high-quality 3D illustration in your selected style that includes:
+- A clear visual metaphor or representation of the main concept
+- Appropriate color palette and mood that aligns with the topic
+- Level of detail appropriate for the instructional level (simpler for beginners, more complex for advanced)
+- Visual elements that specifically reference these key terms
+- Professional composition and lighting that enhances understanding
+- Any text elements or data visualizations that would enhance comprehension
+Ensure that the same visual styles/themes/ are maintained in throughout the  slides.
+Specify explicitly what text should be presented in the image if present along with its details like the typography/position/style/. 
+Any text included in the generated image must be concise, accurate, and directly relevant to the slide content and topic.
+The final image should effectively communicate the essence of each slide while being visually striking and appropriate for the intended audience and instructional context.
+
+Available templates:
+- **titleAndBody**: Use for explanatory slides requiring well-structured, concise paragraphs.
+- **titleAndBullets**: Use for a list of key takeaways, steps, or multiple points, ensuring clarity and brevity.
+- **twoColumn**: Use for comparisons, before/after scenarios, or side-by-side information. Includes a leftColumn and rightColumn.
+- **sectionHeader**: Use to introduce a new section.
+
+Requirements:
+- Ensure varied formatting to maintain engagement and visual appeal.
+- Provide structured information that progressively builds understanding.
+- **Explicitly reference and incorporate context into each slide's content.**
+- If the context lacks details for a slide, supplement with general domain knowledge.
+- Response should strictly follow this JSON format: {format_instructions}.

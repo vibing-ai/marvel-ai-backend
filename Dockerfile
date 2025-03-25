@@ -8,6 +8,8 @@ RUN apt-get update && apt-get install -y ffmpeg && rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt /code/requirements.txt
 
+COPY service-account.json /app/service-account.json
+
 RUN pip install --no-cache-dir -r /code/requirements.txt
 
 COPY ./app /code/app
@@ -18,5 +20,6 @@ COPY ./app /code/app
 # When set to production, API Key on endpoint requests are the actual API Key
 
 ENV PYTHONPATH=/code/app
+ENV GOOGLE_APPLICATION_CREDENTIALS=/app/service-account.json
 
 CMD ["fastapi", "dev", "app/main.py", "--host=0.0.0.0", "--port=8000"]

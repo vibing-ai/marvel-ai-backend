@@ -4,6 +4,7 @@ uvicorn[standard]
 langchain
 langchain-core
 langchain-google-genai
+langchain-google-vertexai
 langchain-chroma
 langchain-community
 google-generativeai

@@ -175,4 +175,6 @@ class SlideGeneratorInput(BaseModel):
     slides_titles: List[str]
     instructional_level: str
     topic: str
+    file_url: str
+    file_type: str
     lang: Optional[str] = "en"
