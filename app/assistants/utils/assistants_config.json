@@ -3,5 +3,10 @@
         "co_teacher": {
             "path": "assistants.classroom_support.co_teacher.core"
         }
+    },
+    "curriculum_support": {
+        "curriculum_coach": {
+            "path": "assistants.curriculum_support.curriculum_coach.core"
+        }
     }
 }
