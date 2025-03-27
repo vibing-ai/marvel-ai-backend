@@ -9,6 +9,9 @@ from langchain_google_genai import GoogleGenerativeAI
 from typing import List, Dict
 from langchain_core.output_parsers import PydanticOutputParser
 from pydantic import BaseModel, Field
+from google.cloud import storage
+from datetime import datetime
+from app.utils.config import Config
 
 logger = setup_logger(__name__)
 client = Together()
@@ -34,7 +37,23 @@ class ImageGenerator:
             "steps": 4,  # FLUX.1-schnell is optimized for low steps
             "n": 1
         }
-        self._ensure_output_directory()
+        # Initialize GCS client with project configuration
+        self.storage_client = storage.Client(project=Config.GOOGLE_CLOUD_PROJECT)
+        self.bucket = self.storage_client.bucket(Config.GCS_BUCKET_NAME)
+
+    def _ensure_bucket_exists(self):
+        """Ensure the GCS bucket exists, create if it doesn't"""
+        try:
+            if not self.bucket.exists():
+                self.bucket = self.storage_client.create_bucket(
+                    self.bucket_name,
+                    location="us-central1"  # Specify your preferred location
+                )
+                logger.info(f"Created new bucket: {self.bucket_name}")
+            return self.bucket
+        except Exception as e:
+            logger.error(f"Failed to ensure bucket exists: {str(e)}")
+            raise
 
     def generate_single_image(self, input_data: Dict) -> Dict:
         """Generate a single image using FLUX.1-schnell model"""
@@ -53,12 +72,12 @@ class ImageGenerator:
             )
             
             image_data = response.data[0].b64_json
-            image_path = self._save_image_to_disk(image_data, slide_title)
+            image_url = self._save_image_to_gcs(image_data, slide_title)  # Changed this line
             
             logger.info(f"Successfully generated image for: {slide_title}")
             return {
                 "title": slide_title,
-                "image_path": image_path,
+                "image_url": image_url,  # Changed from image_path to image_url
                 "status": "success",
                 "prompt": prompt
             }
@@ -72,24 +91,37 @@ class ImageGenerator:
                 "prompt": prompt
             }
 
-    def _ensure_output_directory(self) -> str:
-        script_dir = os.path.dirname(os.path.realpath(__file__))
-        # Create 'generated_images' directory if it doesn't exist
-        output_dir = os.path.join(script_dir, 'generated_images')
-        os.makedirs(output_dir, exist_ok=True)
-        return output_dir
-
-    def _save_image_to_disk(self, image_data: str, slide_title: str) -> str:
-        output_dir = self._ensure_output_directory()
-        safe_title = "".join(x for x in slide_title if x.isalnum() or x in "_ -").rstrip()
-        filename = f"{safe_title}.png"
-        file_path = os.path.join(output_dir, filename)
-        
-        with open(file_path, 'wb') as f:
-            f.write(base64.b64decode(image_data))
-        
-        logger.info(f"Saved image to: {file_path}")
-        return file_path
+    def _save_image_to_gcs(self, image_data: str, slide_title: str) -> str:
+        try:
+            # Create a unique, safe filename with timestamp
+            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+            safe_title = "".join(x for x in slide_title if x.isalnum() or x in "_ -").rstrip()
+            blob_name = f"presentation_images/{safe_title}_{timestamp}.png"
+            
+            # Create a blob object
+            blob = self.bucket.blob(blob_name)
+            
+            # Convert base64 to bytes
+            image_bytes = base64.b64decode(image_data)
+            
+            # Upload the image bytes
+            blob.upload_from_string(
+                image_bytes,
+                content_type='image/png'
+            )
+            
+            # Make the blob publicly accessible (optional)
+            blob.make_public()
+            
+            # Get the public URL
+            public_url = blob.public_url
+            
+            logger.info(f"Successfully uploaded image to GCS: {public_url}")
+            return public_url
+            
+        except Exception as e:
+            logger.error(f"Failed to upload image to GCS: {str(e)}")
+            raise
 
 class ImagePromptGenerator:
     def __init__(self, verbose=False):
@@ -210,56 +242,33 @@ def image_generation_handler(image_generator_args):
         prompts = prompt_generator.generate_image_prompt(slides_data)
         
         # Save prompts for debugging
-        save_to_file(prompts, "image_prompts.json")
+        # save_to_file(prompts, "image_prompts.json")
         logger.info(f"Generated prompts for {len(prompts)} slides")
 
         # Create and execute the parallel image generation chain
         image_chain = create_image_generation_chain(prompts)
-        results = image_chain.invoke({})
+        results = image_chain.invoke({})  # Changed from ainvoke to invoke
         
         # Process and validate results
-        processed_results = []
+        processed_results = {}
         for key, result in results.items():
             if result["status"] == "success":
-                processed_results.append({
-                    "title": result["title"],
-                    "image_path": result["image_path"],
-                    "prompt": result["prompt"]
-                })
+                processed_results[result["title"]] = result["image_url"]  # Changed from image_path
             else:
                 logger.error(f"Failed to generate image for {result['title']}: {result.get('error')}")
                 
         logger.info(f"Successfully generated {len(processed_results)} images")
-        return processed_results
+        return {
+            "status": "success",
+            "data": processed_results
+        }
         
     except Exception as e:
         logger.error(f"Error in image_generation_handler: {e}")
-        raise
-
-async def async_image_generation_handler(image_generator_args):
-    try:
-        slides_data = image_generator_args.presentation_content
-        prompt_generator = ImagePromptGenerator()
-        prompts = prompt_generator.generate_image_prompt(slides_data)
-        
-        image_chain = create_image_generation_chain(prompts)
-        results = await image_chain.ainvoke({})
-        
-        processed_results = []
-        for key, result in results.items():
-            if result["status"] == "success":
-                processed_results.append({
-                    "title": result["title"],
-                    "image_path": result["image_path"],
-                    "prompt": result["prompt"]
-                })
-            
-        logger.info(f"Successfully generated {len(processed_results)} images")
-        return processed_results
-        
-    except Exception as e:
-        logger.error(f"Error in async_image_generation_handler: {e}")
-        raise
+        return {
+            "status": "error",
+            "message": str(e)
+        }
 
 def save_to_file(data: Dict, filename: str) -> None:
     """

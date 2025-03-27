@@ -7,7 +7,7 @@ from app.services.logger import setup_logger
 logger = setup_logger()
 
 
-def executor(presentation_content, lang: str, verbose=False):
+def executor(presentation_content, verbose=False):
     try: 
         if not presentation_content:
             logger.info("Missing required inputs.")
@@ -21,14 +21,13 @@ def executor(presentation_content, lang: str, verbose=False):
         )
         
         # Create ImageGeneratorInput with the correct format
-        logger.info(f"{slides_list}\n\n\ntype: {type(slides_list)}")
         image_generator_args = ImageGeneratorInput(presentation_content=slides_list)
-        output = image_generation_handler(image_generator_args)
+        output = image_generation_handler(image_generator_args)            # Reurns a dictionary of image titles and correswponding image URLs
         logger.info("Image generation completed successfully")
         
         return output
         
     except Exception as e:
-        error_message = f"Error in image generation: {e}"
+        error_message = f"Error in image generation: {str(e)}"
         logger.error(error_message)
         

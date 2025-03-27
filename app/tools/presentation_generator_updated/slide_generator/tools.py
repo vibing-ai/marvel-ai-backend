@@ -91,9 +91,7 @@ class SlideGenerator:
             
         except ValueError as e:
             raise ValueError(e)
-
-        
-        
+      
 
     def compile_context(self):
         # Return the chain
@@ -118,18 +116,31 @@ class SlideGenerator:
             "slides_titles": self.args.slides_titles,
             "lang": self.args.lang
         }
-        logger.info(f"Input parameters: {input_parameters}")
+        # logger.info(f"Input parameters: {input_parameters}")
         
+        # Generate slide content using the chain
         response = chain.invoke(input_parameters)
+        logger.info(f"Response type: {type(response)}")
 
-        logger.info(f"Generated response: {response}")
-        output = image_executor(response, self.args.lang)
+        # logger.info(f"Generated response: {response}")
+
+        # Generate images
+        image_URLs = image_executor(response, self.args.lang)
+        final_slides = self.attach_image_URLs(response, image_URLs)
+        logger.info(f"Final Slides type: {type(final_slides)}")
+
+        # logger.info(f"Generated response with images: {response}")
         
         validation_results = self.validate_slides_content(response=response, topic=self.args.topic)
-        logger.info(f"Response validation: {validation_results}")
+        # logger.info(f"Response validation: {validation_results}")
         
         if not validation_results["valid"]:
             logger.warning(f"Generated content may not fully match the requested topic")
+        return final_slides
+    
+    def attach_image_URLs(self, response, image_URLs):
+        for slide in response["slides"]:
+            slide["image_URL"] = image_URLs[slide["title"]]
         return response
 
 class Slide(BaseModel):
