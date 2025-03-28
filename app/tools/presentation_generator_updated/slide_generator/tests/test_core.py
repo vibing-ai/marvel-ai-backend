@@ -1,7 +1,7 @@
 import pytest
-from app.tools.presentation_generator_updated.slide_generator.core import executor,SlideGeneratorInput
+from app.tools.presentation_generator_updated.slide_generator.core import executor, SlideGeneratorInput
 from unittest.mock import patch, MagicMock, Mock
-from app.tools.presentation_generator_updated.slide_generator.tools import SlideGenerator, Slide,SlidePresentation
+from app.tools.presentation_generator_updated.slide_generator.tools import SlideGenerator, Slide, SlidePresentation
 
 @pytest.fixture
 def mock_slide_data():
@@ -32,15 +32,15 @@ def mock_args():
 @pytest.fixture
 def mock_slide_generator():
     """Mock SlideGenerator instead of instantiating it."""
-    with patch("app.tools.presentation_generator.slide_generator.tools.GoogleGenerativeAI"), \
-         patch("app.tools.presentation_generator.slide_generator.tools.GoogleGenerativeAIEmbeddings"), \
-         patch("app.tools.presentation_generator.slide_generator.tools.Chroma"):
+    with patch("app.tools.presentation_generator_updated.slide_generator.tools.GoogleGenerativeAI"), \
+        patch("app.tools.presentation_generator_updated.slide_generator.tools.GoogleGenerativeAIEmbeddings"), \
+        patch("app.tools.presentation_generator_updated.slide_generator.tools.Chroma"):
             slide_generator = SlideGenerator()
             slide_generator.validate_slides_content = MagicMock()
             slide_generator.generate_slides = MagicMock()
             return slide_generator
 #Test the executor function, we mock the generate_slides method.
-def test_executor(mock_slide_data,mock_slide_generator):
+def test_executor(mock_slide_data, mock_slide_generator):
     slides_titles = ["Introduction to Python", "Basic Syntax"]
     topic = "Python Programming"
     instructional_level = "Beginner"
@@ -49,8 +49,8 @@ def test_executor(mock_slide_data,mock_slide_generator):
     # Create a mock instance of SlideGenerator
     mock_slide_generator.generate_slides.return_value = mock_slide_data
 
-    # Patch SlideGenerator to return the mock instance
-    with patch("app.tools.presentation_generator.slide_generator.core.SlideGenerator", return_value=mock_slide_generator):
+    # Update the patch path to use presentation_generator_updated
+    with patch("app.tools.presentation_generator_updated.slide_generator.core.SlideGenerator", return_value=mock_slide_generator):
         result = executor(slides_titles, topic, instructional_level, lang, verbose)
     # Assertions
     assert result == mock_slide_data
@@ -69,7 +69,7 @@ def test_executor_missing_inputs():
         )
 
 #Test the executor function with a LoaderError.
-@patch("app.tools.presentation_generator.slide_generator.tools.SlideGenerator.generate_slides")
+@patch("app.tools.presentation_generator_updated.slide_generator.tools.SlideGenerator.generate_slides")
 @patch("google.auth.default")
 def test_executor_loader_error(mock_auth,mock_generate_slides):
     mock_auth.return_value=(MagicMock(),"fake-project-id")
@@ -80,7 +80,7 @@ def test_executor_loader_error(mock_auth,mock_generate_slides):
     assert "Error in Slide Generator Pipeline" in str(exc_info.value)
 
 #Test the executor function with an unexpected error.
-@patch("app.tools.presentation_generator.slide_generator.tools.SlideGenerator.generate_slides")
+@patch("app.tools.presentation_generator_updated.slide_generator.tools.SlideGenerator.generate_slides")
 @patch("google.auth.default")
 def test_executor_unexpected_error(mock_auth,mock_generate_slides):
     mock_auth.return_value=(MagicMock(),"fake-project-id")

@@ -127,11 +127,11 @@ class SlideGenerator:
         # Generate images
         image_URLs = image_executor(response, self.args.lang)
         final_slides = self.attach_image_URLs(response, image_URLs)
-        logger.info(f"Final Slides type: {type(final_slides)}")
+        logger.info(f"Final Slides type: {image_URLs}")
 
         # logger.info(f"Generated response with images: {response}")
         
-        validation_results = self.validate_slides_content(response=response, topic=self.args.topic)
+        validation_results = self.validate_slides_content(response=final_slides, topic=self.args.topic)
         # logger.info(f"Response validation: {validation_results}")
         
         if not validation_results["valid"]:
@@ -139,9 +139,37 @@ class SlideGenerator:
         return final_slides
     
     def attach_image_URLs(self, response, image_URLs):
-        for slide in response["slides"]:
-            slide["image_URL"] = image_URLs[slide["title"]]
-        return response
+        try:
+            if not response or not isinstance(response, dict) or "slides" not in response:
+                raise ValueError("Invalid response format")
+            
+            for slide in response["slides"]:
+                try:
+                    if "title" not in slide:
+                        raise KeyError("Slide missing title")
+                    
+                    slide["image_URL"] = image_URLs['data'][slide["title"]]
+                    if not slide["image_URL"]:
+                        logger.warning(f"No image URL found for slide: {slide['title']}")
+                        
+                except KeyError as ke:
+                    logger.error(f"Error processing slide: {ke}")
+                    slide["image_URL"] = None
+                    
+            return response
+            
+        except Exception as e:
+            logger.error(f"Error attaching image URLs: {str(e)}")
+            raise ValueError(f"Failed to attach image URLs: {str(e)}")
+    
+    def mock_image_executor(self, response, lang):
+        return {
+            'Introduction to Linear Algebra: What is it and why does it matter?': 'https://storage.googleapis.com/marvel_ai_backend_bucket/presentation_images/Introduction%20to%20Linear%20Algebra%20What%20is%20it%20and%20why%20does%20it%20matter_20250328_110744.png',
+            'What is Linear Algebra?': 'https://storage.googleapis.com/marvel_ai_backend_bucket/presentation_images/What%20is%20Linear%20Algebra_20250328_110746.png',
+            'Why is Linear Algebra Important?': 'https://storage.googleapis.com/marvel_ai_backend_bucket/presentation_images/Why%20is%20Linear%20Algebra%20Important_20250328_110744.png',
+            'Linear Algebra in Action: Real-World Examples': 'https://storage.googleapis.com/marvel_ai_backend_bucket/presentation_images/Linear%20Algebra%20in%20Action%20Real-World%20Examples_20250328_110746.png',
+            'Linear Equations vs. Linear Transformations': 'https://storage.googleapis.com/marvel_ai_backend_bucket/presentation_images/Linear%20Equations%20vs%20Linear%20Transformations_20250328_110748.png'
+        }
 
 class Slide(BaseModel):
     title: str = Field(..., description="The title of the slide")
