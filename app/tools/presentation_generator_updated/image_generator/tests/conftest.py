@@ -10,7 +10,7 @@ def mock_env_vars():
     """Mock environment variables needed for testing"""
     os.environ['GOOGLE_CLOUD_PROJECT'] = 'test-project'
     os.environ['GCS_BUCKET_NAME'] = 'test-bucket'
-    os.environ['OPENAI_API_KEY'] = 'test-key'
+    os.environ['TOGETHER_API_KEY'] = 'test-key'
 
 @pytest.fixture
 def mock_gcs_client():
