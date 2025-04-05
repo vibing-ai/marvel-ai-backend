@@ -176,3 +176,6 @@ class SlideGeneratorInput(BaseModel):
     instructional_level: str
     topic: str
     lang: Optional[str] = "en"
+
+class ImageGeneratorInput(BaseModel):
+    presentation_content: List[dict]

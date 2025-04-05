@@ -176,3 +176,6 @@ compose*.yaml
 # vscode
 .vscode/
 
+# Firebase credentials
+credentials/
+*.json

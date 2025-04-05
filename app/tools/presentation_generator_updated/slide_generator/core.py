@@ -29,7 +29,8 @@ def executor(
             lang=lang
         )
         output = SlideGenerator(args=slide_generator_args, verbose=verbose).generate_slides()
-        logger.info(f"Slides generated successfully")
+        # logger.info(f"Slides generated successfully")
+        logger.info(f"Slides generated successfully: {output}")
     except LoaderError as e:
         error_message = e
         logger.error(f"Error in Slide Generator Pipeline -> {error_message}")
