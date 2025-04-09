@@ -7,7 +7,7 @@ import os
 from typing import Optional
 
 # Configuration
-PROJECT_ID = "eduimagegen"
+PROJECT_ID = "549485143737"  # Replace with your actual project ID
 LOCATION = "us-central1"
 SERVICE_ACCOUNT_KEY_PATH = os.getenv(
     "SERVICE_ACCOUNT_KEY_PATH",
