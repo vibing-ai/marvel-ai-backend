@@ -56,27 +56,18 @@ async def create_educational_image(prompt_data: ImagePrompt):
     try:
         result = generate_educational_image(prompt_data)
         if not result.success:
-            if "404" in result.error_message:
-                return JSONResponse(
-                    status_code=404,
-                    content=jsonable_encoder(ErrorResponse(status=404, message=result.error_message))
-                )
-            if "400" in result.error_message:  # Handle permissions errors
-                return JSONResponse(
-                    status_code=400,
-                    content=jsonable_encoder(ErrorResponse(status=400, message=result.error_message))
-                )
+            if "400" in result.error_message:
+                raise HTTPException(status_code=400, detail=result.error_message)
+            elif "404" in result.error_message:
+                raise HTTPException(status_code=404, detail=result.error_message)
             raise Exception(result.error_message)
         return result
     except Exception as e:
         logger.error(f"Image generation error: {str(e)}")
         error_message = str(e)
         status_code = 500
-        if "404" in error_message:
-            status_code = 404
-        elif "400" in error_message:  # Handle 400 specifically
+        if "400" in error_message:
             status_code = 400
-        return JSONResponse(
-            status_code=status_code,
-            content=jsonable_encoder(ErrorResponse(status=status_code, message=error_message))
-        )
+        elif "404" in error_message:
+            status_code = 404
+        raise HTTPException(status_code=status_code, detail=error_message)
