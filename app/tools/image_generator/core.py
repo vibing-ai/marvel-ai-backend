@@ -40,7 +40,7 @@ def is_prompt_safe(prompt: str) -> bool:
     return True
 
 def generate_educational_image(prompt_data: ImagePrompt) -> ImageResponse:
-    """Generate an educational image description from a text prompt using Gemini 1.5 Pro."""
+    """Generate an educational image description from a text prompt using Gemini 2.0 Pro."""
     try:
         # Enhance the prompt with context
         enhanced_prompt = enhance_prompt(
@@ -61,10 +61,10 @@ def generate_educational_image(prompt_data: ImagePrompt) -> ImageResponse:
         # Initialize credentials and Vertex AI
         creds = service_account.Credentials.from_service_account_file(SERVICE_ACCOUNT_KEY_PATH)
         logger.info(f"Using credentials for project: {creds.project_id}")  # Should log "eduimagegen"
-        aiplatform.init(credentials=creds)  # Simplified: rely on credentials
+        aiplatform.init(credentials=creds)  # Match script's minimal init
 
-        # Load Gemini model (known stable model)
-        model = GenerativeModel("gemini-1.5-pro")
+        # Load Gemini model (mission-specified)
+        model = GenerativeModel("gemini-2.0-pro")
         logger.info(f"Generating content for prompt: '{enhanced_prompt}'")
 
         # Generate content (text output for now)
