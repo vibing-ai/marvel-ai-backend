@@ -40,7 +40,7 @@ def is_prompt_safe(prompt: str) -> bool:
     return True
 
 def generate_educational_image(prompt_data: ImagePrompt) -> ImageResponse:
-    """Generate an educational image description from a text prompt using Gemini 2.0 Pro."""
+    """Generate an educational image description from a text prompt using Gemini 1.5 Pro."""
     try:
         # Enhance the prompt with context
         enhanced_prompt = enhance_prompt(
@@ -63,17 +63,17 @@ def generate_educational_image(prompt_data: ImagePrompt) -> ImageResponse:
         logger.info(f"Using credentials for project: {creds.project_id}")  # Should log "eduimagegen"
         aiplatform.init(credentials=creds)  # Simplified: rely on credentials
 
-        # Load Gemini model (mission-specified)
-        model = GenerativeModel("gemini-2.0-pro")
+        # Load Gemini model (known stable model)
+        model = GenerativeModel("gemini-1.5-pro")
         logger.info(f"Generating content for prompt: '{enhanced_prompt}'")
 
-        # Generate content (text output for now, per mission)
+        # Generate content (text output for now)
         response = model.generate_content(enhanced_prompt)
         text_output = response.text
 
-        # Placeholder for image URL (mission expects image generation later)
+        # Placeholder for image URL
         return ImageResponse(
-            image_url="",  # To be updated with actual image generation
+            image_url="",  # To be updated with image generation
             prompt_used=enhanced_prompt,
             success=True,
             error_message=f"Text output: {text_output}"
