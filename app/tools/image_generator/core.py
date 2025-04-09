@@ -11,7 +11,7 @@ def generate_educational_image(prompt_data: ImagePrompt) -> ImageResponse:
     try:
         creds = service_account.Credentials.from_service_account_file(SERVICE_ACCOUNT_KEY_PATH)
         aiplatform.init(project=PROJECT_ID, location=LOCATION, credentials=creds)
-        model = GenerativeModel("gemini-1.5-pro-preview")  # Changed to preview
+        model = GenerativeModel("gemini-1.5-pro-preview")  # Must be preview
         response = model.generate_content(prompt_data.prompt)
         text_output = response.text
         return ImageResponse(
