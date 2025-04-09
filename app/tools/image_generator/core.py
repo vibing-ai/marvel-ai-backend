@@ -10,8 +10,8 @@ from typing import Optional
 PROJECT_ID = "eduimagegen"
 LOCATION = "us-central1"
 SERVICE_ACCOUNT_KEY_PATH = os.getenv(
-    "SERVICE_ACCOUNT_KEY_PATH", 
-    "C:\\Users\\melis\\OneDrive\\Masaüstü\\marvel-ai-backend\\marvel-ai-backend\\app\\eduimagegen-d664cc7b6af4.json"
+    "SERVICE_ACCOUNT_KEY_PATH",
+    "C:\\Users\\melis\\OneDrive\\Masaüstü\\marvel-ai-backend\\marvel-ai-backend\\app\\eduimagegen-service-key.json"  # Match tools.py
 )
 
 # Logging setup
@@ -40,7 +40,7 @@ def is_prompt_safe(prompt: str) -> bool:
     return True
 
 def generate_educational_image(prompt_data: ImagePrompt) -> ImageResponse:
-    """Generate an educational image description from a text prompt using Gemini 2.0 Pro."""
+    """Generate an educational image description from a text prompt using Gemini Pro."""
     try:
         # Enhance the prompt with context
         enhanced_prompt = enhance_prompt(
@@ -65,17 +65,16 @@ def generate_educational_image(prompt_data: ImagePrompt) -> ImageResponse:
         aiplatform.init(project=PROJECT_ID, location=LOCATION, credentials=creds)
 
         # Load Gemini model
-        model = GenerativeModel("gemini-2.0-pro")
+        model = GenerativeModel("gemini-pro")  # Changed from "gemini-2.0-pro"
         logger.info(f"Generating content for prompt: '{enhanced_prompt}'")
 
         # Generate content (assuming text output for now)
         response = model.generate_content(enhanced_prompt)
         text_output = response.text
 
-        # If you add an image generation step (e.g., via another API), replace image_url
-        # Example: image_url = generate_image_from_text(text_output)
+        # Placeholder for future image generation
         return ImageResponse(
-            image_url="",  # Placeholder until image generation is added
+            image_url="",  # Update if adding image API
             prompt_used=enhanced_prompt,
             success=True,
             error_message=f"Text output: {text_output}"
@@ -89,10 +88,3 @@ def generate_educational_image(prompt_data: ImagePrompt) -> ImageResponse:
             success=False,
             error_message=f"Image generation failed: {str(e)}"
         )
-
-# Optional: Add this if you integrate an image generation API later
-# def generate_image_from_text(text: str) -> str:
-#     logger.info(f"Converting text to image: {text[:50]}...")
-#     # Call an image generation API (e.g., DALL-E, Stable Diffusion)
-#     # return image_url
-#     pass
