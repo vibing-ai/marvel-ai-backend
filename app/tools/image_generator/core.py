@@ -1,5 +1,5 @@
 from google.cloud import aiplatform
-from vertexai.preview.generative_models import GenerativeModel
+from vertexai.preview.vision_models import ImageGenerationModel
 from app.models import ImagePrompt, ImageResponse
 from google.oauth2 import service_account
 import logging
@@ -40,7 +40,7 @@ def is_prompt_safe(prompt: str) -> bool:
     return True
 
 def generate_educational_image(prompt_data: ImagePrompt) -> ImageResponse:
-    """Generate an educational image description from a text prompt using Gemini 1.5 Flash."""
+    """Generate an educational image using Imagen."""
     try:
         # Enhance the prompt with context
         enhanced_prompt = enhance_prompt(
@@ -60,23 +60,22 @@ def generate_educational_image(prompt_data: ImagePrompt) -> ImageResponse:
 
         # Initialize credentials and Vertex AI
         creds = service_account.Credentials.from_service_account_file(SERVICE_ACCOUNT_KEY_PATH)
-        logger.info(f"Using credentials for project: {creds.project_id}")  # Should log "eduimagegen"
+        logger.info(f"Using credentials for project: {creds.project_id}")
         aiplatform.init(credentials=creds, location=LOCATION)
 
-        # Load Gemini model
-        model = GenerativeModel("gemini-1.5-flash")
-        logger.info(f"Generating content for prompt: '{enhanced_prompt}'")
+        # Load Imagen model
+        model = ImageGenerationModel("imagen-3.0-fast")
+        logger.info(f"Generating image for prompt: '{enhanced_prompt}'")
 
-        # Generate content (text output for now)
-        response = model.generate_content(enhanced_prompt)
-        text_output = response.text
+        # Generate image
+        response = model.generate_images(prompt=enhanced_prompt, number_of_images=1)
+        image_url = response.images[0]._image_data.decode()  # Adjust based on API response
 
-        # Placeholder for image URL
         return ImageResponse(
-            image_url="",  # To be updated with image generation
+            image_url=image_url,
             prompt_used=enhanced_prompt,
             success=True,
-            error_message=f"Text output: {text_output}"
+            error_message=""
         )
 
     except Exception as e:
