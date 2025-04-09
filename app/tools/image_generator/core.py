@@ -5,14 +5,13 @@ from google.oauth2 import service_account
 
 PROJECT_ID = "eduimagegen"
 LOCATION = "us-central1"
-SERVICE_ACCOUNT_KEY_PATH = "C:\\Users\\melis\\OneDrive\\Masaüstü\\marvel-ai-backend\\marvel-ai-backend\\app\\eduimagegen-d664cc7b6af4.json"  # Updated
+SERVICE_ACCOUNT_KEY_PATH = "C:\\Users\\melis\\OneDrive\\Masaüstü\\marvel-ai-backend\\marvel-ai-backend\\app\\eduimagegen-d664cc7b6af4.json"
 
 def generate_educational_image(prompt_data: ImagePrompt) -> ImageResponse:
-    """Generate an educational image description from a text prompt using Gemini 1.5 Pro."""
     try:
         creds = service_account.Credentials.from_service_account_file(SERVICE_ACCOUNT_KEY_PATH)
         aiplatform.init(project=PROJECT_ID, location=LOCATION, credentials=creds)
-        model = GenerativeModel("gemini-1.5-pro")
+        model = GenerativeModel("gemini-1.5-pro-preview")  # Changed to preview
         response = model.generate_content(prompt_data.prompt)
         text_output = response.text
         return ImageResponse(
