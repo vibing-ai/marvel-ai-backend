@@ -11,7 +11,7 @@ PROJECT_ID = "eduimagegen"
 LOCATION = "us-central1"
 SERVICE_ACCOUNT_KEY_PATH = os.getenv(
     "SERVICE_ACCOUNT_KEY_PATH",
-    "C:\\Users\melis\\OneDrive\\Masaüstü\\marvel-ai-backend\\marvel-ai-backend\\app\\eduimagegen-d664cc7b6af4.json"
+    "C:\\Users\\melis\\OneDrive\\Masaüstü\\marvel-ai-backend\\marvel-ai-backend\\app\\eduimagegen-d664cc7b6af4.json"
 )
 
 # Logging setup
@@ -40,7 +40,7 @@ def is_prompt_safe(prompt: str) -> bool:
     return True
 
 def generate_educational_image(prompt_data: ImagePrompt) -> ImageResponse:
-    """Generate an educational image description from a text prompt using Gemini 2.0 Pro."""
+    """Generate an educational image description from a text prompt using Gemini 1.5 Pro."""
     try:
         # Enhance the prompt with context
         enhanced_prompt = enhance_prompt(
@@ -61,10 +61,10 @@ def generate_educational_image(prompt_data: ImagePrompt) -> ImageResponse:
         # Initialize credentials and Vertex AI
         creds = service_account.Credentials.from_service_account_file(SERVICE_ACCOUNT_KEY_PATH)
         logger.info(f"Using credentials for project: {creds.project_id}")  # Should log "eduimagegen"
-        aiplatform.init(credentials=creds, location=LOCATION)  # Explicit region
+        aiplatform.init(credentials=creds, location=LOCATION)  # Keep region explicit
 
         # Load Gemini model
-        model = GenerativeModel("gemini-2.0-pro")
+        model = GenerativeModel("gemini-1.5-pro")
         logger.info(f"Generating content for prompt: '{enhanced_prompt}'")
 
         # Generate content (text output for now)
