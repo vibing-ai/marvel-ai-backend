@@ -60,21 +60,20 @@ def generate_educational_image(prompt_data: ImagePrompt) -> ImageResponse:
 
         # Initialize credentials and Vertex AI
         creds = service_account.Credentials.from_service_account_file(SERVICE_ACCOUNT_KEY_PATH)
-        logger.info(f"Using credentials for project: {creds.project_id}")
-        logger.info(f"Initializing Vertex AI with project: {PROJECT_ID}")
-        aiplatform.init(project=PROJECT_ID, location=LOCATION, credentials=creds)
+        logger.info(f"Using credentials for project: {creds.project_id}")  # Should log "eduimagegen"
+        aiplatform.init(credentials=creds)  # Simplified: no project or location
 
         # Load Gemini model
-        model = GenerativeModel("gemini-1.5-flash")  # Changed from "gemini-pro"
+        model = GenerativeModel("gemini-1.5-flash")
         logger.info(f"Generating content for prompt: '{enhanced_prompt}'")
 
         # Generate content (assuming text output for now)
         response = model.generate_content(enhanced_prompt)
         text_output = response.text
 
-        # If you add an image generation step (e.g., via another API), replace image_url
+        # If you add an image generation step, replace image_url
         return ImageResponse(
-            image_url="",  # Placeholder until image generation is added
+            image_url="",  # Placeholder
             prompt_used=enhanced_prompt,
             success=True,
             error_message=f"Text output: {text_output}"
@@ -88,10 +87,3 @@ def generate_educational_image(prompt_data: ImagePrompt) -> ImageResponse:
             success=False,
             error_message=f"Image generation failed: {str(e)}"
         )
-
-# Optional: Add this if you integrate an image generation API later
-# def generate_image_from_text(text: str) -> str:
-#     logger.info(f"Converting text to image: {text[:50]}...")
-#     # Call an image generation API (e.g., DALL-E, Stable Diffusion)
-#     # return image_url
-#     pass
