@@ -40,16 +40,12 @@ def is_prompt_safe(prompt: str) -> bool:
     return True
 
 def generate_educational_image(prompt_data: ImagePrompt) -> ImageResponse:
-    """Generate an educational image description from a text prompt using Gemini Pro."""
     try:
-        # Enhance the prompt with context
         enhanced_prompt = enhance_prompt(
             prompt_data.prompt,
             subject=prompt_data.subject,
             grade_level=prompt_data.grade_level
         )
-
-        # Safety check
         if not is_prompt_safe(enhanced_prompt):
             return ImageResponse(
                 image_url="",
@@ -58,28 +54,22 @@ def generate_educational_image(prompt_data: ImagePrompt) -> ImageResponse:
                 error_message="Prompt rejected due to unsafe content"
             )
 
-        # Initialize credentials and Vertex AI
+        # Initialize with credentials only
         creds = service_account.Credentials.from_service_account_file(SERVICE_ACCOUNT_KEY_PATH)
-        logger.info(f"Using credentials for project: {creds.project_id}")
-        logger.info(f"Initializing Vertex AI with project: {PROJECT_ID}")
-        aiplatform.init(project=PROJECT_ID, location=LOCATION, credentials=creds)
+        logger.info(f"Using credentials for project: {creds.project_id}")  # Should log "eduimagegen"
+        aiplatform.init(credentials=creds)  # No project or location
 
-        # Load Gemini model
-        model = GenerativeModel("gemini-pro")  # Changed from "gemini-2.0-pro"
+        model = GenerativeModel("gemini-pro")
         logger.info(f"Generating content for prompt: '{enhanced_prompt}'")
-
-        # Generate content (assuming text output for now)
         response = model.generate_content(enhanced_prompt)
         text_output = response.text
 
-        # Placeholder for future image generation
         return ImageResponse(
-            image_url="",  # Update if adding image API
+            image_url="",
             prompt_used=enhanced_prompt,
             success=True,
             error_message=f"Text output: {text_output}"
         )
-
     except Exception as e:
         logger.error(f"Error in generate_educational_image: {str(e)}")
         return ImageResponse(
