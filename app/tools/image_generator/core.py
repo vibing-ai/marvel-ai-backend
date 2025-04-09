@@ -11,7 +11,7 @@ PROJECT_ID = "eduimagegen"
 LOCATION = "us-central1"
 SERVICE_ACCOUNT_KEY_PATH = os.getenv(
     "SERVICE_ACCOUNT_KEY_PATH",
-    "C:\\Users\\melis\\OneDrive\\Masaüstü\\marvel-ai-backend\\marvel-ai-backend\\app\\eduimagegen-service-key.json"  # Match tools.py
+    "C:\\Users\\melis\\OneDrive\\Masaüstü\\marvel-ai-backend\\marvel-ai-backend\\app\\eduimagegen-d664cc7b6af4.json"
 )
 
 # Logging setup
