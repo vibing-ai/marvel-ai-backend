@@ -7,7 +7,7 @@ import os
 from typing import Optional
 
 # Configuration
-PROJECT_ID = "eduimagegen"  # Use Project ID, not Project Number
+PROJECT_ID = "eduimagegen"
 LOCATION = "us-central1"
 SERVICE_ACCOUNT_KEY_PATH = os.getenv(
     "SERVICE_ACCOUNT_KEY_PATH",
@@ -40,12 +40,16 @@ def is_prompt_safe(prompt: str) -> bool:
     return True
 
 def generate_educational_image(prompt_data: ImagePrompt) -> ImageResponse:
+    """Generate an educational image description from a text prompt using Gemini 1.5 Flash."""
     try:
+        # Enhance the prompt with context
         enhanced_prompt = enhance_prompt(
             prompt_data.prompt,
             subject=prompt_data.subject,
             grade_level=prompt_data.grade_level
         )
+
+        # Safety check
         if not is_prompt_safe(enhanced_prompt):
             return ImageResponse(
                 image_url="",
@@ -54,22 +58,28 @@ def generate_educational_image(prompt_data: ImagePrompt) -> ImageResponse:
                 error_message="Prompt rejected due to unsafe content"
             )
 
-        # Initialize with credentials only
+        # Initialize credentials and Vertex AI
         creds = service_account.Credentials.from_service_account_file(SERVICE_ACCOUNT_KEY_PATH)
-        logger.info(f"Using credentials for project: {creds.project_id}")  # Should log "eduimagegen"
-        aiplatform.init(credentials=creds)  # No project or location
+        logger.info(f"Using credentials for project: {creds.project_id}")
+        logger.info(f"Initializing Vertex AI with project: {PROJECT_ID}")
+        aiplatform.init(project=PROJECT_ID, location=LOCATION, credentials=creds)
 
-        model = GenerativeModel("gemini-pro")
+        # Load Gemini model
+        model = GenerativeModel("gemini-1.5-flash")  # Changed from "gemini-pro"
         logger.info(f"Generating content for prompt: '{enhanced_prompt}'")
+
+        # Generate content (assuming text output for now)
         response = model.generate_content(enhanced_prompt)
         text_output = response.text
 
+        # If you add an image generation step (e.g., via another API), replace image_url
         return ImageResponse(
-            image_url="",
+            image_url="",  # Placeholder until image generation is added
             prompt_used=enhanced_prompt,
             success=True,
             error_message=f"Text output: {text_output}"
         )
+
     except Exception as e:
         logger.error(f"Error in generate_educational_image: {str(e)}")
         return ImageResponse(
@@ -78,3 +88,10 @@ def generate_educational_image(prompt_data: ImagePrompt) -> ImageResponse:
             success=False,
             error_message=f"Image generation failed: {str(e)}"
         )
+
+# Optional: Add this if you integrate an image generation API later
+# def generate_image_from_text(text: str) -> str:
+#     logger.info(f"Converting text to image: {text[:50]}...")
+#     # Call an image generation API (e.g., DALL-E, Stable Diffusion)
+#     # return image_url
+#     pass
