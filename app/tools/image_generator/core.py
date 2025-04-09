@@ -16,7 +16,7 @@ def generate_educational_image(prompt_data: ImagePrompt) -> ImageResponse:
         creds = service_account.Credentials.from_service_account_file(SERVICE_ACCOUNT_KEY_PATH)
         logger.info(f"Initializing Vertex AI with project: {PROJECT_ID}")
         aiplatform.init(project=PROJECT_ID, location=LOCATION, credentials=creds)
-        model = GenerativeModel("gemini-2.0-pro")  #  gemini-2.0-pro
+        model = GenerativeModel("gemini-2.0-pro")  # Must be gemini-2.0-pro
         response = model.generate_content(prompt_data.prompt)
         text_output = response.text
         return ImageResponse(
