@@ -8,10 +8,11 @@ LOCATION = "us-central1"
 SERVICE_ACCOUNT_KEY_PATH = "C:\\Users\\melis\\OneDrive\\Masaüstü\\marvel-ai-backend\\marvel-ai-backend\\app\\eduimagegen-d664cc7b6af4.json"
 
 def generate_educational_image(prompt_data: ImagePrompt) -> ImageResponse:
+    """Generate an educational image description from a text prompt using Gemini 2.0 Pro."""
     try:
         creds = service_account.Credentials.from_service_account_file(SERVICE_ACCOUNT_KEY_PATH)
         aiplatform.init(project=PROJECT_ID, location=LOCATION, credentials=creds)
-        model = GenerativeModel("gemini-pro")  # Changed to stable gemini-pro
+        model = GenerativeModel("gemini-2.0-pro")  # Updated to mission-specified model
         response = model.generate_content(prompt_data.prompt)
         text_output = response.text
         return ImageResponse(
