@@ -11,12 +11,12 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 def generate_educational_image(prompt_data: ImagePrompt) -> ImageResponse:
-    """Generate an educational image description from a text prompt using Gemini Pro."""
+    """Generate an educational image description from a text prompt using Gemini 2.0 Pro."""
     try:
         creds = service_account.Credentials.from_service_account_file(SERVICE_ACCOUNT_KEY_PATH)
         logger.info(f"Initializing Vertex AI with project: {PROJECT_ID}")
         aiplatform.init(project=PROJECT_ID, location=LOCATION, credentials=creds)
-        model = GenerativeModel("gemini-pro")  # Using gemini-pro
+        model = GenerativeModel("gemini-2.0-pro")  # Switch to gemini-2.0-pro
         response = model.generate_content(prompt_data.prompt)
         text_output = response.text
         return ImageResponse(
