@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException  # Fixed imports
+from fastapi import APIRouter, Depends, HTTPException
 from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse
 from typing import Union
@@ -10,7 +10,6 @@ from app.api.error_utilities import InputValidationError, ErrorResponse
 from app.tools.utils.tool_utilities import load_tool_metadata, execute_tool, finalize_inputs
 from fastapi.responses import FileResponse
 from starlette.background import BackgroundTask
-# New imports for Image Generator
 from app.models import ImagePrompt, ImageResponse
 from app.tools.image_generator.core import generate_educational_image
 
@@ -52,16 +51,20 @@ async def assistants(request: GenericAssistantRequest, _=Depends(key_check)):
     formatted_response = Message(role="ai", type="text", payload={"text": result})
     return ChatResponse(data=[formatted_response])
 
-# Updated endpoint for Image Generator with better error handling
 @router.post("/generate-image", response_model=Union[ImageResponse, ErrorResponse])
 async def create_educational_image(prompt_data: ImagePrompt):
     try:
         result = generate_educational_image(prompt_data)
         if not result.success:
-            if "404" in result.error_message:  # Check for model not found
+            if "404" in result.error_message:
                 return JSONResponse(
                     status_code=404,
                     content=jsonable_encoder(ErrorResponse(status=404, message=result.error_message))
+                )
+            if "400" in result.error_message:  # Handle permissions errors
+                return JSONResponse(
+                    status_code=400,
+                    content=jsonable_encoder(ErrorResponse(status=400, message=result.error_message))
                 )
             raise Exception(result.error_message)
         return result
@@ -69,8 +72,10 @@ async def create_educational_image(prompt_data: ImagePrompt):
         logger.error(f"Image generation error: {str(e)}")
         error_message = str(e)
         status_code = 500
-        if "404" in error_message:  # Handle 404 specifically
+        if "404" in error_message:
             status_code = 404
+        elif "400" in error_message:  # Handle 400 specifically
+            status_code = 400
         return JSONResponse(
             status_code=status_code,
             content=jsonable_encoder(ErrorResponse(status=status_code, message=error_message))
