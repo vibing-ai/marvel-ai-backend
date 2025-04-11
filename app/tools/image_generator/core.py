@@ -5,10 +5,12 @@ import os
 import requests
 from app.models import ImagePrompt, ImageResponse
 from typing import Optional
+from google.auth.transport.requests import Request
 
 # Configuration
 PROJECT_ID = "eduimagegen"
 LOCATION = "us-central1"
+MODEL_ID = "imagen-3.0-generate-002"  # Switch to Imagen 3 model
 SERVICE_ACCOUNT_KEY_PATH = os.getenv(
     "SERVICE_ACCOUNT_KEY_PATH",
     "C:\\Users\\melis\\OneDrive\\Masaüstü\\marvel-ai-backend\\marvel-ai-backend\\app\\eduimagegen-d664cc7b6af4.json"
@@ -52,17 +54,27 @@ def generate_educational_image(prompt_data: ImagePrompt) -> ImageResponse:
                 error_message="Prompt rejected due to unsafe content"
             )
 
-        creds = service_account.Credentials.from_service_account_file(SERVICE_ACCOUNT_KEY_PATH)
+        # Initialize credentials with proper scope
+        creds = service_account.Credentials.from_service_account_file(
+            SERVICE_ACCOUNT_KEY_PATH,
+            scopes=["https://www.googleapis.com/auth/cloud-platform"]
+        )
+        # Refresh token explicitly
+        if not creds.valid:
+            creds.refresh(Request())
         token = creds.token
 
-        url = f"https://{LOCATION}-aiplatform.googleapis.com/v1/projects/{PROJECT_ID}/locations/{LOCATION}/publishers/google/models/imagegeneration@006:predict"
+        url = f"https://{LOCATION}-aiplatform.googleapis.com/v1/projects/{PROJECT_ID}/locations/{LOCATION}/publishers/google/models/{MODEL_ID}:predict"
         headers = {
             "Authorization": f"Bearer {token}",
             "Content-Type": "application/json"
         }
         payload = {
             "instances": [{"prompt": enhanced_prompt}],
-            "parameters": {"sampleCount": 1}
+            "parameters": {
+                "sampleCount": 1,
+                "enhancePrompt": True  # Enable prompt enhancement (default for Imagen 3)
+            }
         }
 
         logger.info(f"Generating image for prompt: '{enhanced_prompt}'")
