@@ -1,15 +1,14 @@
 from google.cloud import aiplatform
-from google.cloud.aiplatform_v1beta1 import EndpointServiceClient, PredictRequest
-from app.models import ImagePrompt, ImageResponse
 from google.oauth2 import service_account
 import logging
 import os
+import requests
+from app.models import ImagePrompt, ImageResponse
 from typing import Optional
 
 # Configuration
 PROJECT_ID = "eduimagegen"
 LOCATION = "us-central1"
-ENDPOINT_ID = "3059040360077459456"  # Your deployed endpoint
 SERVICE_ACCOUNT_KEY_PATH = os.getenv(
     "SERVICE_ACCOUNT_KEY_PATH",
     "C:\\Users\\melis\\OneDrive\\Masaüstü\\marvel-ai-backend\\marvel-ai-backend\\app\\eduimagegen-d664cc7b6af4.json"
@@ -19,7 +18,6 @@ SERVICE_ACCOUNT_KEY_PATH = os.getenv(
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Safety filter
 UNSAFE_KEYWORDS = {"inappropriate", "violent", "explicit"}
 
 def enhance_prompt(prompt: str, subject: Optional[str] = None, grade_level: Optional[str] = None) -> str:
@@ -55,23 +53,24 @@ def generate_educational_image(prompt_data: ImagePrompt) -> ImageResponse:
             )
 
         creds = service_account.Credentials.from_service_account_file(SERVICE_ACCOUNT_KEY_PATH)
-        logger.info(f"Using credentials for project: {creds.project_id}")
-        aiplatform.init(credentials=creds, location=LOCATION)
+        token = creds.token
 
-        endpoint_name = f"projects/{PROJECT_ID}/locations/{LOCATION}/endpoints/{ENDPOINT_ID}"
-        client = EndpointServiceClient(credentials=creds)
-
-        request = PredictRequest()
-        request.endpoint = endpoint_name
-        request.parameters = {
-            "prompt": enhanced_prompt,
-            "sampleCount": 1
+        url = f"https://{LOCATION}-aiplatform.googleapis.com/v1/projects/{PROJECT_ID}/locations/{LOCATION}/publishers/google/models/imagegeneration@006:predict"
+        headers = {
+            "Authorization": f"Bearer {token}",
+            "Content-Type": "application/json"
+        }
+        payload = {
+            "instances": [{"prompt": enhanced_prompt}],
+            "parameters": {"sampleCount": 1}
         }
 
         logger.info(f"Generating image for prompt: '{enhanced_prompt}'")
-        response = client.predict(request=request)
+        response = requests.post(url, json=payload, headers=headers)
+        response.raise_for_status()
 
-        image_data = response.predictions[0]["bytesBase64Encoded"]
+        result = response.json()
+        image_data = result["predictions"][0]["bytesBase64Encoded"]
         image_url = f"data:image/png;base64,{image_data}"
 
         return ImageResponse(
