@@ -22,7 +22,7 @@ async def lifespan(app: FastAPI):
     yield
     logger.info("Application shutdown")
 
-app = FastAPI(lifespan = lifespan)
+app = FastAPI(lifespan=lifespan)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -39,12 +39,12 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
         message = error['msg']
         error_detail = f"Error in field '{field}': {message}"
         errors.append(error_detail)
-        logger.error(error_detail)  # Log the error details
+        logger.error(error_detail)
 
     error_response = ErrorResponse(status=422, message=errors)
     return JSONResponse(
         status_code=422,
-        content=error_response.dict()
+        content=error_response.model_dump()  # Updated from dict() to model_dump()
     )
 
-app.include_router(router)
+app.include_router(router)  # Ensure this line is present

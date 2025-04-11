@@ -8,6 +8,7 @@ def test_generate_image_success():
     response = generate_educational_image(sample_prompt)
     assert response.success, f"Failed: {response.error_message}"
     assert response.image_url != "", "Image URL should not be empty"
+    assert response.prompt_used == "plant cell, biology, middle school", "Prompt enhancement failed"
 
 def test_generate_image_unsafe_prompt():
     """Test that an unsafe prompt is rejected."""
@@ -15,3 +16,4 @@ def test_generate_image_unsafe_prompt():
     response = generate_educational_image(unsafe_prompt)
     assert not response.success
     assert "unsafe content" in response.error_message
+    assert response.error_message == "Prompt rejected due to unsafe content", "Unexpected error message"

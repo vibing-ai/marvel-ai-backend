@@ -14,7 +14,7 @@ from app.models import ImagePrompt, ImageResponse
 from app.tools.image_generator.core import generate_educational_image
 
 logger = setup_logger(__name__)
-router = APIRouter()
+router = APIRouter(prefix="/api")  # Ensure this is set
 
 @router.get("/")
 def read_root():
@@ -56,7 +56,9 @@ async def create_educational_image(prompt_data: ImagePrompt):
     try:
         result = generate_educational_image(prompt_data)
         if not result.success:
-            if "400" in result.error_message:
+            if "unsafe content" in result.error_message.lower():
+                raise HTTPException(status_code=400, detail=result.error_message)
+            elif "400" in result.error_message:
                 raise HTTPException(status_code=400, detail=result.error_message)
             elif "404" in result.error_message:
                 raise HTTPException(status_code=404, detail=result.error_message)
