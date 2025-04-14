@@ -1,0 +1,34 @@
+{
+    "inputs": [
+        {
+            "label": "Image Description",
+            "name": "prompt",
+            "type": "text"
+        },
+        {
+            "label": "Subject Area",
+            "name": "subject",
+            "type": "text"
+        },
+        {
+            "label": "Grade Level",
+            "name": "grade_level",
+            "type": "text"
+        },
+        
+        {
+            "label": "Language",
+            "name": "lang",
+            "type": "text"
+        },
+        {
+            "label": "Presets",
+            "name": "presets",
+            "type": "dict"
+        }
+        
+
+    ]
+   
+  
+}
