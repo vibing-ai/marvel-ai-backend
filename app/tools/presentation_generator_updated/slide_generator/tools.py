@@ -11,6 +11,7 @@ from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from langchain_core.documents import Document
 from app.tools.presentation_generator_updated.slide_generator.imagen import ImageGenerator
 from app.tools.presentation_generator_updated.slide_generator.firebase import FirebaseManager
+from app.tools.presentation_generator_updated.slide_generator.googleCloudStorage import GoogleCloudStorageManager
 import re
 logger = setup_logger(__name__)
 
@@ -31,11 +32,11 @@ class SlideGenerator:
             "embedding_model": GoogleGenerativeAIEmbeddings(model='models/embedding-001'),
             "parser": JsonOutputParser(pydantic_object=SlidePresentation),
             "prompt": read_text_file("prompt/slide_generator_prompt.txt"),
-            "prompt_with_context": read_text_file("prompt/slide_generator_prompt_with_context.txt"),
+            "prompt_batch": read_text_file("prompt/slide_generator_prompt_batch.txt"),
     
             "vectorstore_class": Chroma
         }
-        self.prompt_with_context= default_config["prompt_with_context"] 
+        self.prompt_batch =t= default_config["prompt_batch"] 
         self.prompt = prompt or default_config["prompt"]
         self.model = model or default_config["model"]
         self.parser = parser or default_config["parser"]
@@ -47,7 +48,9 @@ class SlideGenerator:
         self.verbose = verbose
         self.context =None
         self.image_generator=ImageGenerator()
-        self.firebase = FirebaseManager()
+        #self.firebase = FirebaseManager()
+        self.firebase = GoogleCloudStorageManager()
+    
         if vectorstore_class is None: raise ValueError("Vectorstore must be provided")
        
 
@@ -103,6 +106,7 @@ class SlideGenerator:
             input_variables=["instructional_level", "topic","context"],
             partial_variables={"format_instructions": self.parser.get_format_instructions()}
         )
+      
 
         if self.runner is None:
             logger.info(f"Creating vectorstore from {len(documents)} documents") if self.verbose else None
@@ -133,6 +137,11 @@ class SlideGenerator:
         prompt = PromptTemplate(
             template=self.prompt,
             input_variables=["instructional_level", "topic", "slides_titles"],
+            partial_variables={"format_instructions": self.parser.get_format_instructions()}
+        )
+        prompt_batch = PromptTemplate(
+            template=self.prompt_batch,
+            input_variables=["instructional_level", "topic", "slides_titles","context"],
             partial_variables={"format_instructions": self.parser.get_format_instructions()}
         )
         chain = prompt | self.model | self.parser
@@ -220,9 +229,9 @@ class SlideGenerator:
          # Only run image generation if there are images to generate
         if image_chains:
             #only run first 2 slides due to quota limits
-            image_chains_with2URLS = {k: v for i, (k, v) in enumerate(image_chains.items()) if i < 2}
-            image_pipeline = RunnableParallel(image_chains_with2URLS)
-            #image_pipeline = RunnableParallel(image_chains)
+            #image_chains_with2URLS = {k: v for i, (k, v) in enumerate(image_chains.items()) if i < 1}
+           # image_pipeline = RunnableParallel(image_chains_with2URLS)
+            image_pipeline = RunnableParallel(image_chains)
             image_results = image_pipeline.invoke({})
 
         logger.info(f"Image generation complete {image_results}")

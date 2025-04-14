@@ -178,3 +178,19 @@ class SlideGeneratorInput(BaseModel):
     file_url: str
     file_type: str
     lang: Optional[str] = "en"
+
+# class ImageGeneratorInput(BaseModel):
+#     prompt: str
+#     grade_level: str
+#     subject: str
+#     presets: Optional[dict] = None
+#     lang: Optional[str] = "en"
+
+class ImageGeneratorArgs(BaseModel):
+    prompt: str
+    subject: Optional[str] = None
+    grade_level: Optional[str] = None
+    presets: Optional[dict] = None
+    size: Optional[str] = "1024x1024"
+    lang: Optional[str] = "en"   
+    style: Optional[str] = None

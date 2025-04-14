@@ -43,7 +43,10 @@ class FirebaseManager:
         try:
             if not filename:
                 filename = f"images/{uuid.uuid4()}.png"
-            
+            #upload to bucket if image_dada is not None
+            if image_data is None:
+                logger.error("No image data provided for upload")
+                return None
             blob = self.bucket.blob(filename)            
             blob.upload_from_string(image_data._image_bytes, content_type="image/png")
             blob.make_public()
