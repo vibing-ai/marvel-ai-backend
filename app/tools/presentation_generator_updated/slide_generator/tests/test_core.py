@@ -53,7 +53,7 @@ def mock_slide_generator():
          patch("app.tools.presentation_generator_updated.slide_generator.tools.Chroma"),\
          patch("app.tools.presentation_generator_updated.slide_generator.tools.ImageGenerator") as mock_image_gen\
        :           
-            
+             
             # Set up firebase mock
             mock_firebase = MagicMock()
             mock_firebase.upload_image = MagicMock(return_value="https://example.com/image.png")

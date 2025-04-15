@@ -2,8 +2,9 @@ from typing import Optional
 from app.services.logger import setup_logger
 from app.tools.image_generator.tool import ImageGenerator
 from app.services.schemas import ImageGeneratorArgs
-#from .schemas import ImageGeneratorArgs, ImageGeneratorResponse
-#from .config import ImageGeneratorConfig
+
+from app.api.error_utilities import LoaderError, ToolExecutorError, ImageGenerationError
+
 
 logger = setup_logger(__name__)
 
@@ -41,16 +42,28 @@ def executor(
         )
 
         logger.info(f"Generating image with prompt: {prompt}")
-        logger.info(f"Image generation args: {args}")
         # Initialize generator and generate image
         generator = ImageGenerator(args=args, verbose=verbose)
-        result = generator.generate_image()
+        result = generator.generate_image()      
         
-        if verbose:
-            logger.info(f"Successfully generated image with prompt: ")
-        
-        return result
     
+    
+    except ImageGenerationError as e:
+        error_message = str(e)
+        logger.error(f"Image Generation Error: {error_message}")
+        raise ImageGenerationError(error_message)
+    except ValueError as e:
+        error_message = f"Value Error: {e}"
+        logger.error(error_message)
+        raise ValueError(error_message)
     except Exception as e:
-        logger.error(f"Error in image generation executor: {str(e)}")
-        raise
+        error_message = f"Error in executor: {e}"
+        logger.error(error_message)
+        raise ValueError(error_message)
+    
+    if result.get("image_url"):
+        logger.info(f"Image generated successfully: {result['image_url']}")
+    else:
+        logger.error(f"Image generation failed: {result.get('error', 'Unknown error')}")
+    return result
+
