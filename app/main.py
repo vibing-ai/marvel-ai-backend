@@ -44,7 +44,7 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
     error_response = ErrorResponse(status=422, message=errors)
     return JSONResponse(
         status_code=422,
-        content=error_response.model_dump()  # Updated from dict() to model_dump()
+        content=error_response.dict()
     )
 
-app.include_router(router)  # Ensure this line is present
+app.include_router(router)

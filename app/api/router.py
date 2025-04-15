@@ -1,3 +1,4 @@
+import os
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse
@@ -10,11 +11,12 @@ from app.api.error_utilities import InputValidationError, ErrorResponse
 from app.tools.utils.tool_utilities import load_tool_metadata, execute_tool, finalize_inputs
 from fastapi.responses import FileResponse
 from starlette.background import BackgroundTask
-from app.models import ImagePrompt, ImageResponse
+# Add these imports for the image generator endpoint
 from app.tools.image_generator.core import generate_educational_image
+from app.schemas import ImagePrompt, ImageResponse  # Updated from app.models to app.schemas
 
 logger = setup_logger(__name__)
-router = APIRouter(prefix="/api")  # Ensure this is set
+router = APIRouter()
 
 @router.get("/")
 def read_root():
@@ -48,9 +50,14 @@ async def assistants(request: GenericAssistantRequest, _=Depends(key_check)):
     user_info = request.assistant_inputs.user_info
     messages = request.assistant_inputs.messages
     result = execute_assistant(assistant_group, assistant_name, user_info, messages)
-    formatted_response = Message(role="ai", type="text", payload={"text": result})
+    formatted_response = Message(
+        role="ai",
+        type="text",
+        payload={"text": result}
+    )
     return ChatResponse(data=[formatted_response])
 
+# Add the image generator endpoint back
 @router.post("/generate-image", response_model=Union[ImageResponse, ErrorResponse])
 async def create_educational_image(prompt_data: ImagePrompt):
     try:

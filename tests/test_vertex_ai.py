@@ -1,5 +1,5 @@
 from app.tools.image_generator.core import generate_educational_image
-from app.models import ImagePrompt, ImageResponse
+from app.schemas import ImagePrompt, ImageResponse
 import pytest
 
 def test_generate_image_success():
