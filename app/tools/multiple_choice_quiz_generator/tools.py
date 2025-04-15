@@ -165,6 +165,7 @@ class QuizQuestion(BaseModel):
     choices: List[QuestionChoice] = Field(description="A list of choices for the question, each with a key and a value")
     answer: str = Field(description="The key of the correct answer from the choices list")
     explanation: str = Field(description="An explanation of why the answer is correct")
+    standards: List[str] = Field(description="List of Common Core standards that align with this question")
 
     model_config = {
         "json_schema_extra": {
