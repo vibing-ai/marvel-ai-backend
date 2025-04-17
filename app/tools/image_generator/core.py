@@ -54,8 +54,7 @@ def executor(
         logger.info(f"Image generated successfully for prompt: {prompt}")
 
         # Return the result as a dictionary
-        # Use model_dump() instead of dict() for Pydantic v2 compatibility
-        return result.model_dump()
+        return result.dict()
 
     except ImageHandlerError as e:
         error_message = str(e)

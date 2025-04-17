@@ -314,139 +314,11 @@ class ImageGenerator:
         except Exception as e:
             logger.error(f"Error generating image: {e}")
             raise ImageHandlerError(f"Failed to generate image: {str(e)}", prompt)
-        
-    def detect_content_type(self, prompt, subject=None):
-        """
-        Detects the type of educational content being requested.
-        Returns one of: "diagram", "concept", "process", "historical", "mathematical", "general"
-        """
-        # Define keyword patterns for each content type
-        content_patterns = {
-            "diagram": ["diagram", "label", "anatomy", "structure", "cross section", "annotate"],
-            "process": ["process", "step", "cycle", "workflow", "sequence", "how to", "stages"],
-            "concept": ["concept", "idea", "theory", "principle", "relationship", "compare"],
-            "historical": ["historical", "timeline", "era", "period", "ancient", "medieval", "century"],
-            "mathematical": ["equation", "formula", "graph", "plot", "function", "geometry", "calculation"]
-        }
-        
-        # Check the prompt for each pattern
-        prompt_lower = prompt.lower()
-        
-        # First check subject if provided
-        if subject:
-            subject_lower = subject.lower()
-            if "math" in subject_lower or "algebra" in subject_lower or "geometry" in subject_lower:
-                return "mathematical"
-            if "history" in subject_lower or "social studies" in subject_lower:
-                return "historical"
-            if "biology" in subject_lower or "anatomy" in subject_lower:
-                return "diagram"
-            if "computer science" in subject_lower or "engineering" in subject_lower:
-                return "process"
-        
-        # Then check prompt keywords
-        for content_type, keywords in content_patterns.items():
-            if any(keyword in prompt_lower for keyword in keywords):
-                logger.info(f"Detected content type: {content_type}")
-                return content_type
-        
-        # Use AI to detect content type if no clear pattern matches
-        try:
-            detection_prompt = f"""
-            Analyze this educational image request and determine the most appropriate content type.
-            Return ONLY one of these exact types: diagram, concept, process, historical, mathematical, general.
-            
-            Request: {prompt}
-            """
-            
-            content_type = self.model.invoke(detection_prompt).strip().lower()
-            
-            # Validate the response
-            valid_types = ["diagram", "concept", "process", "historical", "mathematical", "general"]
-            if content_type in valid_types:
-                logger.info(f"AI detected content type: {content_type}")
-                return content_type
-            else:
-                return "general"
-        except:
-            # Default fallback
-            return "general"
-        
-    def get_specialized_prompt_template(self, content_type):
-        """
-        Returns a specialized prompt template based on the detected content type.
-        """
-        base_prompt = self.prompt_template
-        
-        # Specialized additions based on content type
-        specialized_sections = {
-            "diagram": """
-            DIAGRAM DESIGN GUIDELINES:
-            - Use precise, accurate labels for all components
-            - Employ color-coding to distinguish different parts or systems
-            - Include a clear title identifying the diagram's subject
-            - Maintain scientific accuracy in proportions and relationships
-            - Use callout lines that don't cross when possible
-            - Provide a legend if multiple colors/patterns are used
-            - Balance detail with clarity - focus on what's educationally relevant
-            """,
-            
-            "concept": """
-            CONCEPT VISUALIZATION GUIDELINES:
-            - Use visual metaphors that connect to students' prior knowledge
-            - Simplify complex ideas into comprehensible visual forms
-            - Show relationships between elements using consistent visual language
-            - Limit text to essential terms and definitions
-            - Use comparison/contrast where appropriate to highlight distinctions
-            - Consider using familiar iconography where applicable
-            - Arrange elements to show hierarchy of importance or relationship
-            """,
-            
-            "process": """
-            PROCESS VISUALIZATION GUIDELINES:
-            - Create a clear sequential flow with obvious directionality
-            - Number steps or use arrows to indicate progression
-            - Use consistent visual style for similar process stages
-            - Include clear start and end points
-            - Differentiate between major and minor steps visually
-            - Show cause-and-effect relationships clearly
-            - For cyclical processes, ensure the loop is clearly indicated
-            """,
-            
-            "historical": """
-            HISTORICAL CONTENT GUIDELINES:
-            - Maintain period-appropriate visual elements and style
-            - Emphasize key historical features relevant to learning objectives
-            - Use visual cues to indicate time periods or chronology
-            - Include contextual elements that aid understanding of historical setting
-            - Balance historical accuracy with educational clarity
-            - Consider incorporating relevant primary source visual elements
-            - Use color and style to distinguish between different eras or regions
-            """,
-            
-            "mathematical": """
-            MATHEMATICAL CONTENT GUIDELINES:
-            - Ensure precise representation of mathematical notation and symbols
-            - Use consistent scale and proportion in graphs and geometric figures
-            - Clearly label axes, points, and other key elements
-            - Use colors strategically to highlight mathematical relationships
-            - Include grid lines where appropriate for measurement reference
-            - Show work or steps for problem-solving where applicable
-            - Maintain mathematical accuracy while emphasizing key learning points
-            """
-        }
-        
-        # Default to general guidance if no specialized content is available
-        specialized_content = specialized_sections.get(content_type, "")
-        
-        return base_prompt + specialized_content
 
     def generate_educational_image(self) -> ImageGenerationResult:
         """Main method to generate an educational image with all safety checks and enhancements."""
         if not self.args or not self.args.prompt:
             raise ValueError("A prompt is required to generate an image")
-        if self.verbose:
-            logger.info(f"Generating educational image with prompt: {self.args.prompt}")
 
         prompt = self.args.prompt
         subject = self.args.subject
@@ -456,15 +328,6 @@ class ImageGenerator:
         is_safe = self.check_prompt_safety(prompt)
         if not is_safe:
             raise ImageHandlerError("The prompt contains inappropriate content for educational use", prompt)
-        
-        # Detect content type
-        content_type = self.detect_content_type(prompt, subject)
-        
-        # Get specialized prompt template
-        specialized_template = self.get_specialized_prompt_template(content_type)
-        
-        # Replace the standard prompt template with the specialized one
-        self.prompt_template = specialized_template
 
         # Enhance prompt with educational context
         context_result = self.enhance_prompt_with_educational_context(prompt, subject, grade_level)
