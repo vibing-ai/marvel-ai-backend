@@ -1,5 +1,5 @@
-from app.utils.document_loaders import get_docs
-from app.services.schemas import OutlineGeneratorInput
+from app.utils.document_loaders import get_docs,read_text_file
+from app.tools.presentation_generator_updated.schemas import OutlineGeneratorInput
 from app.services.logger import setup_logger
 from app.api.error_utilities import LoaderError, ToolExecutorError
 from app.tools.presentation_generator_updated.outline_generator.tools import OutlineGenerator
@@ -20,7 +20,7 @@ def executor(
             raise ValueError("Missing required inputs")
          
         if(n_slides and topic and instructional_level):
-            logger.info(f"Generating slide outlines. from {topic} for {instructional_level} level")
+            logger.info(f"Generating slide outlines from the topic {topic} for {instructional_level} level")
             #CHECKING IF BOTH FILE UPLOAD URL AND FILE UPLOAD TYPE ARE PROVIDED
         if bool(file_url) != bool(file_type):
             missing = "file_type" if file_url else "file_url"
@@ -51,7 +51,7 @@ def executor(
      
         output = OutlineGenerator(args=presentation_generator_args, verbose=verbose).generate_outline(docs)
 
-        logger.info(f"Presentation generated successfully")
+        logger.info(f"Outlines generated successfully")
 
     except LoaderError as e:
         error_message = e

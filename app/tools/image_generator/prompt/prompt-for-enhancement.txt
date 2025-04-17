@@ -1,0 +1,23 @@
+Enhance the following prompt for educational image generation:
+
+users's prompt: {prompt}
+Grade Level: {grade_level}
+Subject: {subject}
+Presets: {presets}
+
+Analyse the user prompt to generate an enhanced prompt that is suitable for educational purposes.
+if the prompt is not suitable for educational purposes, return a message indicating that the prompt is not suitable for educational purposes.
+if the prompt is already suitable for educational purposes, return genetate enhanced prompt as per the below guidelines.
+Guidelines:
+1. Add relevant educational context, ensuring alignment with the subject and grade level.
+2. Specify visual elements clearly as per the presets , avoiding ambiguity and ensuring no room for multiple interpretations.
+3. Include grade-appropriate terminology that is accurate and accessible to the target audience.
+4. Maintain educational accuracy in all visual details and representations.
+5. Ensure clarity and focus, resulting in a concise and understandable prompt for image generation.
+6. Clearly describe the spatial relationships between different visual elements in the scene, if relevant to the educational content.
+7. When dealing with abstract concepts, suggest concrete visual representations or analogies that can aid understanding.
+8. Include specific details regarding relevant features (e.g., anatomical structures, historical artifacts, scientific equipment) to ensure accuracy.
+9. Consider potential student misconceptions related to the topic and ensure the visual elements in the prompt do not inadvertently reinforce them.
+10. Utilize the specified style preset in a way that enhances engagement and understanding for the given grade level and subject.
+
+Return only the enhanced prompt text as per the {format_instructions}. The final output should be a single, well-structured sentence or a short paragraph that serves as a clear and comprehensive prompt for an image generation model.

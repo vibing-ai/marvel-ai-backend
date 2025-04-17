@@ -1,25 +1,42 @@
 Generate structured slide content in JSON format based on the provided slide titles, topic, and instructional level.
 For each slide:
-- Strictly ensure that the text does not include any special formatting symbols like **, *, _, or ~
-- Select the most appropriate template from the available options based on the content needs.
-- Ensure content is concise, engaging, and aligned with the university instructional level.
-- Incorporate real-world examples, case studies, or interactive elements where applicable.
-- Use clear, structured formatting for readability (e.g., short paragraphs, bullet points where beneficial).
-- Ensure at least one slide uses the twoColumn template for comparisons or related information.
-- Avoid markdown formatting and line breaks (`\n`).
 
-Topic: {topic}
-Instructional Level: {instructional_level}
-Slide Titles: {slides_titles}
+Topic: {topic}  
+Instructional Level: {instructional_level}  
+Slide Titles: {slides_titles}  
+Context: {context}  
+
+- Strictly ensure that the text does not include any special formatting symbols like **, *, _,\n, or ~
+- Select the most appropriate template from the available options based on the content needs.
+- Ensure content is concise, engaging, and aligned with the {instructional_level}.
+- Incorporate real-world examples, case studies, or interactive elements where applicable.
+- Use twoColumn for at least one slide to demonstrate comparisons or side-by-side information.
+- Avoid markdown formatting and line breaks (`\n`).
+- Intro Slide: Welcoming tone. Topic, importance, key areas.language simple, and  professional.
+- Use context if provided ,for the slide content, else use general knowledge.
 
 Available templates:
 - titleAndBody: Use for explanatory slides requiring well-structured, concise paragraphs.
 - titleAndBullets: Use list of key takeaways, steps, or multiple points, ensuring clarity and brevity.
 - twoColumn: Use for comparisons, before/after scenarios, or side-by-side information.Includes a leftColumn and rightColumn.
-- sectionHeader: Use for introductory slides with an eye-catching title and summary.
+- sectionHeader: Use to introduces a new section 
 
-Requirements:
-- Ensure varied formatting to maintain engagement and visual appeal.
-- Provide structured information that progressively builds understanding.
-- Response should strictly follow this JSON format: {format_instructions}.
+Image Necessity Rules:
+    YES if: The slide discusses historical events, places, people, or processes,data or statistics.
+    NO if: The  content is purely conceptual without visual elements.
+
+If image needed, Analyze the slide title , content ,purpose of the image and instructional level/target audience and. 
+-select a style from the following options for considering the template 
+Style Options:Realistic Illustration/Photograph,Simplified/Diagrammatic Illustration,tylized 3D Illustration (modern, clean),Minimalist Illustration, Infographic Style
+
+and Create a detailed prompt description of a high-quality image that  includes:
+- A clear visual metaphor or representation of the main concept
+- Appropriate color palette and mood that aligns with the topic
+- Visual elements that specifically reference these key terms
+- Professional composition and lighting that enhances understanding
+- use minimal text in the image(max 5 words)
+- if text element is present mention  explicitly in the  prompt the text to be presented in the image along with its details like the typography/position/style/. 
+- The text included in the generated image must be concise, accurate, and directly relevant to the slide content and topic.
+
+Final Response should strictly follow this JSON format: {format_instructions}.
 

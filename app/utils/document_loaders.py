@@ -73,6 +73,9 @@ def get_docs(file_url: str, file_type: str, lang: str = "en", verbose=True):
             error_message = exception_map.get(type(e), f"Request failed: {e}")
             logger.error(error_message)
             raise FileHandlerError(error_message, file_url)
+    else:
+        logger.error(f"Unsupported file type: {file_type}")
+        raise FileHandlerError(f"Document loading failed", file_url)
   
     try:
         file_loader = file_loader_map[FileType(file_type)]

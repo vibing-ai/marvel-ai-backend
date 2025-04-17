@@ -64,8 +64,13 @@ class OutlineGenerator:
 
             retriever = self.vectorstore.as_retriever()
             logger.info(f"Retriever created successfully") if self.verbose else None
-            query = "Provide general context for the topic to create notes."
-            self.context = retriever.invoke(query)
+            query = (f"Provide comprehensive background information and key concepts related to {self.args.topic},"
+                            f"tailored for {self.args.instructional_level}, to assist in creating detailed and informative notes.")
+            context_documents = retriever.invoke(query)
+            def extract_text_content(context):
+                return [doc.page_content for doc in context]
+            
+            self.context = extract_text_content(context_documents)        
             
         chain = prompt | self.model | self.parser
 
@@ -108,7 +113,7 @@ class OutlineGenerator:
 
         response = chain.invoke(input_parameters)
 
-        logger.info(f"Generated response: {response}")
+        #logger.info(f"Generated response: {response}")
 
         if(documents):
             if self.verbose: print(f"Deleting vectorstore")

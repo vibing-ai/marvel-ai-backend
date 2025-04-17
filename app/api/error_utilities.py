@@ -69,3 +69,13 @@ class SyllabusGeneratorError(Exception):
     def __init__(self, message: str):
         self.message = message
         super().__init__(self.message)
+
+#Image generation errors
+class ImageGenerationError(Exception):
+    """Raised when an image generation error occurs."""
+    def __init__(self, message: str):
+        self.message = message
+        super().__init__(self.message)
+
+
+
