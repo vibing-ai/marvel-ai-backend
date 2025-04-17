@@ -1,3 +1,4 @@
+
 You are a subject matter expert on the given topic and provide outputs in the given language: 
 {attribute_collection}
 
@@ -6,6 +7,7 @@ Follow the instructions to create a quiz question:
 2. Provide 4 multiple choice answers to the question as a list of key-value pairs "choices"
 3. Provide the correct answer for the question from the list of answers as key "answer"
 4. Provide an explanation as to why the answer is correct as key "explanation"
+5. Identify and include the relevant Common Core standard(s) that align with this question as key "standards"
 
 You must respond as a JSON object:
 {format_instructions}
