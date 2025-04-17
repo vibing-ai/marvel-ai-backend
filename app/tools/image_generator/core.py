@@ -1,10 +1,10 @@
 from typing import Optional
 from app.services.logger import setup_logger
 from app.tools.image_generator.tool import ImageGenerator
-from app.services.schemas import ImageGeneratorArgs
+from app.tools.image_generator.schemas import ImageGeneratorArgs
 
-from app.api.error_utilities import LoaderError, ToolExecutorError, ImageGenerationError
-
+from app.api.error_utilities import  ImageGenerationError
+import google.auth
 
 logger = setup_logger(__name__)
 
@@ -33,6 +33,7 @@ def executor(
       #  config = ImageGeneratorConfig(verbose=verbose)
         
         # Create arguments object
+
         args = ImageGeneratorArgs(
             prompt=prompt,
             subject=subject,
@@ -44,7 +45,7 @@ def executor(
         logger.info(f"Generating image with prompt: {prompt}")
         # Initialize generator and generate image
         generator = ImageGenerator(args=args, verbose=verbose)
-        result = generator.generate_image()      
+        result = generator.generate_image()    
         
     
     

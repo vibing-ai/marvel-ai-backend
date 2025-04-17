@@ -2,7 +2,7 @@ import pytest
 from unittest.mock import patch, MagicMock
 from app.tools.image_generator.core import executor
 from app.tools.image_generator.tool import ImageGenerator, ImageGenerationError
-from app.services.schemas import ImageGeneratorArgs
+from app.tools.image_generator.schemas import ImageGeneratorArgs
 import firebase_admin
 
 @pytest.fixture
@@ -195,7 +195,7 @@ def test_image_generation_error(mock_image_generator):
             )
         print(exc_info.value)
         
-        assert "No images were generated" in str(exc_info.value)
+        assert "No images returned from generation API" in str(exc_info.value)
         # Verify the generate_images method was called
         mock_image_generator.image_generator_model.generate_images.assert_called_once()
 

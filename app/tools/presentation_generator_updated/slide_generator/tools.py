@@ -11,8 +11,7 @@ from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from langchain_core.documents import Document
 from app.tools.presentation_generator_updated.slide_generator.imagen import ImageGenerator
 from app.tools.presentation_generator_updated.slide_generator.firebase import FirebaseManager
-from app.tools.presentation_generator_updated.slide_generator.googleCloudStorage import GoogleCloudStorageManager
-import re
+
 logger = setup_logger(__name__)
 
 def read_text_file(file_path):
@@ -48,8 +47,8 @@ class SlideGenerator:
         self.verbose = verbose
         self.context =None
         self.image_generator=ImageGenerator()
-        #self.firebase = FirebaseManager()
-        self.firebase = GoogleCloudStorageManager()
+        self.firebase = FirebaseManager()
+      
     
         if vectorstore_class is None: raise ValueError("Vectorstore must be provided")
        
@@ -139,11 +138,7 @@ class SlideGenerator:
             input_variables=["instructional_level", "topic", "slides_titles"],
             partial_variables={"format_instructions": self.parser.get_format_instructions()}
         )
-        prompt_batch = PromptTemplate(
-            template=self.prompt_batch,
-            input_variables=["instructional_level", "topic", "slides_titles","context"],
-            partial_variables={"format_instructions": self.parser.get_format_instructions()}
-        )
+      
         chain = prompt | self.model | self.parser
         logger.info(f"Chain compilation complete")
         return chain    

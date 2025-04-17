@@ -42,7 +42,7 @@ class ImageGenerator:
             "model": GoogleGenerativeAI(model="gemini-2.0-flash-001"),
             "parser": JsonOutputParser(pydantic_object=ImageGenerationOutput),
            # "prompt": read_text_file("prompt/image-generator-prompt.txt"),
-            "prompt_enhancement": read_text_file("prompt/prompt-enhancement.txt")
+            "prompt_enhancement": read_text_file("prompt/prompt-for-enhancement.txt")
         }
         self.args = args
         self.verbose = verbose
@@ -109,7 +109,6 @@ class ImageGenerator:
             
             # Convert prompt to lowercase for case-insensitive matching
             prompt_lower = prompt.lower()
-            logger.info(f"Prompt Lower: {prompt_lower}")
             
             # Check for blocked keywords
             found_keywords = []
@@ -140,7 +139,7 @@ class ImageGenerator:
             chain =  safety_check_prompt | self.model | self.safety_check_parser            
             # Get AI analysis
             analysis = chain.invoke(input_parameters)
-            logger.info(f"AI analysis complete: {analysis}")    
+            logger.info(f"AI analysis complete")    
             return analysis
 
         except Exception as e:
@@ -168,7 +167,7 @@ class ImageGenerator:
         try:
             #  Enhance prompt with educational context
             enhanced_prompt = self.enhance_prompt()
-
+            #if the prompt is not safe, return an error with details
             if not enhanced_prompt or  enhanced_prompt["is_safe"] == False:
                 logger.error(f"Failed to enhance prompt: {enhanced_prompt['is_safe']}")
                 return {
@@ -178,10 +177,11 @@ class ImageGenerator:
                 }
                                               
 
-            image_prompt = enhanced_prompt.image_prompt if hasattr(enhanced_prompt, 'image_prompt') else enhanced_prompt.get('image_prompt')
-            logger.info(f"prompt: {image_prompt}")
-                    #  Safety check
+            image_prompt =  enhanced_prompt.get('image_prompt')
+
+            #  Perform Safety check on the enhanced prompt
             safety_check_analysis = self.safety_check(image_prompt)
+            # If the prompt is not safe, return an error with details
             if not safety_check_analysis['is_safe']:
                 logger.error(f"Content safety check failed - prompt contains inappropriate content")
                 return {
@@ -189,27 +189,36 @@ class ImageGenerator:
                     "details": safety_check_analysis['details']['assessment_explanation']
                 }
 
-            # Only proceed with image generation if all safety checks pass
-            response = self.image_generator_model.generate_images(                
-                prompt=image_prompt,
-                negative_prompt="",
-                safety_filter_level="block_most",
-                # Optional:
-                number_of_images=1,
-                seed=0,
-                add_watermark=False,
-            )
+          
+            print("image_prompt",image_prompt)
+            # Generate image
+            response = self.image_generator_model.generate_images(
+            prompt=image_prompt,
+            # Optional:
+            safety_filter_level="block_most",
+            number_of_images=1,
+            seed=0,
+            add_watermark=False,
+            )     
             if not response.images:
-                raise ImageGenerationError("No images were generated")
+                logger.warning("Image generation returned no images, likely due to safety filters")
+                raise ImageGenerationError("No images returned from generation API")
+            
             generated_image = response.images[0]
+            logger.info("Image generated successfully")
             generated_image.save("generated_image.png")
             # Upload to cloud storage
-            image_url = self.save_to_cloud_storage(generated_image)
+            try:
+                image_url = self.save_to_cloud_storage(generated_image)
+                return {
+                    "image_url": image_url,
+                    "enhanced_prompt": image_prompt
+                }
+            except Exception as e:
+                logger.error(f"Failed to save image to cloud storage: {str(e)}", exc_info=True)
+                raise ImageGenerationError(f"Image generated but storage failed: {str(e)}")          
                                     
-            return {
-                        "image_url": image_url,
-                        "enhanced_prompt": image_prompt
-                    }            
+                    
         except ValueError as e:
             logger.error(f"Image generation failed: {str(e)}")
             raise ValueError(f"Image generation failed: {str(e)}")    

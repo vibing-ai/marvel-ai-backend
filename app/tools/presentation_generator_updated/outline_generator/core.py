@@ -1,5 +1,5 @@
 from app.utils.document_loaders import get_docs,read_text_file
-from app.services.schemas import OutlineGeneratorInput
+from app.tools.presentation_generator_updated.schemas import OutlineGeneratorInput
 from app.services.logger import setup_logger
 from app.api.error_utilities import LoaderError, ToolExecutorError
 from app.tools.presentation_generator_updated.outline_generator.tools import OutlineGenerator

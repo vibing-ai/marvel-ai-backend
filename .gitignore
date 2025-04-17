@@ -2,7 +2,10 @@
 __pycache__/
 *.py[cod]
 *$py.class
-
+Dockerfile
+Mission Brief Image Generator.txt
+generated_image.png
+test files/
 # C extensions
 *.so
 
