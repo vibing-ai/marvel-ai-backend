@@ -1,64 +1,64 @@
 {
-    "inputs": [
-        {
-            "label": "Grade Level",
-            "name": "grade_level",
-            "type": "text"
-        },
-        {
-            "label": "Subject",
-            "name": "subject",
-            "type": "text"
-        },
-        {
-            "label": "Course Description",
-            "name": "course_description",
-            "type": "text"
-        },
-        {
-            "label": "Standards/Objectives",
-            "name": "objectives",
-            "type": "text"
-        },
-        {
-            "label": "Required Materials",
-            "name": "required_materials",
-            "type": "text"
-        },
-        {
-            "label": "Grading Policy",
-            "name": "grading_policy",
-            "type": "text"
-        },
-        {
-            "label": "Class Policies and Expectations",
-            "name": "policies_expectations",
-            "type": "text"
-        },
-        {
-            "label": "Course Outline",
-            "name": "course_outline",
-            "type": "text"
-        },
-        {
-            "label": "Additional Customization or Notes",
-            "name": "additional_notes",
-            "type": "text"
-        },
-        {
-            "label": "File URL",
-            "name": "file_url",
-            "type": "text"
-        },
-        {
-            "label": "File Type",
-            "name": "file_type",
-            "type": "text"
-        },
-        {
-            "label": "Language",
-            "name": "lang",
-            "type": "text"
-        }
-    ]
+"inputs": [
+    {
+        "label": "Grade Level",
+        "name": "grade_level",
+        "type": "text"
+    },
+    {
+        "label": "Subject",
+        "name": "subject",
+        "type": "text"
+    },
+    {
+        "label": "Course Description",
+        "name": "course_description",
+        "type": "text"
+    },
+    {
+        "label": "Standards/Objectives",
+        "name": "objectives",
+        "type": "text"
+    },
+    {
+        "label": "Required Materials",
+        "name": "required_materials",
+        "type": "text"
+    },
+    {
+        "label": "Grading Policy",
+        "name": "grading_policy",
+        "type": "text"
+    },
+    {
+        "label": "Class Policies and Expectations",
+        "name": "policies_expectations",
+        "type": "text"
+    },
+    {
+        "label": "Course Outline",
+        "name": "course_outline",
+        "type": "text"
+    },
+    {
+        "label": "Additional Customization or Notes",
+        "name": "additional_notes",
+        "type": "text"
+    },
+    {
+        "label": "File URL",
+        "name": "file_url",
+        "type": "text"
+    },
+    {
+        "label": "File Type",
+        "name": "file_type",
+        "type": "text"
+    },
+    {
+        "label": "Language",
+        "name": "lang",
+        "type": "text"
+    }
+]
 }

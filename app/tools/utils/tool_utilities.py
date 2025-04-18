@@ -12,7 +12,7 @@ logger = setup_logger(__name__)
 def load_config():
     config_path = os.path.join(os.path.dirname(__file__), "tools_config.json")
 
-    
+
     with open(config_path, 'r') as f:
         return json.load(f)
 
@@ -35,7 +35,7 @@ def load_tool_metadata(tool_id):
         raise HTTPException(status_code=404, detail="Tool configuration not found")
     
     # Ensure the base path is relative to the current file's directory
-    base_dir = os.path.dirname(os.path.abspath(__file__))
+    base_dir = os.path.dirname(os.path.abspath(__file__)) 
     logger.debug(f"Base directory: {base_dir}")
     
     # Construct the directory path

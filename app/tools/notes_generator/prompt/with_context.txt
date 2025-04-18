@@ -1,0 +1,4 @@
+Generate notes based on the following content and focus:
+Content: {content}
+Focus: {focus}
+Context: {context}
