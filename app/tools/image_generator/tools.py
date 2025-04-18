@@ -14,7 +14,10 @@ from app.api.error_utilities import ImageHandlerError
 # Load environment variables from .env file
 load_dotenv(find_dotenv())
 
+# Set up logging
 logger = setup_logger(__name__)
+
+# TODO: Consider adding LRU cache for most recent images
 
 def read_text_file(file_path):
     """Read text from a file relative to the current script."""
