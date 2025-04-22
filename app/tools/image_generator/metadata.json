@@ -1,0 +1,36 @@
+{
+    "name": "Image Generator",
+    "description": "Generate educational images from text prompts using Black Forest Labs Flux 1.1 Pro API.",
+    "version": "1.0.0",
+    "inputs": [
+        {
+            "name": "prompt",
+            "type": "string",
+            "description": "The text prompt to generate an image from",
+            "required": true
+        },
+        {
+            "name": "subject",
+            "type": "string",
+            "description": "The educational subject (e.g., 'math', 'science')",
+            "required": false
+        },
+        {
+            "name": "grade_level",
+            "type": "string",
+            "description": "The grade level (e.g., 'elementary', 'middle school', 'high school')",
+            "required": false
+        },
+        {
+            "name": "lang",
+            "type": "string",
+            "description": "The language for text in the image",
+            "required": false,
+            "default": "en"
+        }
+    ],
+    "output": {
+        "type": "object",
+        "description": "Generated image data including base64 encoded image, metadata, and optional GCP storage URL"
+    }
+}
