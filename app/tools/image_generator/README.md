@@ -32,11 +32,10 @@ This tool generates high-quality educational images from text prompts using Blac
 
 3. Set up Google Cloud Storage for image persistence:
 
-   a. Create a GCP project and storage bucket (see GCP Storage Configuration below)
+   a. Create a storage bucket in the GCP project associated with the PROJECT_ID environment variable in your .env file (see GCP Storage Configuration below)
 
    b. Add the following to your `.env` file:
    ```
-   PROJECT_ID=your-gcp-project-id
    GCP_STORAGE_BUCKET=your-gcp-bucket-name
    GOOGLE_APPLICATION_CREDENTIALS=/absolute/path/to/your/credentials.json
    ```
