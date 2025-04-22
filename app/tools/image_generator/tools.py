@@ -5,19 +5,28 @@ import json
 import requests
 import base64
 import time
+import uuid
+from io import BytesIO
+from datetime import datetime
 from dotenv import load_dotenv, find_dotenv
 from pydantic import BaseModel, Field
 from app.services.logger import setup_logger
 from langchain_google_genai import GoogleGenerativeAI
 from app.api.error_utilities import ImageHandlerError
 
+# Import Google Cloud Storage libraries
+try:
+    from google.cloud import storage
+    from google.oauth2 import service_account
+    GCP_AVAILABLE = True
+except ImportError:
+    GCP_AVAILABLE = False
+
 # Load environment variables from .env file
 load_dotenv(find_dotenv())
 
 # Set up logging
 logger = setup_logger(__name__)
-
-# TODO: Consider adding LRU cache for most recent images
 
 def read_text_file(file_path):
     """Read text from a file relative to the current script."""
@@ -33,6 +42,7 @@ class ImageGenerationResult(BaseModel):
     prompt_used: str = Field(..., description="The actual prompt used to generate the image")
     educational_context: str = Field(..., description="The educational context that was applied")
     safety_applied: bool = Field(..., description="Whether safety filtering was applied")
+    gcp_url: Optional[str] = Field(None, description="URL to the image stored in GCP bucket (if available)")
 
 class ImageGeneratorArgs(BaseModel):
     """Arguments for the image generator."""
@@ -49,15 +59,34 @@ class ImageGenerator:
         args: Optional[ImageGeneratorArgs] = None,
         model = None,
         prompt_template_path: str = "prompt/image-generator-prompt.txt",
-        verbose: bool = False
+        verbose: bool = False,
+        storage_bucket: Optional[str] = None,
+        storage_credentials_path: Optional[str] = None
     ):
         self.args = args
         self.verbose = verbose
-        # For safety checks and context enhancement, we'll use Google's Gemini model
         self.model = model or GoogleGenerativeAI(model="gemini-1.5-pro", generation_config={"temperature": 0.7})
-        # We won't be using the image_model for Flux implementation
-        # self.image_model = ChatGoogleGenerativeAI(model="gemini-2.0-pro-vision")
         self.prompt_template = read_text_file(prompt_template_path) if os.path.exists(os.path.join(os.path.dirname(os.path.abspath(__file__)), prompt_template_path)) else ""
+
+        # GCP Storage configuration
+        self.storage_bucket = storage_bucket or os.environ.get('GCP_STORAGE_BUCKET')
+        self.storage_credentials_path = storage_credentials_path or os.environ.get('GOOGLE_APPLICATION_CREDENTIALS')
+        self.storage_client = None
+
+        # Initialize GCP storage client if available and configured
+        if GCP_AVAILABLE and self.storage_bucket and self.storage_credentials_path:
+            try:
+                # Check if the credentials file exists at the specified path
+                if os.path.exists(self.storage_credentials_path):
+                    credentials = service_account.Credentials.from_service_account_file(self.storage_credentials_path)
+                    self.storage_client = storage.Client(credentials=credentials)
+                    if self.verbose:
+                        logger.info(f"GCP Storage client initialized with bucket: {self.storage_bucket}")
+                else:
+                    logger.warning(f"GCP credentials file not found at: {self.storage_credentials_path}")
+            except Exception as e:
+                logger.error(f"Error initializing GCP Storage client: {e}")
+                self.storage_client = None
 
         if self.verbose:
             logger.info(f"ImageGenerator initialized with args: {args}")
@@ -169,6 +198,42 @@ class ImageGenerator:
             # Default to allowing the prompt if the safety check fails
             return True
 
+    def upload_to_gcp_bucket(self, image_data: bytes, prompt: str) -> Optional[str]:
+        """Upload an image to a GCP bucket and return the public URL."""
+        if not GCP_AVAILABLE or not self.storage_client or not self.storage_bucket:
+            if self.verbose:
+                logger.info("GCP Storage not available or not configured, skipping upload")
+            return None
+
+        try:
+            # Generate a unique filename based on timestamp and a UUID
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            unique_id = str(uuid.uuid4())[:8]
+            sanitized_prompt = re.sub(r'[^\w\s-]', '', prompt)[:30].strip().replace(' ', '_')
+            filename = f"image_{timestamp}_{sanitized_prompt}_{unique_id}.png"
+
+            # Get the bucket
+            bucket = self.storage_client.bucket(self.storage_bucket)
+
+            # Create a new blob and upload the image data
+            blob = bucket.blob(f"generated_images/{filename}")
+            blob.upload_from_string(image_data, content_type="image/png")
+
+            # Make the blob publicly readable
+            blob.make_public()
+
+            # Get the public URL
+            public_url = blob.public_url
+
+            if self.verbose:
+                logger.info(f"Image uploaded to GCP bucket: {public_url}")
+
+            return public_url
+
+        except Exception as e:
+            logger.error(f"Error uploading image to GCP bucket: {e}")
+            return None
+
     def generate_image(self, prompt: str) -> Dict[str, Any]:
         """Generate an image from a prompt using Black Forest Labs Flux 1.1 Pro API."""
         if self.verbose:
@@ -179,8 +244,7 @@ class ImageGenerator:
             api_key = os.environ.get('BFL_API_KEY')
             if not api_key:
                 logger.warning("BFL_API_KEY environment variable not set. Using development mode.")
-                # In a real implementation, you might want to raise an error here
-                # For now, we'll return a placeholder in development mode
+                # We return a placeholder in development mode but might want to raise an error here in production
                 if self.verbose:
                     logger.info("Development mode: Returning placeholder image data")
                 return {
@@ -191,18 +255,18 @@ class ImageGenerator:
                 # Log that we have an API key (without revealing it)
                 logger.info(f"Using BFL API key: {'*' * (len(api_key) - 4) + api_key[-4:] if len(api_key) > 4 else '****'}")
 
-            # Updated Black Forest Labs API endpoint based on documentation
+            # Black Forest Labs API endpoint based on documentation
             url = "https://api.us1.bfl.ai/v1/flux-pro-1.1"
             logger.info(f"Using API endpoint: {url}")
 
-            # Updated request headers based on documentation
+            # Request headers based on documentation
             headers = {
                 "accept": "application/json",
                 "x-key": api_key,
                 "Content-Type": "application/json"
             }
 
-            # Updated request payload based on documentation
+            # Request payload based on documentation
             payload = {
                 "prompt": prompt,
                 "width": 1024,
@@ -211,8 +275,8 @@ class ImageGenerator:
 
             logger.info(f"Request payload: width={payload['width']}, height={payload['height']}")
 
-            # Step 1: Submit the image generation request
-            logger.info("Step 1: Submitting image generation request")
+            # Submit the image generation request
+            logger.info("Submitting image generation request")
             response = requests.post(url, headers=headers, json=payload, timeout=30)
 
             # Log the response status and headers for debugging
@@ -228,11 +292,9 @@ class ImageGenerator:
                     request_id = response_data['id']
                     logger.info(f"Request ID: {request_id}")
 
-                    # Step 2: Poll for the result
-                    logger.info("Step 2: Polling for result")
-                    result_url = "https://api.us1.bfl.ai/v1/get_result"
-
                     # Poll for the result with timeout
+                    logger.info("Polling for result")
+                    result_url = "https://api.us1.bfl.ai/v1/get_result"
                     max_attempts = 30  # Maximum number of polling attempts
                     poll_interval = 1  # Seconds between polling attempts
 
@@ -270,10 +332,21 @@ class ImageGenerator:
 
                                         logger.info("Image generated and converted to base64 successfully")
 
-                                        return {
+                                        # Store in GCP bucket if available
+                                        gcp_url = None
+                                        if GCP_AVAILABLE and self.storage_client:
+                                            gcp_url = self.upload_to_gcp_bucket(image_data, prompt)
+
+                                        result = {
                                             "image_b64": image_b64,
                                             "prompt_used": prompt
                                         }
+
+                                        # Add GCP URL to result if available
+                                        if gcp_url:
+                                            result["gcp_url"] = gcp_url
+
+                                        return result
                                     else:
                                         error_msg = f"Failed to download image from URL: {image_url}, status code: {image_response.status_code}"
                                         logger.error(error_msg)
@@ -317,7 +390,7 @@ class ImageGenerator:
         except Exception as e:
             logger.error(f"Error generating image: {e}")
             raise ImageHandlerError(f"Failed to generate image: {str(e)}", prompt)
-        
+
     def detect_content_type(self, prompt, subject=None):
         """
         Detects the type of educational content being requested.
@@ -331,10 +404,10 @@ class ImageGenerator:
             "historical": ["historical", "timeline", "era", "period", "ancient", "medieval", "century"],
             "mathematical": ["equation", "formula", "graph", "plot", "function", "geometry", "calculation"]
         }
-        
+
         # Check the prompt for each pattern
         prompt_lower = prompt.lower()
-        
+
         # First check subject if provided
         if subject:
             subject_lower = subject.lower()
@@ -346,24 +419,24 @@ class ImageGenerator:
                 return "diagram"
             if "computer science" in subject_lower or "engineering" in subject_lower:
                 return "process"
-        
+
         # Then check prompt keywords
         for content_type, keywords in content_patterns.items():
             if any(keyword in prompt_lower for keyword in keywords):
                 logger.info(f"Detected content type: {content_type}")
                 return content_type
-        
+
         # Use AI to detect content type if no clear pattern matches
         try:
             detection_prompt = f"""
             Analyze this educational image request and determine the most appropriate content type.
             Return ONLY one of these exact types: diagram, concept, process, historical, mathematical, general.
-            
+
             Request: {prompt}
             """
-            
+
             content_type = self.model.invoke(detection_prompt).strip().lower()
-            
+
             # Validate the response
             valid_types = ["diagram", "concept", "process", "historical", "mathematical", "general"]
             if content_type in valid_types:
@@ -374,13 +447,13 @@ class ImageGenerator:
         except:
             # Default fallback
             return "general"
-        
+
     def get_specialized_prompt_template(self, content_type):
         """
         Returns a specialized prompt template based on the detected content type.
         """
         base_prompt = self.prompt_template
-        
+
         # Specialized additions based on content type
         specialized_sections = {
             "diagram": """
@@ -393,7 +466,7 @@ class ImageGenerator:
             - Provide a legend if multiple colors/patterns are used
             - Balance detail with clarity - focus on what's educationally relevant
             """,
-            
+
             "concept": """
             CONCEPT VISUALIZATION GUIDELINES:
             - Use visual metaphors that connect to students' prior knowledge
@@ -404,7 +477,7 @@ class ImageGenerator:
             - Consider using familiar iconography where applicable
             - Arrange elements to show hierarchy of importance or relationship
             """,
-            
+
             "process": """
             PROCESS VISUALIZATION GUIDELINES:
             - Create a clear sequential flow with obvious directionality
@@ -415,7 +488,7 @@ class ImageGenerator:
             - Show cause-and-effect relationships clearly
             - For cyclical processes, ensure the loop is clearly indicated
             """,
-            
+
             "historical": """
             HISTORICAL CONTENT GUIDELINES:
             - Maintain period-appropriate visual elements and style
@@ -426,7 +499,7 @@ class ImageGenerator:
             - Consider incorporating relevant primary source visual elements
             - Use color and style to distinguish between different eras or regions
             """,
-            
+
             "mathematical": """
             MATHEMATICAL CONTENT GUIDELINES:
             - Ensure precise representation of mathematical notation and symbols
@@ -438,10 +511,10 @@ class ImageGenerator:
             - Maintain mathematical accuracy while emphasizing key learning points
             """
         }
-        
+
         # Default to general guidance if no specialized content is available
         specialized_content = specialized_sections.get(content_type, "")
-        
+
         return base_prompt + specialized_content
 
     def generate_educational_image(self) -> ImageGenerationResult:
@@ -459,13 +532,13 @@ class ImageGenerator:
         is_safe = self.check_prompt_safety(prompt)
         if not is_safe:
             raise ImageHandlerError("The prompt contains inappropriate content for educational use", prompt)
-        
+
         # Detect content type
         content_type = self.detect_content_type(prompt, subject)
-        
+
         # Get specialized prompt template
         specialized_template = self.get_specialized_prompt_template(content_type)
-        
+
         # Replace the standard prompt template with the specialized one
         self.prompt_template = specialized_template
 
@@ -477,10 +550,16 @@ class ImageGenerator:
         # Generate the image
         image_result = self.generate_image(enhanced_prompt)
 
-        # Return the result
-        return ImageGenerationResult(
-            image_b64=image_result["image_b64"],
-            prompt_used=image_result["prompt_used"],
-            educational_context=educational_context,
-            safety_applied=True
-        )
+        # Create the result object with all available data
+        result_data = {
+            "image_b64": image_result["image_b64"],
+            "prompt_used": image_result["prompt_used"],
+            "educational_context": educational_context,
+            "safety_applied": True
+        }
+
+        # Add GCP URL to the result if available
+        if "gcp_url" in image_result:
+            result_data["gcp_url"] = image_result["gcp_url"]
+
+        return ImageGenerationResult(**result_data)

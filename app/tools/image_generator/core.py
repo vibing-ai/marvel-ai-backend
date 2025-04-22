@@ -23,6 +23,7 @@ def executor(
 
     Returns:
         dict: Generated image data including base64 encoded image and metadata.
+              If GCP storage is configured, the result will also include a gcp_url field.
 
     Raises:
         ToolExecutorError: If there's an error in the image generation process.

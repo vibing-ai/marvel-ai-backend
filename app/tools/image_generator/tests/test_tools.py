@@ -55,7 +55,6 @@ def mock_image_response():
     mock_response.content = b"fake_image_data"
     return mock_response
 
-# Test read_text_file function
 def test_read_text_file():
     """Test reading text from a file."""
     with patch("builtins.open", mock_open(read_data="test content")), \
@@ -65,7 +64,6 @@ def test_read_text_file():
         content = read_text_file("test.txt")
         assert content == "test content"
 
-# Test ImageGenerator initialization
 def test_image_generator_initialization(mock_args):
     """Test that the ImageGenerator initializes correctly."""
     with patch("app.tools.image_generator.tools.GoogleGenerativeAI"), \
@@ -77,7 +75,6 @@ def test_image_generator_initialization(mock_args):
         assert generator.model is not None
         assert generator.prompt_template == "prompt template"
 
-# Test enhance_prompt_with_educational_context with provided context
 def test_enhance_prompt_with_educational_context_provided():
     """Test enhancing prompt with provided educational context."""
     with patch("app.tools.image_generator.tools.GoogleGenerativeAI"):
@@ -92,7 +89,6 @@ def test_enhance_prompt_with_educational_context_provided():
         assert result["enhanced_prompt"] == "A diagram of the solar system, educational context: astronomy for middle school level"
         assert result["educational_context"] == "astronomy for middle school level"
 
-# Test enhance_prompt_with_educational_context with AI inference
 def test_enhance_prompt_with_educational_context_ai_inference():
     """Test enhancing prompt with AI-inferred educational context."""
     mock_model = MagicMock()
@@ -108,7 +104,6 @@ def test_enhance_prompt_with_educational_context_ai_inference():
         assert result["enhanced_prompt"] == "A diagram of the solar system, educational context: astronomy for middle school level"
         assert result["educational_context"] == "astronomy for middle school level"
 
-# Test enhance_prompt_with_educational_context with AI inference failure
 def test_enhance_prompt_with_educational_context_ai_inference_failure():
     """Test enhancing prompt with AI inference failure."""
     mock_model = MagicMock()
@@ -124,7 +119,6 @@ def test_enhance_prompt_with_educational_context_ai_inference_failure():
         assert result["enhanced_prompt"] == "A diagram of the solar system, educational context: suitable for classroom use"
         assert result["educational_context"] == "general educational content"
 
-# Test check_prompt_safety with safe content
 def test_check_prompt_safety_safe():
     """Test that safe prompts pass the safety check."""
     mock_model = MagicMock()
@@ -137,7 +131,6 @@ def test_check_prompt_safety_safe():
 
         assert result == True
 
-# Test check_prompt_safety with unsafe content (keyword)
 @patch("app.tools.image_generator.tools.GoogleGenerativeAI")
 def test_check_prompt_safety_unsafe_keyword(mock_model):
     """Test that unsafe prompts with keywords are detected."""
@@ -162,7 +155,6 @@ def test_check_prompt_safety_unsafe_keyword(mock_model):
 
         assert result == False
 
-# Test check_prompt_safety with unsafe content (AI detection)
 def test_check_prompt_safety_unsafe_ai():
     """Test that unsafe prompts are detected by AI."""
     mock_model = MagicMock()
@@ -175,7 +167,6 @@ def test_check_prompt_safety_unsafe_ai():
 
         assert result == False
 
-# Test generate_image with API key
 @patch("os.environ.get")
 @patch("requests.post")
 @patch("requests.get")
@@ -201,8 +192,8 @@ def test_generate_image_with_api_key(mock_b64encode, mock_get, mock_post, mock_e
         assert result["prompt_used"] == "A diagram of the solar system"
         mock_post.assert_called_once()
         assert mock_get.call_count == 2  # One for result polling, one for image download
+        assert "gcp_url" not in result  # No GCP URL since storage client is None
 
-# Test generate_image without API key
 @patch("os.environ.get")
 def test_generate_image_without_api_key(mock_env_get):
     """Test image generation without API key (development mode)."""
@@ -216,7 +207,103 @@ def test_generate_image_without_api_key(mock_env_get):
         assert result["image_b64"] == "base64_encoded_image_data_would_go_here"
         assert result["prompt_used"] == "A diagram of the solar system"
 
-# Test detect_content_type with subject hints
+@patch("app.tools.image_generator.tools.storage.Client")
+@patch("app.tools.image_generator.tools.service_account.Credentials.from_service_account_file")
+@patch("os.path.exists")
+def test_upload_to_gcp_bucket(mock_path_exists, mock_credentials, mock_storage_client):
+    """Test uploading an image to GCP bucket."""
+    # Setup mocks
+    mock_path_exists.return_value = True
+    mock_credentials.return_value = MagicMock()
+
+    # Mock bucket and blob
+    mock_bucket = MagicMock()
+    mock_blob = MagicMock()
+    mock_blob.public_url = "https://storage.googleapis.com/test-bucket/test-image.png"
+    mock_bucket.blob.return_value = mock_blob
+    mock_storage_client.return_value.bucket.return_value = mock_bucket
+
+    # Create generator with GCP storage configuration
+    with patch("app.tools.image_generator.tools.GCP_AVAILABLE", True):
+        generator = ImageGenerator(
+            storage_bucket="test-bucket",
+            storage_credentials_path="/path/to/credentials.json",
+            verbose=True
+        )
+
+        # Mock the storage client
+        generator.storage_client = mock_storage_client.return_value
+
+        # Test uploading an image
+        image_data = b"fake_image_data"
+        prompt = "A diagram of the solar system"
+
+        result = generator.upload_to_gcp_bucket(image_data, prompt)
+
+        # Verify the result
+        assert result == "https://storage.googleapis.com/test-bucket/test-image.png"
+
+        # Verify the correct methods were called
+        mock_storage_client.return_value.bucket.assert_called_once_with("test-bucket")
+        mock_bucket.blob.assert_called_once()
+        mock_blob.upload_from_string.assert_called_once_with(image_data, content_type="image/png")
+        mock_blob.make_public.assert_called_once()
+
+@patch("os.environ.get")
+@patch("requests.post")
+@patch("requests.get")
+@patch("base64.b64encode")
+@patch("app.tools.image_generator.tools.ImageGenerator.upload_to_gcp_bucket")
+def test_generate_image_with_gcp_storage(mock_upload, mock_b64encode, mock_get, mock_post, mock_env_get):
+    """Test image generation with GCP storage."""
+    # Setup mocks
+    mock_env_get.return_value = "test-api-key"
+
+    # Setup HTTP response mocks
+    mock_post_response = MagicMock()
+    mock_post_response.status_code = 200
+    mock_post_response.json.return_value = {"id": "test-request-id"}
+    mock_post.return_value = mock_post_response
+
+    mock_result_response = MagicMock()
+    mock_result_response.status_code = 200
+    mock_result_response.json.return_value = {
+        "status": "Ready",
+        "result": {"sample": "https://example.com/test-image.png"}
+    }
+
+    mock_image_response = MagicMock()
+    mock_image_response.status_code = 200
+    mock_image_response.content = b"fake_image_data"
+
+    # Set up the get mock to return different responses for different calls
+    mock_get.side_effect = [mock_result_response, mock_image_response]
+
+    # Setup base64 encoding mock
+    mock_encoded = MagicMock()
+    mock_encoded.decode.return_value = "encoded_image_data"
+    mock_b64encode.return_value = mock_encoded
+
+    # Setup GCP upload mock
+    mock_upload.return_value = "https://storage.googleapis.com/test-bucket/test-image.png"
+
+    with patch("app.tools.image_generator.tools.GoogleGenerativeAI"), \
+         patch("app.tools.image_generator.tools.GCP_AVAILABLE", True):
+        # Create generator with storage client
+        generator = ImageGenerator(verbose=True)
+        generator.storage_client = MagicMock()  # Mock the storage client
+
+        # Test image generation with GCP storage
+        result = generator.generate_image("A diagram of the solar system")
+
+        # Verify the result
+        assert "image_b64" in result
+        assert result["prompt_used"] == "A diagram of the solar system"
+        assert result["gcp_url"] == "https://storage.googleapis.com/test-bucket/test-image.png"
+
+        # Verify the upload method was called
+        mock_upload.assert_called_once()
+
 def test_detect_content_type_with_subject():
     """Test content type detection with subject hints."""
     with patch("app.tools.image_generator.tools.GoogleGenerativeAI"):
@@ -231,7 +318,6 @@ def test_detect_content_type_with_subject():
         # Test with biology subject
         assert generator.detect_content_type("A cell structure", "biology") == "diagram"
 
-# Test detect_content_type with prompt keywords
 def test_detect_content_type_with_keywords():
     """Test content type detection with prompt keywords."""
     with patch("app.tools.image_generator.tools.GoogleGenerativeAI"):
@@ -246,7 +332,6 @@ def test_detect_content_type_with_keywords():
         # Test with concept keywords
         assert generator.detect_content_type("Illustrate the concept of gravity") == "concept"
 
-# Test detect_content_type with AI detection
 def test_detect_content_type_with_ai():
     """Test content type detection with AI."""
     mock_model = MagicMock()
@@ -259,7 +344,6 @@ def test_detect_content_type_with_ai():
 
         assert result == "historical"
 
-# Test get_specialized_prompt_template
 def test_get_specialized_prompt_template():
     """Test specialized prompt template generation."""
     with patch("app.tools.image_generator.tools.GoogleGenerativeAI"), \
@@ -280,7 +364,6 @@ def test_get_specialized_prompt_template():
         general_template = generator.get_specialized_prompt_template("unknown")
         assert general_template == "Base template"
 
-# Test generate_educational_image
 @patch("app.tools.image_generator.tools.ImageGenerator.check_prompt_safety")
 @patch("app.tools.image_generator.tools.ImageGenerator.detect_content_type")
 @patch("app.tools.image_generator.tools.ImageGenerator.get_specialized_prompt_template")
@@ -295,10 +378,16 @@ def test_generate_educational_image(mock_generate, mock_enhance, mock_template, 
         "enhanced_prompt": "A diagram of the solar system, educational context: astronomy for middle school level",
         "educational_context": "astronomy for middle school level"
     }
-    mock_generate.return_value = mock_image_data
 
-    with patch("app.tools.image_generator.tools.GoogleGenerativeAI"):
+    # Add GCP URL to the mock image data
+    image_data_with_gcp = mock_image_data.copy()
+    image_data_with_gcp["gcp_url"] = "https://storage.googleapis.com/test-bucket/test-image.png"
+    mock_generate.return_value = image_data_with_gcp
+
+    with patch("app.tools.image_generator.tools.GoogleGenerativeAI"), \
+         patch("app.tools.image_generator.tools.GCP_AVAILABLE", True):
         generator = ImageGenerator(args=mock_args)
+        generator.storage_client = MagicMock()  # Mock the storage client
 
         result = generator.generate_educational_image()
 
@@ -307,6 +396,7 @@ def test_generate_educational_image(mock_generate, mock_enhance, mock_template, 
         assert result.prompt_used == mock_image_data["prompt_used"]
         assert result.educational_context == "astronomy for middle school level"
         assert result.safety_applied == True
+        assert result.gcp_url == "https://storage.googleapis.com/test-bucket/test-image.png"
 
         # Verify the correct methods were called
         mock_safety.assert_called_once_with(mock_args.prompt)
@@ -315,7 +405,50 @@ def test_generate_educational_image(mock_generate, mock_enhance, mock_template, 
         mock_enhance.assert_called_once_with(mock_args.prompt, mock_args.subject, mock_args.grade_level)
         mock_generate.assert_called_once_with("A diagram of the solar system, educational context: astronomy for middle school level")
 
-# Test generate_educational_image with unsafe content
+@patch("app.tools.image_generator.tools.ImageGenerator.check_prompt_safety")
+@patch("app.tools.image_generator.tools.ImageGenerator.detect_content_type")
+@patch("app.tools.image_generator.tools.ImageGenerator.get_specialized_prompt_template")
+@patch("app.tools.image_generator.tools.ImageGenerator.enhance_prompt_with_educational_context")
+@patch("app.tools.image_generator.tools.ImageGenerator.generate_image")
+def test_generate_educational_image_without_gcp(mock_generate, mock_enhance, mock_template, mock_detect, mock_safety, mock_args, mock_image_data):
+    """Test the educational image generation when GCP storage is not configured."""
+    mock_safety.return_value = True
+    mock_detect.return_value = "diagram"
+    mock_template.return_value = "Specialized template for diagrams"
+    mock_enhance.return_value = {
+        "enhanced_prompt": "A diagram of the solar system, educational context: astronomy for middle school level",
+        "educational_context": "astronomy for middle school level"
+    }
+
+    # Create mock image data without GCP URL
+    image_data_without_gcp = mock_image_data.copy()
+    # Ensure there's no gcp_url in the mock data
+    if "gcp_url" in image_data_without_gcp:
+        del image_data_without_gcp["gcp_url"]
+    mock_generate.return_value = image_data_without_gcp
+
+    with patch("app.tools.image_generator.tools.GoogleGenerativeAI"), \
+         patch("app.tools.image_generator.tools.GCP_AVAILABLE", False):
+        generator = ImageGenerator(args=mock_args)
+        generator.storage_client = None  # Ensure storage client is None
+
+        # Test without GCP configuration
+        result = generator.generate_educational_image()
+
+        assert isinstance(result, ImageGenerationResult)
+        assert result.image_b64 == mock_image_data["image_b64"]
+        assert result.prompt_used == mock_image_data["prompt_used"]
+        assert result.educational_context == "astronomy for middle school level"
+        assert result.safety_applied == True
+        assert not hasattr(result, "gcp_url") or result.gcp_url is None
+
+        # Verify the correct methods were called
+        mock_safety.assert_called_once_with(mock_args.prompt)
+        mock_detect.assert_called_once_with(mock_args.prompt, mock_args.subject)
+        mock_template.assert_called_once_with("diagram")
+        mock_enhance.assert_called_once_with(mock_args.prompt, mock_args.subject, mock_args.grade_level)
+        mock_generate.assert_called_once_with("A diagram of the solar system, educational context: astronomy for middle school level")
+
 @patch("app.tools.image_generator.tools.ImageGenerator.check_prompt_safety")
 def test_generate_educational_image_unsafe(mock_safety, mock_args):
     """Test generate_educational_image with unsafe content."""
@@ -327,7 +460,6 @@ def test_generate_educational_image_unsafe(mock_safety, mock_args):
         with pytest.raises(ImageHandlerError, match="inappropriate content"):
             generator.generate_educational_image()
 
-# Test generate_educational_image with missing prompt
 def test_generate_educational_image_missing_prompt():
     """Test generate_educational_image with missing prompt."""
     with patch("app.tools.image_generator.tools.GoogleGenerativeAI"):
@@ -336,7 +468,6 @@ def test_generate_educational_image_missing_prompt():
         with pytest.raises(ValueError, match="A prompt is required"):
             generator.generate_educational_image()
 
-# Test the ImageGenerationResult model
 def test_image_generation_result_model():
     """Test the ImageGenerationResult Pydantic model."""
     result = ImageGenerationResult(
@@ -351,7 +482,6 @@ def test_image_generation_result_model():
     assert result.educational_context == "astronomy for middle school level"
     assert result.safety_applied == True
 
-# Test the ImageGeneratorArgs model
 def test_image_generator_args_model():
     """Test the ImageGeneratorArgs Pydantic model."""
     args = ImageGeneratorArgs(

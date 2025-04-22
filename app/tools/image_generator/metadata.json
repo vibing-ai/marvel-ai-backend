@@ -31,6 +31,6 @@
     ],
     "output": {
         "type": "object",
-        "description": "Generated image data including base64 encoded image and metadata"
+        "description": "Generated image data including base64 encoded image, metadata, and optional GCP storage URL"
     }
 }
