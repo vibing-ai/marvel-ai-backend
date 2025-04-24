@@ -1,0 +1,25 @@
+{
+    "inputs": [
+        {
+            "label": "Base Prompt",
+            "name": "base_prompt",
+            "type": "text"
+        },
+        {
+            "label": "Grade Level",
+            "name": "grade_level",
+            "type": "text"
+        },
+        {
+            "label": "Subject",
+            "name": "subject",
+            "type": "text"
+        },
+        {
+            "label": "Language",
+            "name": "language",
+            "type": "text",
+            "optional": true
+        }
+    ]
+}

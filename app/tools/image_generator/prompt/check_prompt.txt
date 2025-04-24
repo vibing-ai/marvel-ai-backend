@@ -1,0 +1,26 @@
+Evaluate the following prompt for educational image generation:
+
+User's prompt: {prompt}
+Grade Level: {grade_level}
+Subject: {subject}
+
+Your task is to determine if this prompt is safe and appropriate for educational use.
+Reply EXACTLY in one of these two formats:
+- SAFE
+- UNSAFE: <single clear reason why>
+
+Evaluation criteria:
+1. Age-appropriate content for specified grade level
+2. Direct relevance to academic subject
+3. Clear, unambiguous visual elements
+4. Educational accuracy and factual correctness
+5. Potential for student understanding/learning
+
+Automatic disqualifiers:
+- Violence or disturbing content
+- Sexual or suggestive elements
+- Discriminatory or extremist themes
+- Medical/political content beyond curriculum scope
+- Dangerous or harmful activities
+
+Evaluate strictly - when in doubt, mark as unsafe.

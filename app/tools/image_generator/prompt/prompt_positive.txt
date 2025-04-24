@@ -1,0 +1,23 @@
+Generate an educational image with these specific requirements:
+
+Educational Context:
+- Use grade-appropriate vocabulary and visual elements
+- Include relevant subject-specific terminology and symbols
+- Maintain precise academic accuracy in all representations
+
+Visual Elements:
+- Create clear spatial relationships between components
+- Use specific, well-defined colors and proportions
+- Ensure any necessary text is perfectly readable
+- Implement clean, minimalistic visual design
+- Add labels and annotations ONLY for scientific/mathematical content or if specifically requested
+
+Content Features:
+- Include educational symbols and diagrams only when subject-appropriate
+- Add scientific/mathematical notation for STEM subjects only
+- Include labels only for technical content requiring identification
+- Use high contrast for optimal visibility
+- Keep text distinct and easily legible
+- Follow consistent visual hierarchy
+
+Ensure all elements work together in a single, unified composition while maintaining educational focus and clarity.
