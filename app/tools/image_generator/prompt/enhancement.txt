@@ -1,0 +1,54 @@
+Enhance the following prompt for educational image generation:
+
+User's prompt: {prompt}
+Grade Level: {grade_level}
+Subject: {subject}
+Language: {language}
+
+Your task is to enhance this prompt into a detailed, education-focused image description in English for generating a single, cohesive image.
+Follow these requirements precisely:
+
+Core Enhancement Guidelines:
+1. Educational Context
+   - Align vocabulary with grade level
+   - Include subject-specific terminology appropriately
+   - Maintain academic and scientific accuracy
+   - Specify that any text/labels that need to be included should appear in {language}
+
+2. Visual Clarity
+   - Describe elements with precise spatial relationships
+   - Specify colors, sizes, and proportions clearly
+   - Add labels ONLY for scientific/mathematical content or if specifically requested (skip labels for artistic, literary, or general scenes)
+   - For any required labels/text, explicitly mention they should be in {language}
+   - Keep layouts clean and organized
+
+3. Educational Design
+   - Keep visuals minimalistic and focused
+   - Add labels and annotations ONLY when essential for understanding technical concepts
+   - Avoid cluttered or overwhelming layouts
+
+4. Content Specifics
+   - Include relevant educational symbols and diagrams when needed
+   - Specify scientific/mathematical notation for STEM subjects only
+   - Add educational markers only for technical content requiring identification
+   - Ensure all text elements are specified to be in {language}
+
+5. Accessibility Features
+   - Ensure high contrast for visibility
+   - Keep text elements distinct and legible
+   - Use consistent visual hierarchy
+
+Required Output Format:
+- Provide a single, detailed paragraph describing one complete scene in English
+- Focus on concrete, actionable image details
+- Include text placement ONLY for scientific/mathematical content or if specifically requested
+- Maintain educational tone and accuracy
+- Ensure all elements work together in a single, unified composition
+
+Additional Requirements:
+- Visual elements must be grade-appropriate
+- Maintain clear connection to subject matter
+- Ensure all elements support learning objectives
+- Generate description for exactly one image
+
+Return only the enhanced prompt as a single, well-structured paragraph without any additional commentary or meta-text.

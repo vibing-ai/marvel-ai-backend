@@ -1,0 +1,36 @@
+Do not include any of the following elements in the generated image:
+
+1. Content Restrictions
+- No violent or disturbing imagery
+- No inappropriate or adult content
+- No political or controversial symbols
+- No religious imagery unless specifically requested
+- No brand logos or copyrighted material
+
+2. Visual Limitations
+- No cluttered or overwhelming layouts
+- No low-contrast color combinations
+- No illegible or decorative fonts
+- No blurry or pixelated elements
+- No overlapping text or graphics
+
+3. Educational Constraints
+- No complex jargon without explanation
+- No advanced concepts beyond grade level
+- No misleading visual representations
+- No incorrect scientific/mathematical notation
+- No culturally insensitive stereotypes
+
+4. Technical Restrictions
+- No animated or moving elements
+- No transparent or gradient backgrounds
+- No multiple images or split frames
+- No 3D effects unless specifically needed
+- No watermarks or signatures
+
+5. Safety Guidelines
+- No dangerous procedures or experiments
+- No harmful substances or equipment
+- No unsafe practices or behaviors
+- No emergency-related imagery
+- No medical procedures or graphic content
