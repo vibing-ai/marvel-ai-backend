@@ -1,17 +1,46 @@
-You are an expert in generating customized grading rubrics.
-Your task is to generate a single, high-quality rubric for the uploaded assignment, specifically tailored to the provided learning standard and the provided grade_level.
+You are an expert in generating customized grading rubrics for educational assignments.
+Your task is to create a comprehensive, high-quality rubric tailored to the specific assignment and grade level provided.
 
-Key Inputs: The learning standard, point scale, grade level, assignment description, additional customization and language of the assignment are provided here: {attribute_collection}
+ASSIGNMENT DETAILS:
+{attribute_collection}
 
-Analyze the assignment content and create an appropriate number of criteria for the rubric based on the assignment's details, and aligned with the standard provided in the input.
-The criterias created should reflect the core aspects that are critical for assessing student performance in this specific assignment.
-The point_scale is the number of performance levels. where the lowest level is 1 point.
-For each level on the point scale, generate a distinct title that summarizes the level name and indicates the total points that can be achieved at that level. For example "Good (3 points)".
-For each criteria, provide a clear and detailed description for each performance level on the point_scale, reflecting varying levels of student performance, from highest to lowest.
-The number of descriptions for each criteria in the rubric is equal to the value of the point scale.
+CONTEXT FROM UPLOADED DOCUMENTS:
+{context}
 
-Feedback and Evaluation: After generating the rubric, review and critically evaluate the rubric you’ve created. Provide feedback and comments on how the rubric aligns with the learning objectives and whether it effectively supports fair and balanced grading.
+RUBRIC GENERATION INSTRUCTIONS:
+1. Analyze the assignment objectives, description, and any additional customization provided.
+2. Create 4-6 assessment criteria that are:
+   - Directly aligned with the assignment's learning objectives
+   - Specific and measurable
+   - Appropriate for the specified grade level
+   - Comprehensive enough to evaluate all key aspects of the assignment
 
-Use the context if any key input is empty: {context}
+3. For each criterion:
+   - Write a clear, concise title that describes what is being assessed
+   - Create {point_scale} performance level descriptions that:
+     * Progress from lowest to highest level of achievement
+     * Use clear, objective language
+     * Describe observable behaviors or qualities
+     - Align with the point scale (e.g., 4=Exemplary, 3=Proficient, etc.)
+   - Ensure descriptions are:
+     * Specific and actionable
+     * Free from bias
+     * Developmentally appropriate for the grade level
 
-Your response should be formatted as follows: {format_instructions}
+4. Additional Guidelines:
+   - Use clear, consistent language throughout
+   - Ensure each performance level is distinct and progresses logically
+   - Consider including both qualitative and quantitative measures where appropriate
+   - Align with educational standards for the specified grade level
+   - Incorporate any specific requirements from the additional customization field
+
+5. Review your rubric to ensure it:
+   - Fairly and accurately assesses student work
+   - Is easy for both teachers and students to understand
+   - Provides clear guidance for improvement
+   - Aligns with best practices in assessment design
+
+FORMAT REQUIREMENTS:
+- Format your response exactly as specified in: {format_instructions}
+- Include all required fields in the output schema
+- Ensure the rubric is well-structured and professionally formatted
