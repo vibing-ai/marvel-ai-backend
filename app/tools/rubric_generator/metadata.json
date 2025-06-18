@@ -3,47 +3,75 @@
         {
             "label": "Grade Level",
             "name": "grade_level",
-            "type": "text"
+            "type": "text",
+            "required": true,
+            "description": "The grade level for which the rubric is being created"
         },
         {
             "label": "Point Scale",
             "name": "point_scale",
-            "type": "number"
+            "type": "number",
+            "required": true,
+            "description": "The number of performance levels in the rubric (typically 3-6)"
         },
         {
             "label": "Standards/Objectives",
             "name": "objectives",
-            "type": "text"
+            "type": "text",
+            "required": false,
+            "description": "The learning standards or objectives for the assignment"
         },
         {
             "label": "Assignment Description",
             "name": "assignment_description",
-            "type": "text"
+            "type": "text",
+            "required": false,
+            "description": "Detailed description of the assignment"
+        },
+        {
+            "label": "Additional Customization",
+            "name": "additional_customization",
+            "type": "text",
+            "required": false,
+            "description": "Any additional customization or specific requirements for the rubric"
         },
         {
             "label": "Standards/Objectives File URL",
             "name": "objectives_file_url",
-            "type": "text"
+            "type": "text",
+            "required": false,
+            "description": "URL to a file containing standards/objectives (CSV, PDF, DOCX, PPT, TXT, YouTube, Website, Google Sheets)"
         },
         {
             "label": "Standards/Objectives File Type",
             "name": "objectives_file_type",
-            "type": "text"
+            "type": "text",
+            "required": false,
+            "description": "Type of the file (csv, pdf, docx, pptx, txt, youtube, website, gsheet)",
+            "options": ["csv", "pdf", "docx", "pptx", "txt", "youtube", "website", "gsheet"]
         },
         {
             "label": "Assignment Description File URL",
             "name": "assignment_description_file_url",
-            "type": "text"
+            "type": "text",
+            "required": false,
+            "description": "URL to a file containing assignment description (CSV, PDF, DOCX, PPT, TXT, YouTube, Website, Google Sheets)"
         },
         {
             "label": "Assignment Description File Type",
             "name": "assignment_description_file_type",
-            "type": "text"
+            "type": "text",
+            "required": false,
+            "description": "Type of the file (csv, pdf, docx, pptx, txt, youtube, website, gsheet)",
+            "options": ["csv", "pdf", "docx", "pptx", "txt", "youtube", "website", "gsheet"]
         },
         {
             "label": "Language",
             "name": "lang",
-            "type": "text"
+            "type": "text",
+            "required": true,
+            "default": "en",
+            "description": "Language code for the rubric (e.g., en, es, fr)"
         }
     ]
 }
