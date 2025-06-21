@@ -176,3 +176,10 @@ class SlideGeneratorInput(BaseModel):
     instructional_level: str
     topic: str
     lang: Optional[str] = "en"
+
+class TextRewriterArgs(BaseModel):
+    text_input: str
+    file_type: str
+    file_url: str
+    rewrite_instruction: str
+    lang: Optional[str] = "en"
