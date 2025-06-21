@@ -18,9 +18,8 @@ def executor(
     try:
         logger.info(f"Generating docs. from {file_type}")
 
-        # Check if any input is provided for text rewriter
-        if not any([text_input, file_type, file_url, rewrite_instruction]):
-            raise ValueError("No input provided for text rewriter.")
+        if not ((file_url and file_type) or text_input): raise ValueError("No input provided for text rewriter.")
+        if not rewrite_instruction: raise ValueError("Rewrite instruction not provided.")
 
         if file_url and file_type:
             logger.info(f"Generating docs. from {file_type}")
