@@ -1,0 +1,17 @@
+{
+    "name": "ai_resistant_assignment",
+    "description": "Generates AI-Resistant version of assignments based on uploaded document and student grade level.",
+    "input_parameters": [
+        {
+            "name": "grade_level",
+            "type": "string",
+            "required": true
+        },
+        {
+            "name": "assignment_input",
+            "type": "file_or_url",
+            "required": true,
+            "accepted_formats": [".csv", ".pdf", ".docx", ".pptx", ".txt", "url"]
+        }
+    ]
+}
