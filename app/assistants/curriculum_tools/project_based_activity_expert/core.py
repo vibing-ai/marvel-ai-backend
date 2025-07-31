@@ -13,7 +13,7 @@ def executor(user_info: UserInfo, messages: list[Message] = None, k=3):
         ChatMessage(
             role=message.role,
             type=message.type,
-            text=message.payload.text
+            text=message.payload.text,
         ) for message in messages[-k:]
     ]
 
