@@ -3,5 +3,10 @@
         "co_teacher": {
             "path": "assistants.classroom_support.co_teacher.core"
         }
+    },
+    "curriculum_tools": {
+        "project_based_activity_expert": {
+            "path": "assistants.curriculum_tools.project_based_activity_expert.core"
+        }
     }
 }
