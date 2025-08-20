@@ -8,7 +8,8 @@ from app.services.logger import setup_logger
 logger = setup_logger()
 
 load_dotenv(find_dotenv())
-genai.configure(api_key= os.environ("GOOGLE_API_KEY"))
+#genai.configure(api_key= os.environ("GOOGLE_API_KEY"))
+genai.configure(api_key=os.environ['GOOGLE_API_KEY'])
 
 def read_text_file(filepath: str):
     # Get the directory containing the script file
@@ -23,7 +24,7 @@ def read_text_file(filepath: str):
     
 model = genai.GenerativeModel(
     model_name='gemini-2.0-flash-exp',
-    system_instruction=read_text_file('prompt/project_based_activity_context.txt'),
+    system_instruction=read_text_file('prompt/project_based_activity_prompt.txt'),
     )
     
 def run_project_based_activity(user_info: UserInfo, user_query: str, chat_context: str):
